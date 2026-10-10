@@ -1,10 +1,9 @@
-import { DIORAMA } from './layout';
+import { LANDMARK_POSITION } from './layout';
 
-/** A simple silhouette of a famous local building at the back of the diorama. */
+/** A simple silhouette of a famous local building on the skyline behind the diorama. */
 export function Landmark({ kind }: { kind: string }) {
-  const position: [number, number, number] = [-DIORAMA.width / 2 + 40, 0, -DIORAMA.depth / 2 + 40];
   return (
-    <group name={`landmark-${kind}`} position={position}>
+    <group name={`landmark-${kind}`} position={LANDMARK_POSITION}>
       {kind === 'empire-state' && (
         <>
           <mesh position={[0, 90, 0]} scale={[40, 180, 40]}><boxGeometry /><meshStandardMaterial color="#b8ae9c" flatShading /></mesh>

@@ -100,3 +100,26 @@ export function generateNeighbors(site: Site): NeighborBlock[] {
   }
   return blocks;
 }
+
+/** Famous local building, placed on the skyline well behind the diorama. */
+export const LANDMARK_POSITION: [number, number, number] = [-DIORAMA.width / 2 - 260, 0, -DIORAMA.depth / 2 - 380];
+
+export interface CameraFrame {
+  position: [number, number, number];
+  target: [number, number, number];
+}
+
+/** A three-quarter view that fits a tower of `heightM` on this site's lot. */
+export function cameraFrame(site: Site, heightM: number): CameraFrame {
+  const [lx, lz] = lotCenter(site);
+  const span = Math.max(heightM, 160);
+  const target: [number, number, number] = [lx, span * 0.42, lz];
+  const distance = span * 1.5 + 150;
+  // Unit-ish direction: from the front-right, a little above the target.
+  const dir: [number, number, number] = [0.55, 0.3, 0.78];
+  const len = Math.hypot(...dir);
+  return {
+    target,
+    position: [target[0] + (dir[0] / len) * distance, target[1] + (dir[1] / len) * distance, target[2] + (dir[2] / len) * distance],
+  };
+}

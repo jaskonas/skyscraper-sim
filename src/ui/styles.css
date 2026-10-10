@@ -91,9 +91,18 @@ details.group > summary { cursor: pointer; font-weight: 600; }
 .grade-C, .grade-D { color: var(--marginal); }
 .grade-F { color: var(--fail); }
 .assessment-actions { display: flex; gap: 8px; margin-top: 10px; }
-.soil-label { color: #fff; font-size: 11px; background: rgba(0, 0, 0, 0.45); padding: 1px 5px; border-radius: 3px; white-space: nowrap; pointer-events: none; }
 
 @media (max-width: 800px) {
   .game { grid-template-columns: 1fr; grid-template-rows: 55vh 45vh; }
   .sidebar { order: 2; }
 }
+
+/* 3D view overlay */
+.scene { position: relative; width: 100%; height: 100%; }
+.scene-overlay { position: absolute; left: 12px; bottom: 12px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; pointer-events: none; }
+.scene-overlay > * { pointer-events: auto; }
+.soil-legend { background: rgba(17, 22, 28, 0.82); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 0.8em; max-width: 260px; }
+.soil-legend ul { list-style: none; padding: 0; margin: 4px 0; display: flex; flex-direction: column; gap: 2px; }
+.soil-legend li { display: grid; grid-template-columns: 12px 1fr auto; gap: 6px; align-items: center; }
+.soil-legend p { margin: 2px 0; }
+.swatch { width: 12px; height: 12px; border-radius: 2px; display: inline-block; }
