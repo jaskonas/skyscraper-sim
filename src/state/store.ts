@@ -24,6 +24,8 @@ export interface GameState {
   detailLevel: DetailLevel;
   startProject: (siteId: SiteId, mode: GameMode, briefId?: string | null) => void;
   dispatch: (actions: DesignAction[], opts?: { coalesceKey?: string }) => DispatchResult;
+  /** Call when a drag or key press ends so the next change starts a new undo step. */
+  endCoalesce: () => void;
   undo: () => void;
   redo: () => void;
   build: () => void;
@@ -64,6 +66,8 @@ export const useGame = create<GameState>((set, get) => ({
     set({ history: next, historyIndex: next.length - 1, lastCoalesceKey: key });
     return outcome;
   },
+
+  endCoalesce: () => set({ lastCoalesceKey: null }),
 
   undo: () => {
     const { phase, historyIndex } = get();

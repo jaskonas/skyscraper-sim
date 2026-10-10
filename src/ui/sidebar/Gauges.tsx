@@ -52,7 +52,7 @@ export function Gauges() {
       <Gauge label="Sway comfort" valueText={`${w.accelMg.toFixed(1)} / ${w.comfortLimitMg} mg`} status={check('windComfort').status} fraction={w.accelMg / (w.comfortLimitMg * 1.5)} />
       <Gauge label="Earthquake" valueText={analysis.seismic.outcome} status={check('seismic').status} fraction={analysis.seismic.ratio / 1.2} />
       <Gauge label="Foundation" valueText={`${Math.round(analysis.foundation.utilization * 100)}% load`} status={check('foundation').status} fraction={analysis.foundation.utilization / 1.2} />
-      <Gauge label="Elevator wait" valueText={e.avgWaitS >= 999 ? 'no service' : `${Math.round(e.avgWaitS)} / ${e.targetS} s`} status={check('elevators').status} fraction={e.avgWaitS / (e.targetS * 2)} />
+      <Gauge label="Elevator wait" valueText={e.avgWaitS >= 999 ? 'overwhelmed' : `${Math.round(e.avgWaitS)} / ${e.targetS} s`} status={check('elevators').status} fraction={e.avgWaitS / (e.targetS * 2)} />
       <Gauge label="Energy" valueText={`${Math.round(analysis.energy.euiKWhPerM2)} kWh/m²`} status={check('energy').status} fraction={analysis.energy.euiKWhPerM2 / 360} />
     </section>
   );

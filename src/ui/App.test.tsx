@@ -15,6 +15,7 @@ describe('App', () => {
     expect(screen.getByTestId('scene')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Shanghai' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'New project' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Yes, start over' }));
     expect(screen.getByRole('heading', { name: 'Skyscraper Studio' })).toBeInTheDocument();
   });
 });

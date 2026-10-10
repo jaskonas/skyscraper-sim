@@ -106,3 +106,6 @@ details.group > summary { cursor: pointer; font-weight: 600; }
 .soil-legend li { display: grid; grid-template-columns: 12px 1fr auto; gap: 6px; align-items: center; }
 .soil-legend p { margin: 2px 0; }
 .swatch { width: 12px; height: 12px; border-radius: 2px; display: inline-block; }
+.sidebar-header { flex-wrap: wrap; }
+.confirm { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 0.85em; background: var(--card); border: 1px solid var(--marginal); border-radius: 6px; padding: 6px 8px; }
+.confirm span { flex-basis: 100%; }

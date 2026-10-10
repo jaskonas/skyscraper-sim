@@ -15,6 +15,7 @@ export function formatParamValue(def: ParamDef, value: unknown): string {
 export function ParamControl({ def }: { def: ParamDef }) {
   const { site, design } = useCurrent();
   const dispatch = useGame((s) => s.dispatch);
+  const endCoalesce = useGame((s) => s.endCoalesce);
   const [showHelp, setShowHelp] = useState(false);
   const value = design[def.id];
   const set = (v: number | string | boolean, coalesce = false) =>
@@ -31,6 +32,9 @@ export function ParamControl({ def }: { def: ParamDef }) {
         step={def.step}
         value={value as number}
         onChange={(e) => set(Number(e.target.value), true)}
+        onPointerUp={endCoalesce}
+        onKeyUp={endCoalesce}
+        onBlur={endCoalesce}
       />
     );
   } else if (def.kind === 'enum') {

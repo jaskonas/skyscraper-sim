@@ -166,3 +166,12 @@ describe('robustness', () => {
               }
   });
 });
+
+describe('elevator messages', () => {
+  it('says swamped elevators are overwhelmed, not missing', () => {
+    const a = run('new-york', { elevators: 2 });
+    const msg = a.checks.find((c) => c.id === 'elevators')!.message;
+    expect(msg).toMatch(/overwhelmed/);
+    expect(msg).not.toMatch(/No working elevators/);
+  });
+});

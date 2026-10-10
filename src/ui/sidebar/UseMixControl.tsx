@@ -8,6 +8,7 @@ const USE_LABEL: Record<UseType, string> = { retail: 'Shops', office: 'Offices',
 export function UseMixControl() {
   const { design } = useCurrent();
   const dispatch = useGame((s) => s.dispatch);
+  const endCoalesce = useGame((s) => s.endCoalesce);
   const shares = useShares(design);
   return (
     <div>
@@ -23,6 +24,9 @@ export function UseMixControl() {
             step={5}
             value={design.useMix[u]}
             onChange={(e) => dispatch([{ type: 'set_use_mix', mix: { [u]: Number(e.target.value) } }], { coalesceKey: `use-${u}` })}
+            onPointerUp={endCoalesce}
+            onKeyUp={endCoalesce}
+            onBlur={endCoalesce}
           />
           <span className="value">{Math.round(shares[u] * 100)}%</span>
         </div>

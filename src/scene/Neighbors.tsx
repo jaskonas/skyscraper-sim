@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import type { Site } from '../sim/types';
 import { generateNeighbors } from './layout';
@@ -7,6 +7,7 @@ export function Neighbors({ site }: { site: Site }) {
   const blocks = useMemo(() => generateNeighbors(site), [site]);
   const ref = useRef<THREE.InstancedMesh>(null);
   const box = useMemo(() => new THREE.BoxGeometry(1, 1, 1), []);
+  useEffect(() => () => box.dispose(), [box]);
   useLayoutEffect(() => {
     const mesh = ref.current;
     if (!mesh) return;

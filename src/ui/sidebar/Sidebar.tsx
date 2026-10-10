@@ -9,6 +9,8 @@ import { StylePicker } from './StylePicker';
 
 export function Sidebar() {
   const phase = useGame((s) => s.phase);
+  const hasProject = useGame((s) => s.project !== null);
+  if (!hasProject) return null;
   return (
     <aside className="sidebar">
       <SidebarHeader />

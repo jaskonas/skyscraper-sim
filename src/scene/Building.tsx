@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { FLOOR_HEIGHT, crownHeight, floorSlices } from '../sim/geometry';
 import type { Design, Site } from '../sim/types';
@@ -30,10 +30,16 @@ function Instanced({ geometry, items, color, name }: { geometry: THREE.BufferGeo
   );
 }
 
+/** Free a memoised geometry when it is replaced or unmounted; R3F does not dispose geometries passed as props. */
+function useDisposable<T extends { dispose: () => void }>(resource: T): T {
+  useEffect(() => () => resource.dispose(), [resource]);
+  return resource;
+}
+
 function Bracing({ design, color }: { design: Design; color: string }) {
   const struts = useMemo(() => bracingStruts(design), [design]);
   const ref = useRef<THREE.InstancedMesh>(null);
-  const box = useMemo(() => new THREE.BoxGeometry(1, 1, 1), []);
+  const box = useDisposable(useMemo(() => new THREE.BoxGeometry(1, 1, 1), []));
   useLayoutEffect(() => {
     const mesh = ref.current;
     if (!mesh) return;
@@ -49,7 +55,7 @@ function Bracing({ design, color }: { design: Design; color: string }) {
   );
 }
 
-function Crown({ design }: { design: Design }) {
+function Crown({ design, geometry }: { design: Design; geometry: THREE.BufferGeometry }) {
   const slices = floorSlices(design);
   const top = slices[slices.length - 1];
   const bodyHeight = design.floors * FLOOR_HEIGHT;
@@ -58,7 +64,7 @@ function Crown({ design }: { design: Design }) {
   const w = top.width;
   const d = top.depth;
   const segments = design.shape === 'circle' ? 24 : design.shape === 'triangle' ? 3 : 4;
-  const wedge = useMemo(() => {
+  const wedge = useDisposable(useMemo(() => {
     const shape = new THREE.Shape();
     shape.moveTo(-w / 2, 0);
     shape.lineTo(w / 2, 0);
@@ -67,12 +73,11 @@ function Crown({ design }: { design: Design }) {
     const g = new THREE.ExtrudeGeometry(shape, { depth: d, bevelEnabled: false });
     g.translate(0, 0, -d / 2);
     return g;
-  }, [w, d, h]);
+  }, [w, d, h]));
   return (
     <group name="crown" position={[0, bodyHeight, 0]} rotation={[0, top.rotation, 0]}>
       {design.crown === 'flat' && (
-        <mesh position={[0, h / 2, 0]} scale={[w * 0.9, h, d * 0.9]}>
-          <boxGeometry />
+        <mesh geometry={geometry} position={[0, h / 2, 0]} scale={[w * 0.9, h, d * 0.9]}>
           <meshStandardMaterial color={color} flatShading />
         </mesh>
       )}
@@ -96,8 +101,7 @@ function Crown({ design }: { design: Design }) {
       )}
       {design.crown === 'stepped' &&
         [0.75, 0.55, 0.35].map((k, i) => (
-          <mesh key={k} position={[0, FLOOR_HEIGHT * (i + 0.5), 0]} scale={[w * k, FLOOR_HEIGHT, d * k]}>
-            <boxGeometry />
+          <mesh key={k} geometry={geometry} position={[0, FLOOR_HEIGHT * (i + 0.5), 0]} scale={[w * k, FLOOR_HEIGHT, d * k]}>
             <meshStandardMaterial color={color} flatShading />
           </mesh>
         ))}
@@ -147,14 +151,14 @@ function Amenities({ design, geometry }: { design: Design; geometry: THREE.Buffe
 
 export function Building({ site, design }: { site: Site; design: Design }) {
   const [lx, lz] = lotCenter(site);
-  const geometry = useMemo(() => unitGeometry(design.shape), [design.shape]);
+  const geometry = useDisposable(useMemo(() => unitGeometry(design.shape), [design.shape]));
   const body = useMemo(() => bodyInstances(design), [design]);
   const slabs = useMemo(() => slabInstances(design), [design]);
   return (
     <group name="building" position={[lx, 0, lz]}>
       <Instanced name="body" geometry={geometry} items={body} color={facadeColor(design)} />
       <Instanced name="slabs" geometry={geometry} items={slabs} color={design.palette.accent} />
-      <Crown design={design} />
+      <Crown design={design} geometry={geometry} />
       <Amenities design={design} geometry={geometry} />
       <Bracing design={design} color={design.palette.accent} />
     </group>

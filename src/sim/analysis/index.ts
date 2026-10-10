@@ -98,7 +98,7 @@ export function analyze(site: Site, design: Design): Analysis {
       unit: 's',
       message:
         elevators.avgWaitS >= 999
-          ? 'No working elevators — nobody can get upstairs!'
+          ? 'Your elevators are completely overwhelmed — people would queue for ages. Add cars or zones.'
           : `Morning rush average wait about ${Math.round(elevators.avgWaitS)} s (target ${elevators.targetS} s).`,
     },
     {

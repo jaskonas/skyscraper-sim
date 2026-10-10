@@ -80,4 +80,12 @@ describe('game store', () => {
     expect(state().project).toBeNull();
     expect(selectDesign(state())).toBeUndefined();
   });
+
+  it('two separate drags of the same slider are two undo steps', () => {
+    for (const v of [45, 50]) state().dispatch([{ type: 'set_parameter', id: 'floors', value: v }], { coalesceKey: 'floors' });
+    state().endCoalesce();
+    for (const v of [55, 60]) state().dispatch([{ type: 'set_parameter', id: 'floors', value: v }], { coalesceKey: 'floors' });
+    state().undo();
+    expect(design().floors).toBe(50);
+  });
 });
