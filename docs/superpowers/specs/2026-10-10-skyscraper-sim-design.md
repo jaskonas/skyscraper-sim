@@ -22,13 +22,13 @@ A teaching game for the user's son (target age 12–15) about how skyscrapers ar
 
 - Runs locally in a desktop browser. Started with a single `npm run dev`.
 - **Vite + React + TypeScript**, **react-three-fiber** (Three.js) for 3D, **Zustand** for state, **Vitest** for tests.
-- Anthropic API key lives in a local `.env` file (`ANTHROPIC_API_KEY`), read only by a Vite dev-server middleware. The key never reaches the browser.
-- LLM: **Claude Sonnet 5.5** (`claude-sonnet-5-5`), configurable in one place.
+- *(Future iteration — see §11)* Anthropic API key lives in a local `.env` file (`ANTHROPIC_API_KEY`), read only by a Vite dev-server middleware. The key never reaches the browser.
+- *(Future iteration)* LLM: **Claude Sonnet 5.5** (`claude-sonnet-5-5`), configurable in one place.
 
 ## 3. Game flow
 
 1. **Site select.** World map with four pins. Each shows the site's key challenge and a real-world fact. Player chooses a site, then **Challenge** (pick one of the site's briefs) or **Sandbox**.
-2. **Design.** 3D view of the lot. Live procedural preview of the tower. Sidebar holds brief, gauges, design controls, and the design chat.
+2. **Design.** 3D view of the lot. Live procedural preview of the tower. Sidebar holds brief, gauges, and design controls. (The design chat is a future iteration — §11.)
 3. **Build.** Player presses Build; design locks. Animated construction sequence of 3–4 minutes at 1× speed, with pause, 1×/2×/4×, free orbit camera, and a phase timeline showing day and money spent.
 4. **Complete.** Engineering assessment is shown. Overlay toggles become available (structure, elevators, electrical, plumbing, HVAC, wind, earthquake, people).
 5. **New project** returns to site select. Optional: export the design as a JSON file. Nothing carries over.
@@ -40,7 +40,7 @@ src/sim/      catalog, sites, briefs, styles, design model, analysis, constructi
 src/state/    Zustand store: current site/mode/brief, design history (undo/redo), phase, overlay toggles, chat log
 src/ui/       React sidebar: header, brief card, gauges, generated controls, overlay toggles, build controls, design chat; site-select screen; assessment panel
 src/scene/    react-three-fiber: site & neighbors, soil cutaway, procedural building, construction animation, overlays
-server/       Vite middleware: POST /api/design-chat → Claude with catalog-generated tools
+server/       (future iteration) Vite middleware: POST /api/design-chat → Claude with catalog-generated tools
 ```
 
 **Key principles**
@@ -138,9 +138,11 @@ A brief defines: client blurb, required use mix, floor/height minimums, budget, 
 
 ## 10. Sidebar UI
 
-Top to bottom: header (site, mode, phase) → brief card with live requirement status → gauges → collapsible design-control groups generated from the catalog (ⓘ tooltips) → overlay toggles and build/speed controls (contextual by phase) → design chat (log + text box) pinned at the bottom.
+Top to bottom: header (site, mode, phase) → brief card with live requirement status → gauges → collapsible design-control groups generated from the catalog (ⓘ tooltips) → overlay toggles and build/speed controls (contextual by phase) → *(future iteration)* design chat (log + text box) pinned at the bottom.
 
-## 11. Design chat (LLM)
+## 11. Design chat (LLM) — future iteration
+
+> **Deferred.** Not part of the current roadmap (§13). Kept here as the agreed design for when it is picked up. Everything it needs already exists: catalog-driven parameters, `applyActions` validation, phase locks, and undoable history.
 
 - Client sends: message, recent chat history, current design, current analysis, phase, site, brief, detail level.
 - Server (`/api/design-chat`) calls Claude with:
@@ -161,4 +163,12 @@ Top to bottom: header (site, mode, phase) → brief card with live requirement s
 - **Catalog/validation tests:** generated tool schemas match the catalog; out-of-range and unknown actions are rejected; phase locks enforced.
 - **Style preset tests:** every preset produces a valid design and a non-degenerate building mesh.
 - **Scene smoke test** (renders without throwing) plus manual playtesting.
-- Server middleware tested with a mocked Anthropic client.
+- *(Future iteration)* Server middleware tested with a mocked Anthropic client.
+
+## 13. Roadmap
+
+1. **Plan 1 — Core sim and design screen.** Done (merged 2026-10-10).
+2. **Plan 2 — Architectural detail.** Style-driven facades (painted window/spandrel tiles + 3D ornament relief), 28-crown catalog with style defaults and a crown gallery, ornament controls, day/night toggle. Separate spec.
+3. **Plan 3 — Construction animation.** The Build phase driven by `analysis.schedule`; reveals the detailed building.
+4. **Plan 4 — Overlays and people simulation.**
+5. **Future iteration — Design chat (LLM).** §11. Text box at the bottom of the sidebar; Claude turns requests into catalog actions and explains tradeoffs.
