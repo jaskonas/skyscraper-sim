@@ -168,7 +168,8 @@ Top to bottom: header (site, mode, phase) → brief card with live requirement s
 ## 13. Roadmap
 
 1. **Plan 1 — Core sim and design screen.** Done (merged 2026-10-10).
-2. **Plan 2 — Architectural detail.** Style-driven facades (painted window/spandrel tiles + 3D ornament relief), 28-crown catalog with style defaults and a crown gallery, ornament controls, day/night toggle. Separate spec.
-3. **Plan 3 — Construction animation.** The Build phase driven by `analysis.schedule`; reveals the detailed building.
-4. **Plan 4 — Overlays and people simulation.**
-5. **Future iteration — Design chat (LLM).** §11. Text box at the bottom of the sidebar; Claude turns requests into catalog actions and explains tradeoffs.
+2. **Plan 2 — Architectural detail.** Done (merged 2026-10-10). Style-driven facades, 28-crown catalog, ornament controls, day/night toggle. Separate spec. Deployed to GitHub Pages (www.jaskonas.com/skyscraper-sim/).
+3. **Plan 3 — Detail window.** A close-up inset (Facade / Corner / Base) built at real scale in true 3D. Spec: `2026-10-11-detail-window-design.md`.
+4. **Plan 4 — Construction animation.** The Build phase driven by `analysis.schedule`; reveals the detailed building.
+5. **Plan 5 — Overlays and people simulation.**
+6. **Future iteration — Design chat (LLM).** §11. Text box at the bottom of the sidebar; Claude turns requests into catalog actions and explains tradeoffs.
