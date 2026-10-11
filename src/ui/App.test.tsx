@@ -18,4 +18,17 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Yes, start over' }));
     expect(screen.getByRole('heading', { name: 'Skyscraper Studio' })).toBeInTheDocument();
   });
+
+  it('starts each screen at the top of the page, whatever was scrolled before', () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    render(<App />);
+    scrollTo.mockClear();
+    fireEvent.click(screen.getByRole('button', { name: 'Sandbox in Chicago' }));
+    expect(scrollTo).toHaveBeenLastCalledWith(0, 0);
+    scrollTo.mockClear();
+    fireEvent.click(screen.getByRole('button', { name: 'New project' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Yes, start over' }));
+    expect(scrollTo).toHaveBeenLastCalledWith(0, 0);
+    scrollTo.mockRestore();
+  });
 });

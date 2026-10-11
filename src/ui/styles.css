@@ -112,7 +112,8 @@ details.group > summary { cursor: pointer; font-weight: 600; }
 .gallery { margin-top: 4px; }
 .gallery-section { margin-bottom: 6px; }
 .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 6px; }
-.gallery-item { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; font-size: 0.72em; line-height: 1.15; text-align: center; color: inherit; }
+/* position: relative anchors each button's screen-reader text, so it stays inside the scrolling sidebar instead of stretching the page. */
+.gallery-item { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; font-size: 0.72em; line-height: 1.15; text-align: center; color: inherit; }
 .gallery-item[aria-pressed='true'] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
 .gallery-item.dimmed { opacity: 0.5; }
 .gallery-item .icon { width: 56px; height: 56px; }
