@@ -2,7 +2,12 @@ import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { FLOOR_HEIGHT, floorSlices } from '../sim/geometry';
 import type { Design, Site } from '../sim/types';
+import { facadeRecipe } from '../sim/facade';
 import { bodyInstances, facadeColor, instanceMatrix, slabInstances, unitGeometry, type BoxInstance } from './buildingGeometry';
+import { createFacadeMaterial, setFacadeNight } from './FacadeMaterial';
+import { TILE_HEIGHT_M } from './facadeTile';
+import { facadeTextures } from './facadeTexture';
+import { nightWindowAttributes } from './nightWindows';
 import { crownParts } from './crownParts';
 import { lotCenter } from './layout';
 import { bracingParts, ornamentParts } from './ornaments';
@@ -28,6 +33,48 @@ function Instanced({ geometry, items, color, name }: { geometry: THREE.BufferGeo
 function useDisposable<T extends { dispose: () => void }>(resource: T): T {
   useEffect(() => () => resource.dispose(), [resource]);
   return resource;
+}
+
+/** The glazed part of every floor, wearing the painted facade tile; windows light up at night. */
+function Body({ design, night }: { design: Design; night: boolean }) {
+  const ref = useRef<THREE.InstancedMesh>(null);
+  const items = useMemo(() => bodyInstances(design), [design]);
+  const recipe = useMemo(() => facadeRecipe(design), [design]);
+  const textures = useMemo(() => facadeTextures(recipe), [recipe]);
+  const geometry = useDisposable(
+    useMemo(() => {
+      const g = unitGeometry(design.shape);
+      const a = nightWindowAttributes(design);
+      g.setAttribute('aFloor', new THREE.InstancedBufferAttribute(a.floor, 1));
+      g.setAttribute('aLit', new THREE.InstancedBufferAttribute(a.lit, 1));
+      g.setAttribute('aLitColor', new THREE.InstancedBufferAttribute(a.color, 3));
+      return g;
+    }, [design]),
+  );
+  const material = useDisposable(
+    useMemo(
+      () =>
+        createFacadeMaterial({
+          map: textures?.map ?? null,
+          glowMap: textures?.glowMap ?? null,
+          tileWidth: textures?.layout.widthM ?? recipe.pattern.bayWidth,
+          tileHeight: textures?.layout.heightM ?? TILE_HEIGHT_M,
+          roughness: recipe.roughness,
+          metalness: recipe.metalness,
+          color: facadeColor(design),
+        }),
+      [textures, recipe, design],
+    ),
+  );
+  useEffect(() => setFacadeNight(material, night), [material, night]);
+  useLayoutEffect(() => {
+    const mesh = ref.current;
+    if (!mesh) return;
+    items.forEach((it, i) => mesh.setMatrixAt(i, instanceMatrix(it)));
+    mesh.instanceMatrix.needsUpdate = true;
+    mesh.computeBoundingSphere();
+  }, [items, geometry]);
+  return <instancedMesh key={items.length} name="body" ref={ref} args={[geometry, material, items.length]} />;
 }
 
 function Amenities({ design, geometry }: { design: Design; geometry: THREE.BufferGeometry }) {
@@ -68,7 +115,6 @@ function Amenities({ design, geometry }: { design: Design; geometry: THREE.Buffe
 export function Building({ site, design, night = false }: { site: Site; design: Design; night?: boolean }) {
   const [lx, lz] = lotCenter(site);
   const geometry = useDisposable(useMemo(() => unitGeometry(design.shape), [design.shape]));
-  const body = useMemo(() => bodyInstances(design), [design]);
   const slabs = useMemo(() => slabInstances(design), [design]);
   const crown = useMemo(() => crownParts(design), [design]);
   const ornaments = useMemo(() => ornamentParts(design), [design]);
@@ -76,7 +122,7 @@ export function Building({ site, design, night = false }: { site: Site; design: 
   const look = { palette: design.palette, plan: design.shape, night };
   return (
     <group name="building" position={[lx, 0, lz]}>
-      <Instanced name="body" geometry={geometry} items={body} color={facadeColor(design)} />
+      <Body design={design} night={night} />
       <Instanced name="slabs" geometry={geometry} items={slabs} color={design.palette.accent} />
       <PartsMesh name="crown" parts={crown} {...look} />
       <PartsMesh name="ornaments" parts={ornaments} {...look} />
