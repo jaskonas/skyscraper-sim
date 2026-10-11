@@ -5,6 +5,7 @@ import { getSite } from '../sim/sites';
 import type { Design, DetailLevel, SiteId } from '../sim/types';
 
 export type GameMode = 'challenge' | 'sandbox';
+export type TimeOfDay = 'day' | 'night';
 
 export interface Project {
   siteId: SiteId;
@@ -22,6 +23,8 @@ export interface GameState {
   /** Consecutive dispatches with the same key (e.g. one slider drag) share one undo step. */
   lastCoalesceKey: string | null;
   detailLevel: DetailLevel;
+  /** View only — not part of the design, its history, or the export. */
+  timeOfDay: TimeOfDay;
   startProject: (siteId: SiteId, mode: GameMode, briefId?: string | null) => void;
   dispatch: (actions: DesignAction[], opts?: { coalesceKey?: string }) => DispatchResult;
   /** Call when a drag or key press ends so the next change starts a new undo step. */
@@ -30,6 +33,7 @@ export interface GameState {
   redo: () => void;
   build: () => void;
   newProject: () => void;
+  setTimeOfDay: (t: TimeOfDay) => void;
 }
 
 export type DispatchResult = Pick<ApplyResult, 'applied' | 'rejected'>;
@@ -41,6 +45,7 @@ export const useGame = create<GameState>((set, get) => ({
   historyIndex: -1,
   lastCoalesceKey: null,
   detailLevel: 'standard',
+  timeOfDay: 'day',
 
   startProject: (siteId, mode, briefId = null) =>
     set({
@@ -85,7 +90,10 @@ export const useGame = create<GameState>((set, get) => ({
     if (get().project && get().phase === 'design') set({ phase: 'complete', lastCoalesceKey: null });
   },
 
-  newProject: () => set({ project: null, phase: 'design', history: [], historyIndex: -1, lastCoalesceKey: null }),
+  newProject: () =>
+    set({ project: null, phase: 'design', history: [], historyIndex: -1, lastCoalesceKey: null, timeOfDay: 'day' }),
+
+  setTimeOfDay: (timeOfDay) => set({ timeOfDay }),
 }));
 
 export const selectDesign = (s: GameState): Design | undefined => s.history[s.historyIndex];
