@@ -51,53 +51,6 @@ export function facadeColor(design: Design): string {
   return '#' + body.lerp(new THREE.Color(design.palette.glass), design.windowRatio * 0.5).getHexString();
 }
 
-export interface Strut {
-  from: Vec3;
-  to: Vec3;
-}
-
-const BRACE_FLOORS = 10;
-
-/** X-braces on the four faces of each 10-floor segment, for exposed structure. */
-export function bracingStruts(design: Design): Strut[] {
-  if (!design.exposedStructure) return [];
-  const slices = floorSlices(design);
-  const struts: Strut[] = [];
-  for (let start = 0; start < slices.length; start += BRACE_FLOORS) {
-    const bottom = slices[start];
-    const endIndex = Math.min(start + BRACE_FLOORS, slices.length) - 1;
-    const y0 = bottom.y;
-    const y1 = slices[endIndex].y + FLOOR_HEIGHT;
-    const hw = bottom.width / 2 + 0.6;
-    const hd = bottom.depth / 2 + 0.6;
-    const rot = slices[Math.floor((start + endIndex) / 2)].rotation;
-    const c = Math.cos(rot);
-    const s = Math.sin(rot);
-    const p = (x: number, y: number, z: number): Vec3 => [x * c + z * s, y, -x * s + z * c];
-    const faces: [number, number, number, number][] = [
-      [-hw, hd, hw, hd],
-      [hw, -hd, -hw, -hd],
-      [hw, hd, hw, -hd],
-      [-hw, -hd, -hw, hd],
-    ];
-    for (const [ax, az, bx, bz] of faces) {
-      struts.push({ from: p(ax, y0, az), to: p(bx, y1, bz) });
-      struts.push({ from: p(bx, y0, bz), to: p(ax, y1, az) });
-    }
-  }
-  return struts;
-}
-
-/** Matrix for a thin box running from `from` to `to`. */
-export function strutMatrix(strut: Strut, thickness: number): THREE.Matrix4 {
-  const a = new THREE.Vector3(...strut.from);
-  const b = new THREE.Vector3(...strut.to);
-  const dir = b.clone().sub(a);
-  const length = dir.length();
-  const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
-  return new THREE.Matrix4().compose(a.add(b).multiplyScalar(0.5), q, new THREE.Vector3(thickness, length, thickness));
-}
-
 export function instanceMatrix(i: BoxInstance): THREE.Matrix4 {
   return new THREE.Matrix4().compose(
     new THREE.Vector3(...i.position),
