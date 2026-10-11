@@ -4,12 +4,14 @@ import { STYLE_PRESETS } from '../../sim/catalog/styles';
 import { useCurrent } from '../../state/hooks';
 import { useGame } from '../../state/store';
 import { OrnamentIcon } from './icons';
+import { useGalleryDetail } from './OptionGallery';
 
 /** Pick any number of ornaments, grouped by where they go on the tower. */
 export function OrnamentsControl() {
   const { design } = useCurrent();
   const dispatch = useGame((s) => s.dispatch);
   const styleDefaults = STYLE_PRESETS[design.style].settings.ornaments;
+  const { describe, panel } = useGalleryDetail();
   return (
     <div className="gallery" role="group" aria-label="Ornaments">
       <div className="control-row">
@@ -26,15 +28,20 @@ export function OrnamentsControl() {
                 const on = design.ornaments.includes(id);
                 const isDefault = styleDefaults.includes(id);
                 const off = on && design.ornament === 'none' && o.decorative;
+                const { description, ...detailProps } = describe(
+                  id,
+                  `${o.label}${isDefault ? ' (★ style default)' : ''}: Seen on ${o.seenOn}. ${o.blurb}${off ? ' Hidden while Ornament amount is None.' : ''}`,
+                );
                 return (
                   <button
                     key={id}
                     className={`gallery-item${off ? ' dimmed' : ''}`}
                     aria-pressed={on}
                     aria-label={`${o.label}${isDefault ? ' (style default)' : ''}`}
-                    title={`${o.label}${isDefault ? ' ★ style default' : ''}\nSeen on ${o.seenOn}. ${o.blurb}${off ? '\nHidden while Ornament amount is None.' : ''}`}
+                    {...detailProps}
                     onClick={() => dispatch([on ? { type: 'remove_ornament', id } : { type: 'add_ornament', id }])}
                   >
+                    {description}
                     <OrnamentIcon id={id} palette={design.palette} />
                     <span className="gallery-caption">
                       {isDefault && <span className="star">★ </span>}
@@ -47,6 +54,7 @@ export function OrnamentsControl() {
           </div>
         );
       })}
+      {panel}
     </div>
   );
 }

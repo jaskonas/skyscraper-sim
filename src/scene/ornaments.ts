@@ -4,6 +4,7 @@ import { FLOOR_HEIGHT, floorSlices, type FloorSlice } from '../sim/geometry';
 import { placePart, rotateYXZ, strutPart, type Part } from '../sim/parts';
 import type { Design } from '../sim/types';
 import {
+  alongFace,
   baseFloors,
   floorRuns,
   floorTop,
@@ -119,12 +120,9 @@ function place(o: OrnamentDef, design: Design, rule: AmountRule): Part[] {
       const front = faces.reduce((best, f) => (f.z > best.z ? f : best));
       const count = rule.count ?? 1;
       const spacing = 7 * size;
-      const ax = Math.cos(front.yaw);
-      const az = -Math.sin(front.yaw);
-      const anchors = Array.from({ length: count }, (_, k) => {
-        const s = (k - (count - 1) / 2) * spacing;
-        return { x: front.x + ax * s, z: front.z + az * s, yaw: front.yaw };
-      });
+      const anchors = Array.from({ length: count }, (_, k) =>
+        alongFace(design.shape, ground.width, ground.depth, front, (k - (count - 1) / 2) * spacing),
+      );
       parts.push(...stamp(o, ground, 0, size, anchors));
       break;
     }
@@ -140,6 +138,19 @@ export function ornamentParts(design: Design): Part[] {
 
 const BRACE_FLOORS = 10;
 
+/**
+ * Where the braces meet. A round tower gets eight points pushed out far enough that the straight
+ * braces between them clear the curved wall (a chord's middle sits at R·cos(π/8)).
+ */
+function braceCorners(shape: Design['shape'], width: number, depth: number) {
+  if (shape !== 'circle') return planCorners(shape, width, depth);
+  const k = 1 / Math.cos(Math.PI / 8);
+  return Array.from({ length: 8 }, (_, i) => {
+    const a = ((i + 0.5) / 8) * Math.PI * 2;
+    return { x: (width / 2) * k * Math.sin(a), z: (depth / 2) * k * Math.cos(a), yaw: a };
+  });
+}
+
 /** X-braces on every wall of each 10-floor segment, following the floor's real shape. */
 export function bracingParts(design: Design): Part[] {
   if (!design.exposedStructure) return [];
@@ -151,7 +162,7 @@ export function bracingParts(design: Design): Part[] {
     const mid = slices[Math.floor((start + end.index) / 2)];
     const y0 = bottom.y;
     const y1 = end.y + FLOOR_HEIGHT;
-    const corners = planCorners(design.shape, bottom.width + 1.2, bottom.depth + 1.2);
+    const corners = braceCorners(design.shape, bottom.width + 1.2, bottom.depth + 1.2);
     corners.forEach((p, i) => {
       const q = corners[(i + 1) % corners.length];
       parts.push(placePart(strutPart([p.x, y0, p.z], [q.x, y1, q.z], 0.8, 'accent'), mid.rotation));

@@ -47,13 +47,13 @@ export function validateAction(action: DesignAction, design: Design, site: Site,
       return { ok: true };
     }
     case 'apply_style_preset':
-      return STYLE_PRESETS[action.style] ? { ok: true } : { ok: false, reason: `There is no "${action.style}" style.` };
+      return Object.hasOwn(STYLE_PRESETS, action.style) ? { ok: true } : { ok: false, reason: `There is no "${action.style}" style.` };
     case 'add_amenity':
     case 'remove_amenity':
-      return AMENITIES[action.id] ? { ok: true } : { ok: false, reason: `There is no "${action.id}" amenity.` };
+      return Object.hasOwn(AMENITIES, action.id) ? { ok: true } : { ok: false, reason: `There is no "${action.id}" amenity.` };
     case 'add_ornament':
     case 'remove_ornament':
-      return ORNAMENTS[action.id] ? { ok: true } : { ok: false, reason: `There is no "${action.id}" ornament.` };
+      return Object.hasOwn(ORNAMENTS, action.id) ? { ok: true } : { ok: false, reason: `There is no "${action.id}" ornament.` };
     case 'set_use_mix': {
       const entries = Object.entries(action.mix);
       if (entries.length === 0) return { ok: false, reason: 'The use mix is empty.' };

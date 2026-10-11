@@ -75,17 +75,24 @@ export function perimeterPoints(shape: PlanShape, width: number, depth: number, 
   return pointsAlongFaces(shape, width, depth, (f) => Math.max(1, Math.round(f.length / spacing)));
 }
 
-/** `perFace(face)` evenly spaced points along each straight wall, never on a corner. */
+/**
+ * The spot `s` metres along a wall from its middle. On a straight wall that is along the wall's line;
+ * on a round plan it follows the curve, so the spot stays on the wall and faces straight out.
+ */
+export function alongFace(shape: PlanShape, width: number, depth: number, f: Face, s: number): Anchor {
+  if (shape === 'circle') {
+    const a = f.yaw + s / (width / 2);
+    return { x: (width / 2) * Math.sin(a), z: (depth / 2) * Math.cos(a), yaw: a };
+  }
+  return { x: f.x + Math.cos(f.yaw) * s, z: f.z - Math.sin(f.yaw) * s, yaw: f.yaw };
+}
+
+/** `perFace(face)` evenly spaced points along each wall, never on a corner. */
 export function pointsAlongFaces(shape: PlanShape, width: number, depth: number, perFace: (f: Face) => number): Anchor[] {
   const out: Anchor[] = [];
   for (const f of planFaces(shape, width, depth)) {
     const n = perFace(f);
-    const ax = Math.cos(f.yaw); // local +x along the wall
-    const az = -Math.sin(f.yaw);
-    for (let k = 0; k < n; k++) {
-      const s = ((k + 0.5) / n - 0.5) * f.length;
-      out.push({ x: f.x + ax * s, z: f.z + az * s, yaw: f.yaw });
-    }
+    for (let k = 0; k < n; k++) out.push(alongFace(shape, width, depth, f, ((k + 0.5) / n - 0.5) * f.length));
   }
   return out;
 }

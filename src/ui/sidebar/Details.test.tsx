@@ -63,6 +63,18 @@ describe('crown gallery and details', () => {
     expect(within(ornaments).getByRole('button', { name: 'Gargoyles' })).not.toHaveClass('dimmed');
   });
 
+  it('describes a crown or ornament on keyboard focus, and to screen readers', () => {
+    render(<Sidebar />);
+    const pagoda = screen.getByRole('button', { name: 'Pagoda tiers' });
+    expect(pagoda).toHaveAccessibleDescription(/Seen on Jin Mao Tower/);
+    fireEvent.focus(pagoda);
+    expect(within(screen.getByRole('group', { name: 'Crown' })).getByRole('status')).toHaveTextContent(/Seen on Jin Mao Tower/);
+    const gargoyles = screen.getByRole('button', { name: 'Gargoyles' });
+    expect(gargoyles).toHaveAccessibleDescription(/Seen on Chrysler Building/);
+    fireEvent.focus(gargoyles);
+    expect(within(screen.getByRole('group', { name: 'Ornaments' })).getByRole('status')).toHaveTextContent(/Steel eagle heads/);
+  });
+
   it('notes antennas that do not count toward official height', () => {
     render(<Sidebar />);
     fireEvent.click(screen.getByRole('button', { name: 'Twin antennas' }));

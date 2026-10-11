@@ -134,6 +134,13 @@ describe('ornament amount and effects', () => {
     expect(removed.design.ornaments).toEqual([]);
     const bad = applyActions(design, [{ type: 'add_ornament', id: 'laser-eyes' as never }], site, 'design');
     expect(bad.rejected).toHaveLength(1);
+    for (const action of [
+      { type: 'add_ornament', id: 'toString' },
+      { type: 'add_amenity', id: 'toString' },
+      { type: 'apply_style_preset', style: 'toString' },
+    ] as never[]) {
+      expect(applyActions(design, [action], site, 'design').rejected, JSON.stringify(action)).toHaveLength(1);
+    }
     const locked = applyActions(design, [{ type: 'add_ornament', id: 'urns' }], site, 'complete');
     expect(locked.applied).toHaveLength(0);
   });

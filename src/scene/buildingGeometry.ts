@@ -17,8 +17,12 @@ export function unitGeometry(shape: PlanShape): THREE.BufferGeometry {
   switch (shape) {
     case 'circle':
       return new THREE.CylinderGeometry(0.5, 0.5, 1, 24);
-    case 'triangle':
-      return new THREE.CylinderGeometry(1 / Math.sqrt(3), 1 / Math.sqrt(3), 1, 3);
+    case 'triangle': {
+      // Flat normals per wall (a 3-sided cylinder has rounded ones), so facades can tell the walls apart.
+      const g = new THREE.CylinderGeometry(1 / Math.sqrt(3), 1 / Math.sqrt(3), 1, 3).toNonIndexed();
+      g.computeVertexNormals();
+      return g;
+    }
     default:
       return new THREE.BoxGeometry(1, 1, 1);
   }

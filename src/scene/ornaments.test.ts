@@ -77,11 +77,28 @@ describe('ornamentParts', () => {
   });
 });
 
+describe('ornaments on a round tower', () => {
+  it('urns, sunbursts and arched entries sit against the curved wall', () => {
+    for (const id of ['urns', 'sunburst-bands', 'arched-entry'] as const) {
+      const { design } = designFor('chicago', { shape: 'circle', plateWidth: 40, floors: 30, setbacks: 'none', taper: 0, ornaments: [id], ornament: 'high' });
+      for (const p of ornamentParts(design)) {
+        const off = Math.hypot(p.position[0], p.position[2]) - 20;
+        expect(Math.abs(off), id).toBeLessThan(2);
+      }
+    }
+  });
+});
+
 describe('bracingParts', () => {
   it('adds X-braces only for exposed structure, two per wall per 10 floors', () => {
     const { design } = designFor('chicago', { floors: 30, shape: 'square' });
     expect(bracingParts(design)).toEqual([]);
     expect(bracingParts({ ...design, exposedStructure: true })).toHaveLength(3 * 4 * 2);
     expect(bracingParts({ ...design, shape: 'triangle', exposedStructure: true })).toHaveLength(3 * 3 * 2);
+  });
+
+  it('keeps braces on a round tower outside the wall so they show', () => {
+    const { design } = designFor('chicago', { floors: 30, shape: 'circle', plateWidth: 40, taper: 0, exposedStructure: true });
+    for (const p of bracingParts(design)) expect(Math.hypot(p.position[0], p.position[2])).toBeGreaterThanOrEqual(20);
   });
 });

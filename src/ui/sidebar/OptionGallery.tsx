@@ -1,4 +1,31 @@
-import type { ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
+
+/**
+ * Shows an option's full description while it is hovered or keyboard-focused, and gives each button
+ * an accessible description so screen readers hear it too.
+ */
+export function useGalleryDetail() {
+  const prefix = useId();
+  const [detail, setDetail] = useState<string | null>(null);
+  const describe = (key: string, text: string) => ({
+    'aria-describedby': `${prefix}-${key}`,
+    onFocus: () => setDetail(text),
+    onMouseEnter: () => setDetail(text),
+    onBlur: () => setDetail(null),
+    onMouseLeave: () => setDetail(null),
+    description: (
+      <span id={`${prefix}-${key}`} className="sr-only">
+        {text}
+      </span>
+    ),
+  });
+  const panel = (
+    <p className="gallery-detail" role="status">
+      {detail ?? '\u00a0'}
+    </p>
+  );
+  return { describe, panel };
+}
 import type { EnumParam } from '../../sim/catalog/parameters';
 
 export interface GallerySection {
@@ -24,6 +51,7 @@ export function OptionGallery({
   onPick: (value: string) => void;
 }) {
   const byValue = new Map(def.options.map((o) => [o.value, o]));
+  const { describe, panel } = useGalleryDetail();
   return (
     <div className="gallery" role="group" aria-label={def.label}>
       {sections.map((section) => (
@@ -33,15 +61,17 @@ export function OptionGallery({
             {section.values.map((v) => {
               const o = byValue.get(v)!;
               const isDefault = v === defaultValue;
+              const { description, ...detailProps } = describe(v, `${o.label}${isDefault ? ' (★ style default)' : ''}: ${o.explain}`);
               return (
                 <button
                   key={v}
                   className="gallery-item"
                   aria-pressed={v === value}
                   aria-label={`${o.label}${isDefault ? ' (style default)' : ''}`}
-                  title={`${o.label}${isDefault ? ' ★ style default' : ''}\n${o.explain}`}
+                  {...detailProps}
                   onClick={() => onPick(v)}
                 >
+                  {description}
                   {icon(v)}
                   <span className="gallery-caption">
                     {isDefault && <span className="star">★ </span>}
@@ -53,6 +83,7 @@ export function OptionGallery({
           </div>
         </div>
       ))}
+      {panel}
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { FLOOR_HEIGHT, floorSlices } from '../sim/geometry';
 import type { Design, Site } from '../sim/types';
 import { facadeRecipe } from '../sim/facade';
 import { bodyInstances, facadeColor, instanceMatrix, slabInstances, unitGeometry, type BoxInstance } from './buildingGeometry';
-import { createFacadeMaterial, setFacadeNight } from './FacadeMaterial';
+import { createFacadeMaterial, setFacadeLook, setFacadeNight } from './FacadeMaterial';
 import { TILE_HEIGHT_M } from './facadeTile';
 import { facadeTextures } from './facadeTexture';
 import { nightWindowAttributes } from './nightWindows';
@@ -51,22 +51,24 @@ function Body({ design, night }: { design: Design; night: boolean }) {
       return g;
     }, [design]),
   );
+  const look = {
+    tileWidth: textures?.layout.widthM ?? recipe.pattern.bayWidth,
+    tileHeight: textures?.layout.heightM ?? TILE_HEIGHT_M,
+    color: facadeColor(design),
+    round: design.shape === 'circle',
+  };
+  // One material per texture and finish; everything else is updated in place so the shader is not recompiled.
   const material = useDisposable(
     useMemo(
-      () =>
-        createFacadeMaterial({
-          map: textures?.map ?? null,
-          glowMap: textures?.glowMap ?? null,
-          tileWidth: textures?.layout.widthM ?? recipe.pattern.bayWidth,
-          tileHeight: textures?.layout.heightM ?? TILE_HEIGHT_M,
-          roughness: recipe.roughness,
-          metalness: recipe.metalness,
-          color: facadeColor(design),
-        }),
-      [textures, recipe, design],
+      () => createFacadeMaterial({ ...look, map: textures?.map ?? null, glowMap: textures?.glowMap ?? null, roughness: recipe.roughness, metalness: recipe.metalness }),
+      // `look` is deliberately left out: it is applied in place below on every render.
+      [textures, recipe.roughness, recipe.metalness],
     ),
   );
-  useEffect(() => setFacadeNight(material, night), [material, night]);
+  useLayoutEffect(() => {
+    setFacadeLook(material, look);
+    setFacadeNight(material, night);
+  });
   useLayoutEffect(() => {
     const mesh = ref.current;
     if (!mesh) return;

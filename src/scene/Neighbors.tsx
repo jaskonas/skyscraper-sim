@@ -37,6 +37,7 @@ export function Neighbors({ site, night = false }: { site: Site; night?: boolean
       roughness: 0.8,
       metalness: 0.1,
       color: '#ffffff',
+      round: false,
     });
   }, []);
   useEffect(() => () => box.dispose(), [box]);

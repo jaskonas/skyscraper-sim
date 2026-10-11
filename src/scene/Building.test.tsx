@@ -65,6 +65,19 @@ describe('<Building />', () => {
     expect(night.scene.findAll((n) => n.props.name === 'aircraft-lights')).toHaveLength(1);
   });
 
+  it('keeps one facade material while a slider changes the design', async () => {
+    const { site, design } = designFor('chicago', { floors: 30, shape: 'circle' });
+    const r = await ReactThreeTestRenderer.create(<Building site={site} design={design} />);
+    const body = () => r.scene.findAll((n) => n.props.name === 'body')[0].instance as THREE.InstancedMesh;
+    const material = body().material as THREE.Material;
+    expect(material.userData.facadeUniforms.uRound.value).toBe(1);
+    await r.update(<Building site={site} design={{ ...design, floors: 31 }} night />);
+    expect(body().material).toBe(material);
+    await r.update(<Building site={site} design={{ ...design, floors: 32, shape: 'square' }} />);
+    expect(body().material).toBe(material);
+    expect(material.userData.facadeUniforms.uRound.value).toBe(0);
+  });
+
   it('disposes the old shape geometry when the shape changes', async () => {
     const { site, design } = designFor('chicago', { shape: 'square', crown: 'sloped' });
     const r = await ReactThreeTestRenderer.create(<Building site={site} design={design} />);

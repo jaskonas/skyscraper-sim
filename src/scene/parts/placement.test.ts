@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { designFor } from '../../sim/testUtils';
 import type { PlanShape } from '../../sim/types';
-import { floorRuns, perimeterPoints, planCorners, planFaces, setbackLevels } from './placement';
+import { floorRuns, perimeterPoints, planCorners, planFaces, pointsAlongFaces, setbackLevels } from './placement';
 
 const SHAPES: PlanShape[] = ['square', 'rectangle', 'circle', 'triangle'];
 
@@ -46,5 +46,11 @@ describe('placement', () => {
     for (const r of runs) expect(r.length).toBeLessThanOrEqual(6);
     const stepFloors = setbackLevels(design).map((l) => l.slice.index);
     for (const i of stepFloors) expect(runs.some((r) => r.at(-1)!.index === i)).toBe(true);
+  });
+
+  it('spreads points along a round wall on the wall itself, not on a tangent line', () => {
+    const pts = pointsAlongFaces('circle', 40, 40, () => 6);
+    expect(pts).toHaveLength(24);
+    for (const p of pts) expect(Math.hypot(p.x, p.z)).toBeCloseTo(20, 6);
   });
 });
