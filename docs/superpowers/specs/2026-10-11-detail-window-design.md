@@ -63,9 +63,18 @@ interface DetailWindow { part: Part; floor: number; bay: number; lit: boolean; c
   - `plain` makes a flat panel.
 - **Slab edge:** a 0.6 m band projecting 0.1 m in accent colour, matching the main tower's slab bands.
 
-**Ornaments:**
-- `ornamentParts` already places every ornament for the whole tower in building coordinates. The detail builder keeps only the parts whose bounds intersect the section's box, then moves them into the local frame. Placement, amounts, Ornament amount "None" and new catalog entries therefore all match the main tower automatically.
-- Corner-placed ornaments only appear in the Corner view, because only that view's box contains a setback corner.
+**Ornaments**, in two kinds:
+- **Vertical ornaments** (`bay-lines`: ribs, I-beam mullions, fins) are placed by the detail builder itself, on the section's own bay grid:
+  - one piece per bay boundary per floor, using the catalog template at the active amount's size and `every` spacing;
+  - so they sit between windows and stop at the section's edges.
+
+  On the main tower they are placed in 6-floor runs at perimeter points. That is too coarse up close, and those points do not line up with the detail view's window bays.
+- **All other ornaments** (`floor-rings`, `setback-corners`, `setback-faces`, `roof-edge`, `base-floors`, `entry`) come from `ornamentParts`:
+  - The builder keeps only the parts whose centre lies inside the section's box, then moves them into the local frame.
+  - So placement, amounts, Ornament amount "None" and new catalog entries all match the main tower automatically.
+  - A band (a `plan`-shaped part) keeps only its front segment, as a straight or curved strip across the section.
+  - Corner-placed ornaments only appear in the Corner view, because only that view's box contains a setback corner.
+- **Both kinds** use `activeOrnaments`, so Ornament amount "None" behaves the same everywhere.
 
 **Night:**
 - Each pane gets `lit = windowLit(bay index on that face, floor index, NIGHT_LIGHTS[use].lit)` and that use's colour, matching the main tower's shader for the same floor and bay.
