@@ -1,8 +1,9 @@
 import { AMENITIES } from './catalog/amenities';
+import { ORNAMENTS } from './catalog/facades';
 import { PARAMS_BY_ID, paramMax, type ParamId } from './catalog/parameters';
 import { STYLE_PRESETS } from './catalog/styles';
 import { applyStylePreset, normalizeDesign } from './design';
-import type { AmenityId, Design, Site, StyleId, UseType } from './types';
+import type { AmenityId, Design, OrnamentId, Site, StyleId, UseType } from './types';
 import { USE_ORDER } from './types';
 
 export type GamePhase = 'design' | 'building' | 'complete';
@@ -12,6 +13,8 @@ export type DesignAction =
   | { type: 'apply_style_preset'; style: StyleId }
   | { type: 'add_amenity'; id: AmenityId }
   | { type: 'remove_amenity'; id: AmenityId }
+  | { type: 'add_ornament'; id: OrnamentId }
+  | { type: 'remove_ornament'; id: OrnamentId }
   | { type: 'set_use_mix'; mix: Partial<Record<UseType, number>> };
 
 export type ValidationResult = { ok: true } | { ok: false; reason: string };
@@ -48,6 +51,9 @@ export function validateAction(action: DesignAction, design: Design, site: Site,
     case 'add_amenity':
     case 'remove_amenity':
       return AMENITIES[action.id] ? { ok: true } : { ok: false, reason: `There is no "${action.id}" amenity.` };
+    case 'add_ornament':
+    case 'remove_ornament':
+      return ORNAMENTS[action.id] ? { ok: true } : { ok: false, reason: `There is no "${action.id}" ornament.` };
     case 'set_use_mix': {
       const entries = Object.entries(action.mix);
       if (entries.length === 0) return { ok: false, reason: 'The use mix is empty.' };
@@ -78,6 +84,10 @@ export function applyAction(design: Design, action: DesignAction, site: Site): D
       return design.amenities.includes(action.id) ? design : { ...design, amenities: [...design.amenities, action.id] };
     case 'remove_amenity':
       return { ...design, amenities: design.amenities.filter((a) => a !== action.id) };
+    case 'add_ornament':
+      return design.ornaments.includes(action.id) ? design : { ...design, ornaments: [...design.ornaments, action.id] };
+    case 'remove_ornament':
+      return { ...design, ornaments: design.ornaments.filter((o) => o !== action.id) };
     case 'set_use_mix':
       return { ...design, useMix: { ...design.useMix, ...action.mix } };
   }

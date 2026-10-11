@@ -1,5 +1,6 @@
 import { COEFFICIENTS } from '../catalog/coefficients';
 import { CROWNS } from '../catalog/crowns';
+import { activeOrnaments } from '../facade';
 import {
   FLOOR_HEIGHT,
   crownHeight,
@@ -92,7 +93,8 @@ export function computeMassing(design: Design): Massing {
   const unitWeight =
     W.materialKNPerM2[design.material] +
     W.facadeKNPerM2[design.facade] +
-    (design.exposedStructure ? W.exposedStructureKNPerM2 : 0);
+    (design.exposedStructure ? W.exposedStructureKNPerM2 : 0) +
+    activeOrnaments(design).filter((o) => o.stone).length * W.stoneOrnamentKNPerM2 * W.ornamentAmountWeight[design.ornament];
   const amenityKN = design.amenities.reduce((s, a) => s + W.amenityKN[a], 0);
   return {
     bodyHeight,

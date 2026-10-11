@@ -23,6 +23,10 @@ export const COEFFICIENTS = {
     facadeKNPerM2: { glass: 0.5, metal: 0.6, precast: 1.5, masonry: 2.5 } satisfies Record<FacadeType, number>,
     /** Exposed exterior bracing adds steel. */
     exposedStructureKNPerM2: 0.5,
+    /** Carved stone ornaments add weight per m² of floor, per ornament type, at amount High. */
+    stoneOrnamentKNPerM2: 0.1,
+    /** Share of that weight at each amount (None keeps only working parts, at the Low size). */
+    ornamentAmountWeight: { none: 0.6, low: 0.6, high: 1 },
     /** Amenities are concentrated weight near the top, kN. A rooftop pool is ~2,000 tonnes of water. */
     amenityKN: { helipad: 3000, pool: 20000, 'observation-deck': 2000, 'sky-garden': 6000 } satisfies Record<AmenityId, number>,
   },
@@ -171,6 +175,8 @@ export const COEFFICIENTS = {
     windowPerM2: 900,
     opaquePerM2: { glass: 800, metal: 700, precast: 500, masonry: 1100 } satisfies Record<FacadeType, number>,
     ornamentFactor: { none: 1, low: 1.05, high: 1.15 },
+    /** Each ornament type built adds this share to facade cost. */
+    perOrnamentFactor: 0.02,
     interiorsPerM2: { office: 1200, residential: 1600, hotel: 2000, retail: 1000 } satisfies Record<UseType, number>,
     systemsPerM2: { standard: 600, efficient: 750, green: 950 } satisfies Record<SystemsGrade, number>,
     /** Damper cost for a 60-storey tower, scaled by floors / 60. */

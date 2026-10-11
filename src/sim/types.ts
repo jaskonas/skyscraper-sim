@@ -1,6 +1,6 @@
-import type { CrownId } from './catalog/ids';
+import type { CrownId, OrnamentId, SpandrelId, WindowPatternId } from './catalog/ids';
 
-export type { CrownId } from './catalog/ids';
+export type { CrownId, OrnamentId, SpandrelId, WindowPatternId } from './catalog/ids';
 export type DetailLevel = 'standard' | 'advanced';
 export type SiteId = 'new-york' | 'tokyo' | 'chicago' | 'shanghai';
 export type PlanShape = 'square' | 'rectangle' | 'circle' | 'triangle';
@@ -71,7 +71,12 @@ export interface Design {
   systemsGrade: SystemsGrade;
   amenities: AmenityId[];
   palette: Palette;
+  /** Ornament amount: how densely the chosen ornaments are placed. */
   ornament: Ornament;
+  windowPattern: WindowPatternId;
+  spandrel: SpandrelId;
+  /** Chosen relief ornaments. */
+  ornaments: OrnamentId[];
 }
 
 export interface SoilLayer {

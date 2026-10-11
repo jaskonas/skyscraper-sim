@@ -1,12 +1,14 @@
 import { maxPlateDepth, maxPlateWidth } from '../design';
 import { CROWNS } from './crowns';
-import { CROWN_IDS } from './ids';
+import { SPANDRELS, WINDOW_PATTERNS } from './facades';
+import { CROWN_IDS, SPANDREL_IDS, WINDOW_PATTERN_IDS } from './ids';
 import type { Design, DetailLevel, Site } from '../types';
 
-export type ParamGroupId = 'form' | 'structure' | 'foundation' | 'facade' | 'elevators' | 'systems';
+export type ParamGroupId = 'form' | 'details' | 'structure' | 'foundation' | 'facade' | 'elevators' | 'systems';
 
 export const PARAM_GROUPS: { id: ParamGroupId; label: string }[] = [
   { id: 'form', label: 'Shape' },
+  { id: 'details', label: 'Details' },
   { id: 'structure', label: 'Structure' },
   { id: 'foundation', label: 'Foundation' },
   { id: 'facade', label: 'Facade' },
@@ -17,7 +19,8 @@ export const PARAM_GROUPS: { id: ParamGroupId; label: string }[] = [
 export type ParamId =
   | 'floors' | 'plateWidth' | 'plateDepth' | 'shape' | 'setbacks' | 'taper' | 'twist' | 'crown'
   | 'system' | 'material' | 'exposedStructure' | 'damping' | 'baseIsolation'
-  | 'foundation' | 'facade' | 'windowRatio' | 'elevators' | 'zoning' | 'systemsGrade';
+  | 'foundation' | 'facade' | 'windowRatio' | 'elevators' | 'zoning' | 'systemsGrade'
+  | 'windowPattern' | 'spandrel' | 'ornament';
 
 interface ParamBase {
   id: ParamId;
@@ -115,6 +118,25 @@ export const PARAMS: ParamDef[] = [
     id: 'crown', group: 'form', kind: 'enum', label: 'Crown', minDetailLevel: 'standard', widget: 'gallery',
     explain: 'The top of the tower. Mostly about looks — but it adds height, and each style has a favourite.',
     options: CROWN_IDS.map((id) => ({ value: id, label: CROWNS[id].label, explain: `Seen on ${CROWNS[id].seenOn}. ${CROWNS[id].blurb}` })),
+  },
+  {
+    id: 'windowPattern', group: 'details', kind: 'enum', label: 'Windows', minDetailLevel: 'standard', widget: 'gallery',
+    explain: 'The shape and grouping of the windows. It changes the look — window area (in Facade) changes the energy.',
+    options: WINDOW_PATTERN_IDS.map((id) => ({ value: id, label: WINDOW_PATTERNS[id].label, explain: `Seen on ${WINDOW_PATTERNS[id].seenOn}. ${WINDOW_PATTERNS[id].blurb}` })),
+  },
+  {
+    id: 'spandrel', group: 'details', kind: 'enum', label: 'Spandrels', minDetailLevel: 'standard', widget: 'gallery',
+    explain: 'The panels between one floor\'s windows and the next.',
+    options: SPANDREL_IDS.map((id) => ({ value: id, label: SPANDRELS[id].label, explain: `Seen on ${SPANDRELS[id].seenOn}. ${SPANDRELS[id].blurb}` })),
+  },
+  {
+    id: 'ornament', group: 'details', kind: 'enum', label: 'Ornament amount', minDetailLevel: 'standard',
+    explain: 'How much decoration to build. More ornament costs more, and carved stone adds weight. None keeps working parts like mullions and fins.',
+    options: [
+      { value: 'none', label: 'None', explain: 'Only working parts — mullions, fins, ribs and ties.' },
+      { value: 'low', label: 'Low', explain: 'A light touch.' },
+      { value: 'high', label: 'High', explain: 'Lavish: bigger and more of everything you picked.' },
+    ],
   },
   {
     id: 'system', group: 'structure', kind: 'enum', label: 'Structural system', minDetailLevel: 'standard',

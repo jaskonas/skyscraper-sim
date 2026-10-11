@@ -1,3 +1,5 @@
+import { CROWNS } from './catalog/crowns';
+import { ORNAMENTS, SPANDRELS, WINDOW_PATTERNS } from './catalog/facades';
 import { STYLE_PRESETS, type StyleSettings } from './catalog/styles';
 import type { Design, Site, StyleId } from './types';
 
@@ -9,12 +11,24 @@ export function maxPlateDepth(site: Site): number {
   return site.lot.depth;
 }
 
-/** Clamp anything that depends on the site (plate size) or is otherwise out of range. */
+/**
+ * Clamp anything that depends on the site (plate size) or is otherwise out of range, and replace
+ * look ids that no longer exist (an old export, a renamed option) with the style's own choice.
+ * Returns the same object when nothing changes.
+ */
 export function normalizeDesign(design: Design, site: Site): Design {
+  const preset = STYLE_PRESETS[design.style].settings;
+  const patch: Partial<Design> = {};
   const plateWidth = Math.min(design.plateWidth, maxPlateWidth(site, design));
   const plateDepth = Math.min(design.plateDepth, maxPlateDepth(site));
-  if (plateWidth === design.plateWidth && plateDepth === design.plateDepth) return design;
-  return { ...design, plateWidth, plateDepth };
+  if (plateWidth !== design.plateWidth) patch.plateWidth = plateWidth;
+  if (plateDepth !== design.plateDepth) patch.plateDepth = plateDepth;
+  if (!Object.hasOwn(CROWNS, design.crown)) patch.crown = preset.crown;
+  if (!Object.hasOwn(WINDOW_PATTERNS, design.windowPattern)) patch.windowPattern = preset.windowPattern;
+  if (!Object.hasOwn(SPANDRELS, design.spandrel)) patch.spandrel = preset.spandrel;
+  const ornaments = [...new Set((design.ornaments ?? []).filter((o) => Object.hasOwn(ORNAMENTS, o)))];
+  if (ornaments.length !== design.ornaments?.length) patch.ornaments = ornaments;
+  return Object.keys(patch).length === 0 ? design : { ...design, ...patch };
 }
 
 export function applyStylePreset(design: Design, style: StyleId): Design {
@@ -55,6 +69,9 @@ export function defaultDesign(site: Site): Design {
     amenities: [],
     palette: STYLE_PRESETS.international.settings.palette,
     ornament: 'none',
+    windowPattern: 'flush-grid',
+    spandrel: 'plain',
+    ornaments: [],
   };
   return normalizeDesign(applyStylePreset(base, 'international'), site);
 }

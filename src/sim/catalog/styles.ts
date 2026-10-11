@@ -2,7 +2,8 @@ import type { Design, StyleId } from '../types';
 
 export type StyleSettings = Pick<
   Design,
-  'shape' | 'setbacks' | 'taper' | 'twist' | 'crown' | 'facade' | 'windowRatio' | 'exposedStructure' | 'palette' | 'ornament'
+  | 'shape' | 'setbacks' | 'taper' | 'twist' | 'crown' | 'facade' | 'windowRatio' | 'exposedStructure' | 'palette'
+  | 'ornament' | 'windowPattern' | 'spandrel' | 'ornaments'
 >;
 
 export interface StylePreset {
@@ -29,8 +30,9 @@ export const STYLE_PRESETS: Record<StyleId, StylePreset> = {
       { name: 'Flatiron Building', city: 'New York' },
     ],
     settings: {
-      shape: 'square', setbacks: 'none', taper: 0, twist: 0, crown: 'flat', facade: 'masonry', windowRatio: 0.5,
+      shape: 'square', setbacks: 'none', taper: 0, twist: 0, crown: 'cornice', facade: 'masonry', windowRatio: 0.5,
       exposedStructure: false, ornament: 'low', palette: { body: '#a0522d', accent: '#e8dcc8', glass: '#7fa7c0' },
+      windowPattern: 'chicago', spandrel: 'plain', ornaments: ['belt-courses', 'setback-cornices', 'rusticated-base'],
     },
   },
   'gothic-revival': {
@@ -44,8 +46,9 @@ export const STYLE_PRESETS: Record<StyleId, StylePreset> = {
       { name: 'Tribune Tower', city: 'Chicago' },
     ],
     settings: {
-      shape: 'square', setbacks: 'few', taper: 0, twist: 0, crown: 'pointed', facade: 'masonry', windowRatio: 0.35,
+      shape: 'square', setbacks: 'few', taper: 0, twist: 0, crown: 'gothic-pinnacles', facade: 'masonry', windowRatio: 0.35,
       exposedStructure: false, ornament: 'high', palette: { body: '#e6e0d2', accent: '#b9a77d', glass: '#6f8ea3' },
+      windowPattern: 'arched', spandrel: 'plain', ornaments: ['stone-ribs', 'pinnacles', 'gargoyles', 'arched-entry'],
     },
   },
   'art-deco': {
@@ -61,8 +64,9 @@ export const STYLE_PRESETS: Record<StyleId, StylePreset> = {
       { name: 'Peace Hotel', city: 'Shanghai' },
     ],
     settings: {
-      shape: 'square', setbacks: 'wedding-cake', taper: 0, twist: 0, crown: 'spire', facade: 'masonry', windowRatio: 0.4,
+      shape: 'square', setbacks: 'wedding-cake', taper: 0, twist: 0, crown: 'deco-arches', facade: 'masonry', windowRatio: 0.4,
       exposedStructure: false, ornament: 'high', palette: { body: '#d8cbb0', accent: '#c9a227', glass: '#5f7f94' },
+      windowPattern: 'flush-grid', spandrel: 'chevron', ornaments: ['stone-ribs', 'sunburst-bands', 'deco-steps', 'gargoyles'],
     },
   },
   international: {
@@ -79,6 +83,7 @@ export const STYLE_PRESETS: Record<StyleId, StylePreset> = {
     settings: {
       shape: 'rectangle', setbacks: 'none', taper: 0, twist: 0, crown: 'flat', facade: 'glass', windowRatio: 0.9,
       exposedStructure: false, ornament: 'none', palette: { body: '#2f3a40', accent: '#1f2a30', glass: '#4d6f80' },
+      windowPattern: 'flush-grid', spandrel: 'plain', ornaments: ['ibeam-mullions'],
     },
   },
   brutalist: {
@@ -92,8 +97,9 @@ export const STYLE_PRESETS: Record<StyleId, StylePreset> = {
       { name: 'Marina City', city: 'Chicago' },
     ],
     settings: {
-      shape: 'square', setbacks: 'few', taper: 0, twist: 0, crown: 'flat', facade: 'precast', windowRatio: 0.3,
+      shape: 'square', setbacks: 'few', taper: 0, twist: 0, crown: 'concrete-cap', facade: 'precast', windowRatio: 0.3,
       exposedStructure: false, ornament: 'none', palette: { body: '#9c9a94', accent: '#77756f', glass: '#4a5a63' },
+      windowPattern: 'punched', spandrel: 'plain', ornaments: ['concrete-fins'],
     },
   },
   postmodern: {
@@ -108,8 +114,9 @@ export const STYLE_PRESETS: Record<StyleId, StylePreset> = {
       { name: 'Tokyo Metropolitan Government Building', city: 'Tokyo' },
     ],
     settings: {
-      shape: 'square', setbacks: 'few', taper: 0, twist: 0, crown: 'stepped', facade: 'masonry', windowRatio: 0.45,
+      shape: 'square', setbacks: 'few', taper: 0, twist: 0, crown: 'split-pediment', facade: 'masonry', windowRatio: 0.45,
       exposedStructure: false, ornament: 'low', palette: { body: '#c7a68a', accent: '#7a4b3a', glass: '#5c7484' },
+      windowPattern: 'punched', spandrel: 'stripes', ornaments: ['belt-courses', 'arched-entry', 'urns'],
     },
   },
   'high-tech': {
@@ -124,8 +131,9 @@ export const STYLE_PRESETS: Record<StyleId, StylePreset> = {
       { name: 'HSBC Building', city: 'Hong Kong' },
     ],
     settings: {
-      shape: 'square', setbacks: 'none', taper: 0, twist: 0, crown: 'flat', facade: 'metal', windowRatio: 0.7,
+      shape: 'square', setbacks: 'none', taper: 0, twist: 0, crown: 'lattice-mast', facade: 'metal', windowRatio: 0.7,
       exposedStructure: true, ornament: 'none', palette: { body: '#c0c6cc', accent: '#d33f2f', glass: '#6b8797' },
+      windowPattern: 'exposed-frame', spandrel: 'plain', ornaments: ['accent-ties'],
     },
   },
   'neo-futurist': {
@@ -140,8 +148,9 @@ export const STYLE_PRESETS: Record<StyleId, StylePreset> = {
       { name: 'Tokyo Skytree', city: 'Tokyo' },
     ],
     settings: {
-      shape: 'circle', setbacks: 'none', taper: 0.3, twist: 120, crown: 'pointed', facade: 'glass', windowRatio: 0.85,
+      shape: 'circle', setbacks: 'none', taper: 0.3, twist: 120, crown: 'open-frame', facade: 'glass', windowRatio: 0.85,
       exposedStructure: false, ornament: 'none', palette: { body: '#a9c6d6', accent: '#e0e6ea', glass: '#7fa9c2' },
+      windowPattern: 'diamond', spandrel: 'plain', ornaments: ['ribbon-bands'],
     },
   },
 };
