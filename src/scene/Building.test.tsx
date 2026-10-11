@@ -2,7 +2,7 @@ import ReactThreeTestRenderer from '@react-three/test-renderer';
 import type * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { designFor } from '../sim/testUtils';
-import type { CrownType, PlanShape } from '../sim/types';
+import type { CrownId, PlanShape } from '../sim/types';
 import { Building } from './Building';
 
 describe('<Building />', () => {
@@ -15,7 +15,7 @@ describe('<Building />', () => {
 
   it('renders every shape, crown and amenity without throwing', async () => {
     const shapes: PlanShape[] = ['square', 'rectangle', 'circle', 'triangle'];
-    const crowns: CrownType[] = ['flat', 'spire', 'pointed', 'stepped', 'sloped'];
+    const crowns: CrownId[] = ['flat', 'spire', 'pointed', 'stepped', 'sloped'];
     for (const shape of shapes)
       for (const crown of crowns) {
         const { site, design } = designFor('tokyo', {

@@ -146,6 +146,8 @@ export const COEFFICIENTS = {
     opaqueHeatLoss: { glass: 0.6, metal: 0.4, precast: 0.35, masonry: 0.3 } satisfies Record<FacadeType, number>,
     gradeFactor: { standard: 1, efficient: 0.8, green: 0.6 } satisfies Record<SystemsGrade, number>,
     dollarsPerKWh: 0.15,
+    /** Rooftop wind turbines cover about 5% of a tower's electricity (Strata SE1 manages ~8%). */
+    windTurbineFactor: 0.95,
     /** EUI (kWh/m²/yr) limits. */
     euiPass: 240,
     euiMarginal: 300,

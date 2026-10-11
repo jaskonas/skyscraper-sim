@@ -114,6 +114,7 @@ export function analyze(site: Site, design: Design): Analysis {
 
   return {
     heightM: m.heightM,
+    tipHeightM: m.tipHeightM,
     gfa: m.gfa,
     footprint: m.footprint,
     weightKN: m.weightKN,

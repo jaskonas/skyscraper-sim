@@ -1,4 +1,5 @@
-import type { CrownType, Design, PlanShape, Setbacks } from './types';
+import { CROWNS } from './catalog/crowns';
+import type { CrownId, Design, PlanShape, Setbacks } from './types';
 
 /** Metres per storey. Fixed at the standard detail level. */
 export const FLOOR_HEIGHT = 4;
@@ -91,17 +92,14 @@ export function sliceArea(shape: PlanShape, slice: FloorSlice): number {
 }
 
 /** Extra height above the roof, metres, for a crown on a body of height `bodyHeight`. */
-export function crownHeight(crown: CrownType, bodyHeight: number): number {
-  switch (crown) {
-    case 'spire':
-      return 0.15 * bodyHeight;
-    case 'pointed':
-      return 0.08 * bodyHeight;
-    case 'stepped':
-      return 3 * FLOOR_HEIGHT;
-    case 'sloped':
-      return 0.05 * bodyHeight;
-    default:
-      return 2;
+export function crownHeight(crown: CrownId, bodyHeight: number): number {
+  const rule = CROWNS[crown].height;
+  switch (rule.kind) {
+    case 'metres':
+      return rule.value;
+    case 'floors':
+      return rule.value * FLOOR_HEIGHT;
+    case 'fraction':
+      return rule.value * bodyHeight;
   }
 }

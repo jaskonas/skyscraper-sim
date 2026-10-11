@@ -33,7 +33,7 @@ function CameraFramer({ frame, nonce }: { frame: CameraFrame; nonce: number }) {
 export function Scene() {
   const { site, design, analysis } = useCurrent();
   const [nonce, setNonce] = useState(0);
-  const frame = cameraFrame(site, analysis.heightM);
+  const frame = cameraFrame(site, analysis.tipHeightM);
   return (
     <div className="scene">
       <Canvas key={site.id} camera={{ position: frame.position, fov: 45, near: 1, far: 6000 }}>

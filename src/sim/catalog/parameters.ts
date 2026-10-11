@@ -1,4 +1,6 @@
 import { maxPlateDepth, maxPlateWidth } from '../design';
+import { CROWNS } from './crowns';
+import { CROWN_IDS } from './ids';
 import type { Design, DetailLevel, Site } from '../types';
 
 export type ParamGroupId = 'form' | 'structure' | 'foundation' | 'facade' | 'elevators' | 'systems';
@@ -51,6 +53,8 @@ export interface EnumOption {
 export interface EnumParam extends ParamBase {
   kind: 'enum';
   options: EnumOption[];
+  /** Draw as a picture gallery instead of a dropdown. */
+  widget?: 'gallery';
 }
 
 export interface BooleanParam extends ParamBase {
@@ -108,15 +112,9 @@ export const PARAMS: ParamDef[] = [
     explain: 'Rotating each floor a little confuses the wind so it cannot push the tower in rhythm.',
   },
   {
-    id: 'crown', group: 'form', kind: 'enum', label: 'Crown', minDetailLevel: 'standard',
-    explain: 'The top of the tower. Mostly about looks — but it adds height.',
-    options: [
-      { value: 'flat', label: 'Flat roof', explain: 'Simple; good for a helipad or pool.' },
-      { value: 'spire', label: 'Spire', explain: 'A tall needle on top — adds a lot of height.' },
-      { value: 'pointed', label: 'Pointed', explain: 'A pyramid-like cap.' },
-      { value: 'stepped', label: 'Stepped', explain: 'Small boxes stacked like a ziggurat.' },
-      { value: 'sloped', label: 'Sloped', explain: 'A slanted top, like a ramp to the sky.' },
-    ],
+    id: 'crown', group: 'form', kind: 'enum', label: 'Crown', minDetailLevel: 'standard', widget: 'gallery',
+    explain: 'The top of the tower. Mostly about looks — but it adds height, and each style has a favourite.',
+    options: CROWN_IDS.map((id) => ({ value: id, label: CROWNS[id].label, explain: `Seen on ${CROWNS[id].seenOn}. ${CROWNS[id].blurb}` })),
   },
   {
     id: 'system', group: 'structure', kind: 'enum', label: 'Structural system', minDetailLevel: 'standard',

@@ -40,7 +40,8 @@ export function Gauges() {
   return (
     <section className="card" aria-label="Live estimates">
       <p className="stats">
-        {Math.round(analysis.heightM)} m tall · {Math.round(analysis.gfa).toLocaleString()} m² · {analysis.schedule.totalDays} days to build
+        {Math.round(analysis.heightM)} m tall
+        {analysis.tipHeightM > analysis.heightM + 0.5 ? ` (+${Math.round(analysis.tipHeightM - analysis.heightM)} m antennas)` : ''} · {Math.round(analysis.gfa).toLocaleString()} m² · {analysis.schedule.totalDays} days to build
       </p>
       <Gauge
         label={briefBudget ? 'Budget' : 'Cost vs typical'}

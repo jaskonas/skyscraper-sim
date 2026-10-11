@@ -1,4 +1,5 @@
 import { COEFFICIENTS } from './catalog/coefficients';
+import { CROWNS } from './catalog/crowns';
 import { AMENITIES } from './catalog/amenities';
 import { STYLE_PRESETS } from './catalog/styles';
 import { formatMoney as money } from './format';
@@ -33,8 +34,7 @@ const STRUCTURAL_CHECKS = ['windStrength', 'seismic', 'foundation'] as const;
 export function isLandmark(design: Design): boolean {
   return (
     design.twist >= 30 ||
-    design.crown === 'spire' ||
-    design.crown === 'pointed' ||
+    CROWNS[design.crown].landmark ||
     design.exposedStructure ||
     design.setbacks === 'wedding-cake' ||
     design.taper >= 0.25
@@ -126,7 +126,7 @@ export function evaluateRequirement(r: Requirement, design: Design, a: Analysis)
         requirement: r,
         label: 'Distinctive landmark shape',
         met: isLandmark(design),
-        detail: 'Try a twist, taper, spire, pointed crown, wedding-cake setbacks, or exposed structure.',
+        detail: 'Try a twist, taper, a showpiece crown, wedding-cake setbacks, or exposed structure.',
       };
   }
 }

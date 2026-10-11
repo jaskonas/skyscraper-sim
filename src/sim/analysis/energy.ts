@@ -1,4 +1,5 @@
 import { COEFFICIENTS } from '../catalog/coefficients';
+import { CROWNS } from '../catalog/crowns';
 import type { Analysis, Design, Site } from '../types';
 import type { Massing } from './massing';
 
@@ -9,6 +10,7 @@ export function analyzeEnergy(site: Site, design: Design, m: Massing): Analysis[
   const solarGain = 0.5 + wr;
   const euiKWhPerM2 =
     (C.baseEui + C.heatingEui * site.climate.heating * heatLoss + C.coolingEui * site.climate.cooling * solarGain) *
-    C.gradeFactor[design.systemsGrade];
+    C.gradeFactor[design.systemsGrade] *
+    (CROWNS[design.crown].generatesPower ? C.windTurbineFactor : 1);
   return { euiKWhPerM2, annualCost: euiKWhPerM2 * m.gfa * C.dollarsPerKWh };
 }

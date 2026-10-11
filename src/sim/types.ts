@@ -1,8 +1,10 @@
+import type { CrownId } from './catalog/ids';
+
+export type { CrownId } from './catalog/ids';
 export type DetailLevel = 'standard' | 'advanced';
 export type SiteId = 'new-york' | 'tokyo' | 'chicago' | 'shanghai';
 export type PlanShape = 'square' | 'rectangle' | 'circle' | 'triangle';
 export type Setbacks = 'none' | 'few' | 'wedding-cake';
-export type CrownType = 'flat' | 'spire' | 'stepped' | 'pointed' | 'sloped';
 export type StructuralSystem =
   | 'rigid-frame'
   | 'framed-tube'
@@ -52,7 +54,7 @@ export interface Design {
   taper: number;
   /** Degrees of rotation from bottom to top, 0..120. */
   twist: number;
-  crown: CrownType;
+  crown: CrownId;
   /** Percentages per use; normalized when used. */
   useMix: Record<UseType, number>;
   system: StructuralSystem;
@@ -173,7 +175,10 @@ export interface CostBreakdown {
 export type SeismicOutcome = 'operational' | 'damaged' | 'fails';
 
 export interface Analysis {
+  /** Official height: roof plus crown, but not antennas. */
   heightM: number;
+  /** To the very tip, antennas included. */
+  tipHeightM: number;
   gfa: number;
   footprint: number;
   weightKN: number;

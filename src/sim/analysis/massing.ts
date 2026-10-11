@@ -1,4 +1,5 @@
 import { COEFFICIENTS } from '../catalog/coefficients';
+import { CROWNS } from '../catalog/crowns';
 import {
   FLOOR_HEIGHT,
   crownHeight,
@@ -13,7 +14,10 @@ import { USE_ORDER } from '../types';
 
 export interface Massing {
   bodyHeight: number;
+  /** Official height (antennas excluded). */
   heightM: number;
+  /** To the very tip, antennas included. */
+  tipHeightM: number;
   gfa: number;
   footprint: number;
   /** Total wall area, m². */
@@ -82,7 +86,8 @@ export function computeMassing(design: Design): Massing {
   const { width, depth } = plateDims(design);
   const footprint = width * depth * shapeAreaFactor(design.shape);
   const bodyHeight = design.floors * FLOOR_HEIGHT;
-  const heightM = bodyHeight + crownHeight(design.crown, bodyHeight);
+  const tipHeightM = bodyHeight + crownHeight(design.crown, bodyHeight);
+  const heightM = CROWNS[design.crown].officialHeight ? tipHeightM : bodyHeight;
   const baseWidth = Math.min(width, depth);
   const unitWeight =
     W.materialKNPerM2[design.material] +
@@ -92,6 +97,7 @@ export function computeMassing(design: Design): Massing {
   return {
     bodyHeight,
     heightM,
+    tipHeightM,
     gfa,
     footprint,
     facadeArea,
