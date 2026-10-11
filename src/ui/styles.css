@@ -109,3 +109,12 @@ details.group > summary { cursor: pointer; font-weight: 600; }
 .sidebar-header { flex-wrap: wrap; }
 .confirm { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 0.85em; background: var(--card); border: 1px solid var(--marginal); border-radius: 6px; padding: 6px 8px; }
 .confirm span { flex-basis: 100%; }
+.gallery { margin-top: 4px; }
+.gallery-section { margin-bottom: 6px; }
+.gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 6px; }
+.gallery-item { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; font-size: 0.72em; line-height: 1.15; text-align: center; color: inherit; }
+.gallery-item[aria-pressed='true'] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.gallery-item.dimmed { opacity: 0.5; }
+.gallery-item .icon { width: 56px; height: 56px; }
+.gallery-caption .star, .star { color: var(--accent); }
+.gallery-selected { margin: 2px 0 4px; font-size: 0.85em; color: var(--accent); }

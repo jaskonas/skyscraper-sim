@@ -2,6 +2,7 @@ import { PARAM_GROUPS, visibleParams } from '../../sim/catalog/parameters';
 import { useCurrent } from '../../state/hooks';
 import { useGame } from '../../state/store';
 import { AmenitiesControl } from './AmenitiesControl';
+import { OrnamentsControl } from './OrnamentsControl';
 import { ParamControl } from './ParamControl';
 import { UseMixControl } from './UseMixControl';
 
@@ -19,6 +20,7 @@ export function ControlGroups() {
             .map((p) => (
               <ParamControl key={p.id} def={p} />
             ))}
+          {g.id === 'details' && <OrnamentsControl />}
         </details>
       ))}
       <details className="card group">
