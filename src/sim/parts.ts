@@ -14,6 +14,8 @@ export type PartShape =
   | 'sphere'
   | 'dome'
   | 'torus'
+  /** A half ring standing upright in the x-y plane, open at the bottom: a doorway arch. */
+  | 'arch'
   | 'wedge'
   /** A slab of the tower's own plan shape (square, round or triangular). */
   | 'plan'
@@ -21,7 +23,7 @@ export type PartShape =
   | 'plan-cone';
 
 export const PART_MATERIALS = [
-  'body', 'accent', 'glass', 'stone', 'concrete', 'copper', 'gold', 'steel', 'foliage', 'ruby', 'light',
+  'body', 'accent', 'glass', 'stone', 'concrete', 'copper', 'gold', 'steel', 'foliage', 'ruby', 'light', 'interior',
 ] as const;
 export type PartMaterial = (typeof PART_MATERIALS)[number];
 

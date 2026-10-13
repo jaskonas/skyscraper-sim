@@ -288,7 +288,7 @@ export const ORNAMENTS: Record<OrnamentId, OrnamentDef> = {
     template: [
       { shape: 'box', position: [-2.4, 2.5, 0.5], scale: [0.8, 5, 1], material: 'stone' },
       { shape: 'box', position: [2.4, 2.5, 0.5], scale: [0.8, 5, 1], material: 'stone' },
-      { shape: 'torus', position: [0, 5, 0.5], scale: [5.6, 1, 5.6], rotation: [Math.PI / 2, 0, 0], material: 'stone' },
+      { shape: 'arch', position: [0, 6.4, 0.5], scale: [5.6, 2.8, 1], material: 'stone' },
     ],
     amount: { low: { size: 1, count: 1 }, high: { size: 1.1, count: 3 } },
     decorative: true, stone: true, minDetailLevel: S,

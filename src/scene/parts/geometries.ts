@@ -17,6 +17,11 @@ function torus(): THREE.BufferGeometry {
   return new THREE.TorusGeometry(0.4, 0.1, 8, 24).rotateX(Math.PI / 2).scale(1, 5, 1);
 }
 
+function arch(): THREE.BufferGeometry {
+  // The upper half of a ring in the x-y plane (y runs 0..0.5 before fitting), fitted to the unit cube.
+  return new THREE.TorusGeometry(0.4, 0.1, 8, 24, Math.PI).translate(0, -0.25, 0).scale(1, 2, 5);
+}
+
 function wedge(): THREE.BufferGeometry {
   // A ramp: full height at -x, sloping down to nothing at +x.
   const s = new THREE.Shape();
@@ -49,6 +54,8 @@ function make(shape: PartShape, plan: PlanShape): THREE.BufferGeometry {
       return dome();
     case 'torus':
       return torus();
+    case 'arch':
+      return arch();
     case 'wedge':
       return wedge();
     case 'plan':
