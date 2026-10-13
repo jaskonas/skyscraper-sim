@@ -11,6 +11,8 @@ Then open the printed `http://localhost:5173` link.
 
 In the game, the **🔍 Close-up** window (bottom-right of the 3D view) shows a piece of the tower in full detail. Use **Facade**, **Corner** and **Base** to switch, and drag to look around.
 
+Pressing **Build it!** builds the tower one stage at a time: digging, the foundation, the core and frame, the facade, the crown, then the interiors. Each stage explains what is happening and how it goes for your tower; press **Next** to move on, or **Skip to finished**. The bare structure you see while it rises depends on the structural system and material you chose.
+
 ## Develop
 
     npm test          # unit and component tests
