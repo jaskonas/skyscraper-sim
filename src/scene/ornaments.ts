@@ -130,10 +130,12 @@ function place(o: OrnamentDef, design: Design, rule: AmountRule): Part[] {
   return parts;
 }
 
-/** Every ornament the design builds, in building coordinates. */
-export function ornamentParts(design: Design): Part[] {
+/** Every ornament the design builds (or just those `include` accepts), in building coordinates. */
+export function ornamentParts(design: Design, include: (o: OrnamentDef) => boolean = () => true): Part[] {
   const level = amountLevel(design);
-  return activeOrnaments(design).flatMap((o) => place(o, design, o.amount[level]));
+  return activeOrnaments(design)
+    .filter(include)
+    .flatMap((o) => place(o, design, o.amount[level]));
 }
 
 const BRACE_FLOORS = 10;
