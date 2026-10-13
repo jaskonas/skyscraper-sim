@@ -7,6 +7,7 @@ import { useGame } from '../state/store';
 import { DetailInset } from '../ui/DetailInset';
 import { SoilLegend } from '../ui/SoilLegend';
 import { Building } from './Building';
+import { ConstructionView } from './construction/ConstructionView';
 import { FoundationView } from './FoundationView';
 import { Landmark } from './Landmark';
 import { lighting } from './lighting';
@@ -41,6 +42,7 @@ export function Scene() {
   const timeOfDay = useGame((s) => s.timeOfDay);
   const setTimeOfDay = useGame((s) => s.setTimeOfDay);
   const night = timeOfDay === 'night';
+  const building = useGame((s) => s.phase === 'building');
   const light = lighting(site, night);
   const frame = cameraFrame(site, analysis.tipHeightM);
   return (
@@ -53,8 +55,14 @@ export function Scene() {
         <SiteDiorama site={site} />
         <Neighbors site={site} night={night} />
         <Landmark kind={site.visuals.landmark} />
-        <Building site={site} design={design} night={night} />
-        <FoundationView site={site} design={design} />
+        {building ? (
+          <ConstructionView site={site} design={design} analysis={analysis} night={night} />
+        ) : (
+          <>
+            <Building site={site} design={design} night={night} />
+            <FoundationView site={site} design={design} />
+          </>
+        )}
         <OrbitControls makeDefault maxPolarAngle={Math.PI * 0.62} minDistance={40} maxDistance={2500} />
         <CameraFramer frame={frame} nonce={nonce} />
       </Canvas>
