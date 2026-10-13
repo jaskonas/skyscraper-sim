@@ -2,13 +2,13 @@ import { OrbitControls } from '@react-three/drei';
 import { Canvas, useThree } from '@react-three/fiber';
 import { useEffect, useRef, useState } from 'react';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
-import type { Site } from '../sim/types';
 import { useCurrent } from '../state/hooks';
 import { useGame } from '../state/store';
 import { SoilLegend } from '../ui/SoilLegend';
 import { Building } from './Building';
 import { FoundationView } from './FoundationView';
 import { Landmark } from './Landmark';
+import { lighting } from './lighting';
 import { Neighbors } from './Neighbors';
 import { SiteDiorama } from './SiteDiorama';
 import { cameraFrame, type CameraFrame } from './layout';
@@ -32,12 +32,7 @@ function CameraFramer({ frame, nonce }: { frame: CameraFrame; nonce: number }) {
   return null;
 }
 
-/** Sky and light for day or night. Night is a simple dusk palette — no light simulation. */
-export function lighting(site: Site, night: boolean) {
-  return night
-    ? { sky: '#0b1426', hemi: 0.4, hemiSky: '#6f85b5', sun: 0.35, sunColor: '#9fb4ff' }
-    : { sky: site.visuals.sky, hemi: 0.9, hemiSky: '#ffffff', sun: 1.8, sunColor: '#ffffff' };
-}
+export { lighting };
 
 export function Scene() {
   const { site, design, analysis } = useCurrent();
