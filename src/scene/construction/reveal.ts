@@ -1,4 +1,5 @@
 import type { ConstructionState } from '../../sim/construction/stages';
+import { FLOOR_HEIGHT } from '../../sim/geometry';
 import type { Part } from '../../sim/parts';
 import type { Analysis, Design, Site } from '../../sim/types';
 import { cameraFrame, lotCenter, type CameraFrame } from '../layout';
@@ -25,9 +26,14 @@ export function visibleStructure(parts: StructurePart[], s: ConstructionState): 
       case 'mass-damper':
         shown = s.crown >= 0.3;
         break;
+      // The core, its walls and the columns span several floors at a time: each run goes up once work
+      // is a floor into it, so they always stand at or above the beams and slabs they hold.
       case 'core':
       case 'wall':
-        shown = p.top <= s.coreTop + EPS && p.top > s.facadeTop - EPS;
+        shown = p.bottom + FLOOR_HEIGHT <= s.coreTop + EPS && p.top > s.facadeTop - EPS;
+        break;
+      case 'column':
+        shown = p.bottom + FLOOR_HEIGHT <= s.frameTop + EPS && p.top > s.facadeTop - EPS;
         break;
       case 'slab':
         shown = p.top <= s.slabTop + EPS && p.top > s.facadeTop - EPS;

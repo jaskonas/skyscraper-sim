@@ -75,6 +75,14 @@ describe('stageCaption', () => {
     expect(cards('chicago', { damping: 'viscous' }).cards[2].yours).toMatch(/Viscous dampers/);
   });
 
+  it('the last card quotes the real time interiors take, however long the crown stage is', () => {
+    for (const amenities of [[], ['helipad', 'pool', 'observation-deck', 'sky-garden']] as Design['amenities'][]) {
+      const { analysis, cards: c } = cards('chicago', { amenities });
+      const fitout = analysis.schedule.phases.find((p) => p.id === 'fitout')!;
+      expect(c[5].yours).toContain(`Interiors and systems take ${fitout.days} days`);
+    }
+  });
+
   it('the last card gives the opening day and the total cost', () => {
     const { analysis, cards: c } = cards('tokyo', {});
     expect(c[5].yours).toContain(`day ${analysis.schedule.totalDays}`);

@@ -24,8 +24,10 @@ export type StructureRole =
 export interface StructurePart {
   part: Part;
   role: StructureRole;
-  /** Height of its top, metres: it counts as built once construction passes this height. */
+  /** Height of its top, metres. */
   top: number;
+  /** Height of its bottom, metres. Columns and the core span several floors and go up once work is a floor into them. */
+  bottom: number;
 }
 
 /** How each material looks: column size, slab thickness and the colour of columns and beams. */
@@ -54,7 +56,10 @@ const at = (x: number, z: number, rot: number): [number, number] => {
   return [wx, wz];
 };
 
-const tag = (part: Part, role: StructureRole): StructurePart => ({ part, role, top: partBounds(part).max[1] });
+const tag = (part: Part, role: StructureRole): StructurePart => {
+  const b = partBounds(part);
+  return { part, role, top: b.max[1], bottom: b.min[1] };
+};
 
 function column(x: number, z: number, y0: number, y1: number, size: number, rot: number, material: PartMaterial): Part {
   const [wx, wz] = at(x, z, rot);

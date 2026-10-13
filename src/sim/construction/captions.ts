@@ -87,7 +87,7 @@ export function stageCaption(design: Design, site: Site, analysis: Analysis, sta
     }
     case 'fitout':
       sentences.push(
-        `Interiors and systems take ${days} days. Your tower opens on day ${analysis.schedule.totalDays}, about ${Math.round(analysis.schedule.totalDays / 30)} months after digging began, for ${formatMoney(analysis.cost.total)}.`,
+        `Interiors and systems take ${analysis.schedule.phases.find((p) => p.id === 'fitout')!.days} days, starting as the crown goes on. Your tower opens on day ${analysis.schedule.totalDays}, about ${Math.round(analysis.schedule.totalDays / 30)} months after digging began, for ${formatMoney(analysis.cost.total)}.`,
       );
       break;
   }

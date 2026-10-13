@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { analyze } from '../../sim/analysis';
 import { constructionState } from '../../sim/construction/stages';
+import { FLOOR_HEIGHT } from '../../sim/geometry';
 import { designFor } from '../../sim/testUtils';
 import { cameraFrame, lotCenter } from '../layout';
 import { structureParts } from '../structure/structureParts';
@@ -22,8 +23,30 @@ describe('visibleStructure', () => {
     for (const part of shown) {
       const p = roleOf.get(part)!;
       const limit = p.role === 'core' || p.role === 'wall' ? s.coreTop : p.role === 'slab' ? s.slabTop : s.frameTop;
-      expect(p.top).toBeLessThanOrEqual(limit + 0.01);
+      // Multi-floor runs (core, walls, columns) go up once work is a floor into them; the rest by their top.
+      const reached = ['core', 'wall', 'column'].includes(p.role) ? p.bottom + FLOOR_HEIGHT : p.top;
+      expect(reached).toBeLessThanOrEqual(limit + 0.01);
       expect(p.top).toBeGreaterThan(s.facadeTop - 0.01);
+    }
+  });
+
+  it('never shows beams or slabs above the core and columns holding them up, even on tall towers', () => {
+    for (const patch of [
+      { floors: 150, material: 'concrete' as const, system: 'core-outrigger' as const },
+      { floors: 150, material: 'steel' as const, system: 'rigid-frame' as const },
+      { floors: 90, material: 'composite' as const, system: 'framed-tube' as const },
+    ]) {
+      const { design, analysis, parts } = setup(patch);
+      const roleOf = new Map(parts.map((p) => [p.part, p]));
+      for (let i = 1; i <= 40; i++) {
+        const shown = visibleStructure(parts, constructionState(design, analysis, 2, i / 40)).map((p) => roleOf.get(p)!);
+        const highest = (roles: string[]) => Math.max(-Infinity, ...shown.filter((p) => roles.includes(p.role)).map((p) => p.top));
+        const floor = highest(['beam', 'slab']);
+        if (floor === -Infinity) continue;
+        const label = `${patch.system} ${patch.material} t=${i / 40}`;
+        expect(highest(['core']), label).toBeGreaterThanOrEqual(floor - 0.01);
+        expect(highest(['column']), label).toBeGreaterThanOrEqual(floor - 0.01);
+      }
     }
   });
 

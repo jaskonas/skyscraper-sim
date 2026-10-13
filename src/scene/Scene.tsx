@@ -1,6 +1,6 @@
 import { OrbitControls } from '@react-three/drei';
 import { Canvas, useThree } from '@react-three/fiber';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import { useCurrent } from '../state/hooks';
 import { useGame } from '../state/store';
@@ -9,6 +9,7 @@ import { SoilLegend } from '../ui/SoilLegend';
 import { Building } from './Building';
 import { ConstructionView } from './construction/ConstructionView';
 import { FoundationView } from './FoundationView';
+import { useFrameNonce } from './frameNonce';
 import { Landmark } from './Landmark';
 import { lighting } from './lighting';
 import { Neighbors } from './Neighbors';
@@ -38,11 +39,12 @@ export { lighting };
 
 export function Scene() {
   const { site, design, analysis } = useCurrent();
-  const [nonce, setNonce] = useState(0);
   const timeOfDay = useGame((s) => s.timeOfDay);
   const setTimeOfDay = useGame((s) => s.setTimeOfDay);
   const night = timeOfDay === 'night';
-  const building = useGame((s) => s.phase === 'building');
+  const phase = useGame((s) => s.phase);
+  const building = phase === 'building';
+  const [nonce, reframe] = useFrameNonce(phase);
   const light = lighting(site, night);
   const frame = cameraFrame(site, analysis.tipHeightM);
   return (
@@ -69,7 +71,7 @@ export function Scene() {
       <DetailInset />
       <div className="scene-overlay">
         <SoilLegend site={site} design={design} />
-        <button onClick={() => setNonce((n) => n + 1)}>Fit tower in view</button>
+        <button onClick={reframe}>Fit tower in view</button>
         <button aria-pressed={night} onClick={() => setTimeOfDay(night ? 'day' : 'night')}>
           {night ? '☀️ Day' : '🌙 Night'}
         </button>
