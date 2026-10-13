@@ -12,8 +12,9 @@ import { crownParts } from './crownParts';
 import { lotCenter } from './layout';
 import { bracingParts, ornamentParts } from './ornaments';
 import { PartsMesh } from './parts/PartsMesh';
+import { partBounds, type Part } from '../sim/parts';
 
-function Instanced({ geometry, items, color, name }: { geometry: THREE.BufferGeometry; items: BoxInstance[]; color: string; name: string }) {
+function Instanced({ geometry, items, color, name, count }: { geometry: THREE.BufferGeometry; items: BoxInstance[]; color: string; name: string; count?: number }) {
   const ref = useRef<THREE.InstancedMesh>(null);
   useLayoutEffect(() => {
     const mesh = ref.current;
@@ -21,7 +22,8 @@ function Instanced({ geometry, items, color, name }: { geometry: THREE.BufferGeo
     items.forEach((it, i) => mesh.setMatrixAt(i, instanceMatrix(it)));
     mesh.instanceMatrix.needsUpdate = true;
     mesh.computeBoundingSphere();
-  }, [items]);
+    mesh.count = Math.min(items.length, count ?? items.length);
+  }, [items, count]);
   return (
     <instancedMesh key={items.length} name={name} ref={ref} args={[geometry, undefined, items.length]}>
       <meshStandardMaterial color={color} flatShading roughness={0.5} metalness={0.2} />
@@ -35,8 +37,11 @@ function useDisposable<T extends { dispose: () => void }>(resource: T): T {
   return resource;
 }
 
-/** The glazed part of every floor, wearing the painted facade tile; windows light up at night. */
-function Body({ design, night }: { design: Design; night: boolean }) {
+/**
+ * The glazed part of every floor, wearing the painted facade tile; windows light up at night.
+ * During construction only the lowest `floors` are drawn, and only floors below `litFloors` light up.
+ */
+function Body({ design, night, floors, litFloors }: { design: Design; night: boolean; floors?: number; litFloors?: number }) {
   const ref = useRef<THREE.InstancedMesh>(null);
   const items = useMemo(() => bodyInstances(design), [design]);
   const recipe = useMemo(() => facadeRecipe(design), [design]);
@@ -75,7 +80,14 @@ function Body({ design, night }: { design: Design; night: boolean }) {
     items.forEach((it, i) => mesh.setMatrixAt(i, instanceMatrix(it)));
     mesh.instanceMatrix.needsUpdate = true;
     mesh.computeBoundingSphere();
-  }, [items, geometry]);
+    mesh.count = Math.min(items.length, floors ?? items.length);
+  }, [items, geometry, floors]);
+  useLayoutEffect(() => {
+    const attr = geometry.getAttribute('aLit') as THREE.InstancedBufferAttribute;
+    const base = nightWindowAttributes(design).lit;
+    for (let i = 0; i < base.length; i++) attr.array[i] = litFloors === undefined || i < litFloors ? base[i] : 0;
+    attr.needsUpdate = true;
+  }, [geometry, design, litFloors]);
   return <instancedMesh key={items.length} name="body" ref={ref} args={[geometry, material, items.length]} />;
 }
 
@@ -114,22 +126,50 @@ function Amenities({ design, geometry }: { design: Design; geometry: THREE.Buffe
   );
 }
 
-export function Building({ site, design, night = false }: { site: Site; design: Design; night?: boolean }) {
+/** How much of the finished tower to show while it is being built. */
+export interface BuildingReveal {
+  /** Finished floors shown, from the ground up. */
+  floors: number;
+  /** 0..1: ornaments and crown appear from the bottom up; amenities from halfway. */
+  crown: number;
+  /** Floors whose windows can light up. */
+  litFloors: number;
+  /** Light the windows even by day (the opening stage). */
+  lights: boolean;
+}
+
+/** Parts whose bottom is below `share` of the way up the whole set. */
+function upTo(parts: Part[], share: number): Part[] {
+  if (share >= 1) return parts;
+  if (share <= 0 || parts.length === 0) return [];
+  const bottoms = parts.map((p) => partBounds(p).min[1]);
+  const top = Math.max(...parts.map((p) => partBounds(p).max[1]));
+  return parts.filter((_, i) => bottoms[i] <= share * top);
+}
+
+export function Building({ site, design, night = false, reveal }: { site: Site; design: Design; night?: boolean; reveal?: BuildingReveal }) {
   const [lx, lz] = lotCenter(site);
   const geometry = useDisposable(useMemo(() => unitGeometry(design.shape), [design.shape]));
   const slabs = useMemo(() => slabInstances(design), [design]);
   const crown = useMemo(() => crownParts(design), [design]);
   const ornaments = useMemo(() => ornamentParts(design), [design]);
   const bracing = useMemo(() => bracingParts(design), [design]);
+  const share = reveal ? reveal.crown : 1;
+  const top = useMemo(() => {
+    if (share >= 1) return { crown, ornaments };
+    const shown = new Set(upTo([...ornaments, ...crown], share));
+    return { crown: crown.filter((p) => shown.has(p)), ornaments: ornaments.filter((p) => shown.has(p)) };
+  }, [ornaments, crown, share]);
   const look = { palette: design.palette, plan: design.shape, night };
   return (
     <group name="building" position={[lx, 0, lz]}>
-      <Body design={design} night={night} />
-      <Instanced name="slabs" geometry={geometry} items={slabs} color={design.palette.accent} />
-      <PartsMesh name="crown" parts={crown} {...look} />
-      <PartsMesh name="ornaments" parts={ornaments} {...look} />
-      <PartsMesh name="bracing" parts={bracing} {...look} />
-      <Amenities design={design} geometry={geometry} />
+      <Body design={design} night={night || !!reveal?.lights} floors={reveal?.floors} litFloors={reveal?.litFloors} />
+      <Instanced name="slabs" geometry={geometry} items={slabs} color={design.palette.accent} count={reveal?.floors} />
+      <PartsMesh name="crown" parts={top.crown} {...look} />
+      <PartsMesh name="ornaments" parts={top.ornaments} {...look} />
+      {/* While building, exposed bracing is part of the bare structure instead. */}
+      <PartsMesh name="bracing" parts={reveal ? [] : bracing} {...look} />
+      {share > 0.5 && <Amenities design={design} geometry={geometry} />}
     </group>
   );
 }

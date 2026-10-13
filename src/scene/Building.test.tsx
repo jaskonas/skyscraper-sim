@@ -89,3 +89,39 @@ describe('<Building />', () => {
     expect(disposed).toBe(true);
   });
 });
+
+describe('<Building reveal />', () => {
+  it('during construction shows only the finished floors, no bracing, and no crown or ornaments yet', async () => {
+    const { site, design } = designFor('chicago', { floors: 30, exposedStructure: true, ornaments: ['stone-ribs'], crown: 'spire' });
+    const r = await ReactThreeTestRenderer.create(<Building site={site} design={design} reveal={{ floors: 12, crown: 0, litFloors: 0, lights: false }} />);
+    expect((r.scene.findAll((n) => n.props.name === 'body')[0].instance as THREE.InstancedMesh).count).toBe(12);
+    expect((r.scene.findAll((n) => n.props.name === 'slabs')[0].instance as THREE.InstancedMesh).count).toBe(12);
+    expect(instanceTotal(r, 'bracing')).toBe(0);
+    expect(instanceTotal(r, 'crown')).toBe(0);
+    expect(instanceTotal(r, 'ornaments')).toBe(0);
+  });
+
+  it('adds ornaments and the crown from the bottom up as the crown stage plays', async () => {
+    const { site, design } = designFor('chicago', { floors: 30, ornaments: ['stone-ribs', 'rusticated-base'], ornament: 'high', crown: 'spire' });
+    const at = async (crown: number) => {
+      const r = await ReactThreeTestRenderer.create(<Building site={site} design={design} reveal={{ floors: 30, crown, litFloors: 0, lights: false }} />);
+      const n = { crown: instanceTotal(r, 'crown'), ornaments: instanceTotal(r, 'ornaments') };
+      await r.unmount();
+      return n;
+    };
+    const half = await at(0.5);
+    const full = await at(1);
+    expect(half.ornaments).toBeGreaterThan(0);
+    expect(half.ornaments + half.crown).toBeLessThan(full.ornaments + full.crown);
+    expect(full).toEqual({ crown: crownParts(design).length, ornaments: ornamentParts(design).length });
+  });
+
+  it('switches the lights on only up to the lit floors', async () => {
+    const { site, design } = designFor('chicago', { floors: 20, useMix: { retail: 0, office: 100, hotel: 0, residential: 0 } });
+    const r = await ReactThreeTestRenderer.create(<Building site={site} design={design} reveal={{ floors: 20, crown: 1, litFloors: 8, lights: true }} />);
+    const body = r.scene.findAll((n) => n.props.name === 'body')[0].instance as THREE.InstancedMesh;
+    const lit = body.geometry.getAttribute('aLit').array as Float32Array;
+    expect(Array.from(lit.slice(0, 8)).every((v) => v > 0)).toBe(true);
+    expect(Array.from(lit.slice(8)).every((v) => v === 0)).toBe(true);
+  });
+});
