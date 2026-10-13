@@ -9,6 +9,8 @@ A teaching game about designing and building skyscrapers. Pick a real-city site,
 
 Then open the printed `http://localhost:5173` link.
 
+In the game, the **🔍 Close-up** window (bottom-right of the 3D view) shows a piece of the tower in full detail. Use **Facade**, **Corner** and **Base** to switch, and drag to look around.
+
 ## Develop
 
     npm test          # unit and component tests
