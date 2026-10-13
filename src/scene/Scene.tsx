@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import { useCurrent } from '../state/hooks';
 import { useGame } from '../state/store';
+import { DetailInset } from '../ui/DetailInset';
 import { SoilLegend } from '../ui/SoilLegend';
 import { Building } from './Building';
 import { FoundationView } from './FoundationView';
@@ -57,6 +58,7 @@ export function Scene() {
         <OrbitControls makeDefault maxPolarAngle={Math.PI * 0.62} minDistance={40} maxDistance={2500} />
         <CameraFramer frame={frame} nonce={nonce} />
       </Canvas>
+      <DetailInset />
       <div className="scene-overlay">
         <SoilLegend site={site} design={design} />
         <button onClick={() => setNonce((n) => n + 1)}>Fit tower in view</button>
