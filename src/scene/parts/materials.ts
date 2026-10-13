@@ -33,6 +33,9 @@ export function materialLook(m: PartMaterial, palette: Palette): MaterialLook {
       return { color: '#c2182b', roughness: 0.4, metalness: 0.2 };
     case 'light':
       return { color: '#fff3c4', roughness: 0.5, metalness: 0 };
+    case 'girder':
+      // Bare structural steel seen during construction: darker and duller than finished steel trim.
+      return { color: '#4f5860', roughness: 0.55, metalness: 0.6 };
     case 'interior':
       // The dim room behind a window, seen in the close-up.
       return { color: '#2a2f36', roughness: 0.9, metalness: 0 };
