@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useGame } from '../state/store';
 import { DetailInset } from './DetailInset';
@@ -44,9 +44,13 @@ describe('<DetailInset />', () => {
     expect(screen.getByRole('button', { name: /Close-up/ })).toBeInTheDocument();
   });
 
-  it('keeps working after the design is built', () => {
+  it('hides during construction and comes back once the building is finished', () => {
     useGame.getState().build();
-    render(<DetailInset />);
+    const { rerender } = render(<DetailInset />);
+    expect(screen.queryByRole('region', { name: 'Close-up' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Close-up/ })).not.toBeInTheDocument();
+    act(() => useGame.getState().skipBuild());
+    rerender(<DetailInset />);
     expect(screen.getByRole('region', { name: 'Close-up' })).toBeInTheDocument();
   });
 

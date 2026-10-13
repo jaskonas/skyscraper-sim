@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { useBuildProgress } from './buildProgress';
 import { selectCanRedo, selectCanUndo, selectDesign, useGame } from './store';
 
 const state = () => useGame.getState();
@@ -67,7 +68,7 @@ describe('game store', () => {
   it('locks the design after build: no changes, no undo', () => {
     state().dispatch([{ type: 'set_parameter', id: 'floors', value: 50 }]);
     state().build();
-    expect(state().phase).toBe('complete');
+    expect(state().phase).toBe('building');
     const r = state().dispatch([{ type: 'set_parameter', id: 'floors', value: 60 }]);
     expect(r.applied).toHaveLength(0);
     expect(selectCanUndo(state())).toBe(false);
@@ -87,5 +88,66 @@ describe('game store', () => {
     for (const v of [55, 60]) state().dispatch([{ type: 'set_parameter', id: 'floors', value: v }], { coalesceKey: 'floors' });
     state().undo();
     expect(design().floors).toBe(50);
+  });
+});
+
+describe('construction', () => {
+  beforeEach(() => {
+    state().newProject();
+    state().startProject('chicago', 'sandbox');
+  });
+
+  it('Build starts the first of six stages instead of jumping to the finished tower', () => {
+    state().build();
+    expect(state()).toMatchObject({ phase: 'building', buildStage: 0, stageDone: false });
+    expect(useBuildProgress.getState().t).toBe(0);
+  });
+
+  it('Next waits until the stage has finished playing, then moves on', () => {
+    state().build();
+    state().nextStage();
+    expect(state().buildStage).toBe(0);
+    state().finishStage();
+    expect(state().stageDone).toBe(true);
+    expect(useBuildProgress.getState().t).toBe(1);
+    state().nextStage();
+    expect(state()).toMatchObject({ buildStage: 1, stageDone: false });
+    expect(useBuildProgress.getState().t).toBe(0);
+  });
+
+  it('Next on the last stage opens the finished building', () => {
+    state().build();
+    for (let i = 0; i < 6; i++) {
+      state().finishStage();
+      state().nextStage();
+    }
+    expect(state().phase).toBe('complete');
+  });
+
+  it('Replay plays the stage again, and Skip goes straight to the finished building', () => {
+    state().build();
+    state().finishStage();
+    const run = state().stageRun;
+    state().replayStage();
+    expect(state().stageDone).toBe(false);
+    expect(state().stageRun).toBe(run + 1);
+    state().skipBuild();
+    expect(state().phase).toBe('complete');
+  });
+
+  it('stage controls do nothing outside construction', () => {
+    state().finishStage();
+    state().nextStage();
+    state().skipBuild();
+    expect(state()).toMatchObject({ phase: 'design', buildStage: 0, stageDone: false });
+  });
+
+  it('a new project forgets the construction', () => {
+    state().build();
+    state().finishStage();
+    state().nextStage();
+    state().newProject();
+    state().startProject('tokyo', 'sandbox');
+    expect(state()).toMatchObject({ phase: 'design', buildStage: 0, stageDone: false });
   });
 });

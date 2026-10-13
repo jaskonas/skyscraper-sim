@@ -54,9 +54,12 @@ describe('Sidebar', () => {
     expect(design().useMix.office).toBe(90);
   });
 
-  it('building shows the assessment and hides the controls', () => {
+  it('building shows the construction card, then the assessment, and hides the controls', () => {
     render(<Sidebar />);
     fireEvent.click(screen.getByRole('button', { name: 'Build it!' }));
+    expect(screen.getByRole('region', { name: 'Construction' })).toBeInTheDocument();
+    expect(screen.queryByRole('slider', { name: 'Floors' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Skip to finished' }));
     expect(screen.getByRole('region', { name: 'Engineering assessment' })).toBeInTheDocument();
     expect(screen.queryByRole('slider', { name: 'Floors' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Undo' })).toBeDisabled();
@@ -66,6 +69,7 @@ describe('Sidebar', () => {
     useGame.getState().startProject('new-york', 'sandbox');
     render(<Sidebar />);
     fireEvent.click(screen.getByRole('button', { name: 'Build it!' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Skip to finished' }));
     expect(screen.getByText('Safety')).toBeInTheDocument();
     expect(screen.getByText('Sustainability')).toBeInTheDocument();
   });

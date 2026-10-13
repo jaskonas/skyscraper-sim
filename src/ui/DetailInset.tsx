@@ -31,10 +31,13 @@ const startsMinimized = () => typeof window !== 'undefined' && window.innerWidth
 export function DetailInset() {
   const { site, design } = useCurrent();
   const night = useGame((s) => s.timeOfDay === 'night');
+  const building = useGame((s) => s.phase === 'building');
   const [prefs, setPrefs] = useState(() => loadPrefs() ?? { view: 'facade' as DetailView, minimized: startsMinimized() });
   useEffect(() => savePrefs(prefs), [prefs]);
   const caption = detailModel(design, prefs.view).caption;
 
+  // The bare structure is the point of construction; the close-up shows the finished facade, so it waits.
+  if (building) return null;
   if (prefs.minimized) {
     return (
       <button className="detail-open" onClick={() => setPrefs({ ...prefs, minimized: false })}>

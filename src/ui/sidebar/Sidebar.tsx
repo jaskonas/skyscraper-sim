@@ -2,6 +2,7 @@ import { useGame } from '../../state/store';
 import { AssessmentPanel } from './AssessmentPanel';
 import { BriefCard } from './BriefCard';
 import { BuildBar } from './BuildBar';
+import { ConstructionCard } from './ConstructionCard';
 import { ControlGroups } from './ControlGroups';
 import { Gauges } from './Gauges';
 import { SidebarHeader } from './SidebarHeader';
@@ -17,6 +18,8 @@ export function Sidebar() {
       <div className="sidebar-scroll">
         {phase === 'complete' ? (
           <AssessmentPanel />
+        ) : phase === 'building' ? (
+          <ConstructionCard />
         ) : (
           <>
             <BriefCard />

@@ -1,8 +1,10 @@
 import { create } from 'zustand';
+import { STAGE_COUNT } from '../sim/construction/stages';
 import { applyActions, type ApplyResult, type DesignAction, type GamePhase } from '../sim/actions';
 import { defaultDesign } from '../sim/design';
 import { getSite } from '../sim/sites';
 import type { Design, DetailLevel, SiteId } from '../sim/types';
+import { setBuildProgress } from './buildProgress';
 
 export type GameMode = 'challenge' | 'sandbox';
 export type TimeOfDay = 'day' | 'night';
@@ -25,6 +27,12 @@ export interface GameState {
   detailLevel: DetailLevel;
   /** View only — not part of the design, its history, or the export. */
   timeOfDay: TimeOfDay;
+  /** Construction stage being shown (0..5) while building. */
+  buildStage: number;
+  /** The current stage has finished playing, so Next is allowed. */
+  stageDone: boolean;
+  /** Goes up each time a stage starts playing (including replays), so the 3D view restarts it. */
+  stageRun: number;
   startProject: (siteId: SiteId, mode: GameMode, briefId?: string | null) => void;
   dispatch: (actions: DesignAction[], opts?: { coalesceKey?: string }) => DispatchResult;
   /** Call when a drag or key press ends so the next change starts a new undo step. */
@@ -32,6 +40,11 @@ export interface GameState {
   undo: () => void;
   redo: () => void;
   build: () => void;
+  /** The 3D view calls this when the current stage has finished playing. */
+  finishStage: () => void;
+  nextStage: () => void;
+  replayStage: () => void;
+  skipBuild: () => void;
   newProject: () => void;
   setTimeOfDay: (t: TimeOfDay) => void;
 }
@@ -46,6 +59,9 @@ export const useGame = create<GameState>((set, get) => ({
   lastCoalesceKey: null,
   detailLevel: 'standard',
   timeOfDay: 'day',
+  buildStage: 0,
+  stageDone: false,
+  stageRun: 0,
 
   startProject: (siteId, mode, briefId = null) =>
     set({
@@ -54,6 +70,8 @@ export const useGame = create<GameState>((set, get) => ({
       history: [defaultDesign(getSite(siteId))],
       historyIndex: 0,
       lastCoalesceKey: null,
+      buildStage: 0,
+      stageDone: false,
     }),
 
   dispatch: (actions, opts) => {
@@ -87,11 +105,49 @@ export const useGame = create<GameState>((set, get) => ({
   },
 
   build: () => {
-    if (get().project && get().phase === 'design') set({ phase: 'complete', lastCoalesceKey: null });
+    if (!get().project || get().phase !== 'design') return;
+    setBuildProgress(0);
+    set({ phase: 'building', buildStage: 0, stageDone: false, stageRun: get().stageRun + 1, lastCoalesceKey: null });
+  },
+
+  finishStage: () => {
+    if (get().phase !== 'building') return;
+    setBuildProgress(1);
+    set({ stageDone: true });
+  },
+
+  nextStage: () => {
+    const { phase, buildStage, stageDone, stageRun } = get();
+    if (phase !== 'building' || !stageDone) return;
+    if (buildStage >= STAGE_COUNT - 1) {
+      set({ phase: 'complete' });
+      return;
+    }
+    setBuildProgress(0);
+    set({ buildStage: buildStage + 1, stageDone: false, stageRun: stageRun + 1 });
+  },
+
+  replayStage: () => {
+    if (get().phase !== 'building') return;
+    setBuildProgress(0);
+    set({ stageDone: false, stageRun: get().stageRun + 1 });
+  },
+
+  skipBuild: () => {
+    if (get().phase === 'building') set({ phase: 'complete' });
   },
 
   newProject: () =>
-    set({ project: null, phase: 'design', history: [], historyIndex: -1, lastCoalesceKey: null, timeOfDay: 'day' }),
+    set({
+      project: null,
+      phase: 'design',
+      history: [],
+      historyIndex: -1,
+      lastCoalesceKey: null,
+      timeOfDay: 'day',
+      buildStage: 0,
+      stageDone: false,
+    }),
 
   setTimeOfDay: (timeOfDay) => set({ timeOfDay }),
 }));
