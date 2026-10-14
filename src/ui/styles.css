@@ -34,6 +34,7 @@ h1, h2, h3 { margin: 0; }
 .world-map { width: 100%; height: auto; margin: 16px 0; }
 .world-ocean { fill: #18324a; }
 .world-grid { stroke: #24445f; stroke-width: 1; }
+.world-land { fill: #2f5a48; stroke: #4a7d64; stroke-width: 0.6; stroke-linejoin: round; }
 .world-pin { fill: var(--accent); stroke: #fff; stroke-width: 2; }
 .world-label { fill: #fff; font-size: 14px; font-weight: 600; }
 .site-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }

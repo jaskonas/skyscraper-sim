@@ -1,6 +1,7 @@
 import { briefsForSite } from '../sim/briefs';
 import { SITES, SITE_IDS } from '../sim/sites';
 import { useGame } from '../state/store';
+import { LAND_PATH } from './worldLand';
 
 const MAP_W = 720;
 const MAP_H = 300;
@@ -8,6 +9,9 @@ const MAP_H = 300;
 function project(lat: number, lon: number): { x: number; y: number } {
   return { x: ((lon + 180) / 360) * MAP_W, y: ((70 - lat) / 120) * MAP_H };
 }
+
+/** Sites whose map label goes on the left of the pin, so neighbouring cities' labels don't overlap. */
+const LABEL_LEFT: ReadonlySet<string> = new Set(['chicago']);
 
 export function SiteSelect() {
   const startProject = useGame((s) => s.startProject);
@@ -19,6 +23,11 @@ export function SiteSelect() {
       </header>
 
       <svg className="world-map" viewBox={`0 0 ${MAP_W} ${MAP_H}`} role="img" aria-label="World map of building sites">
+        <defs>
+          <clipPath id="world-clip">
+            <rect width={MAP_W} height={MAP_H} rx="12" />
+          </clipPath>
+        </defs>
         <rect width={MAP_W} height={MAP_H} rx="12" className="world-ocean" />
         {[-150, -120, -90, -60, -30, 0, 30, 60, 90, 120, 150].map((lon) => (
           <line key={`lon${lon}`} x1={project(0, lon).x} x2={project(0, lon).x} y1={0} y2={MAP_H} className="world-grid" />
@@ -26,12 +35,14 @@ export function SiteSelect() {
         {[60, 30, 0, -30].map((lat) => (
           <line key={`lat${lat}`} y1={project(lat, 0).y} y2={project(lat, 0).y} x1={0} x2={MAP_W} className="world-grid" />
         ))}
+        <path d={LAND_PATH} className="world-land" clipPath="url(#world-clip)" />
         {SITE_IDS.map((id) => {
           const { x, y } = project(SITES[id].mapPos.lat, SITES[id].mapPos.lon);
+          const left = LABEL_LEFT.has(id);
           return (
             <g key={id}>
               <circle cx={x} cy={y} r="7" className="world-pin" />
-              <text x={x + 11} y={y + 4} className="world-label">
+              <text x={left ? x - 11 : x + 11} y={y + 4} textAnchor={left ? 'end' : 'start'} className="world-label">
                 {SITES[id].city}
               </text>
             </g>
