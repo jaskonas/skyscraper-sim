@@ -16,9 +16,11 @@ export interface SwaySignal {
   lean: number;
   /** Height the bend is measured over, metres. */
   height: number;
+  /** Seconds since the force was switched on (the quake cycle and damage marks keep time by it). */
+  time: number;
 }
 
-export const createSway = (): SwaySignal => ({ active: false, groundX: 0, baseX: 0, topX: 0, lean: 0, height: 1 });
+export const createSway = (): SwaySignal => ({ active: false, groundX: 0, baseX: 0, topX: 0, lean: 0, height: 1, time: 0 });
 
 /** Sideways offset, metres, of the part of the tower at height `y`. */
 export function swayAt(s: SwaySignal, y: number): number {
