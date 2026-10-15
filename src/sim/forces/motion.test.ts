@@ -141,11 +141,15 @@ describe('the quake cycle', () => {
     expect(peak).toBeGreaterThan(m.responseM * 0.5);
   });
 
-  it('a failing tower leans over during the strong shaking and straightens in the pause', () => {
+  it('a failing tower leans over during the strong shaking and eases back upright in the pause', () => {
     const m = { ...quake('tokyo'), outcome: 'fails' as const, failLeanDeg: 3 };
+    const full = (3 * Math.PI) / 180;
     expect(quakeLean(m, 1)).toBe(0);
-    expect(quakeLean(m, 9)).toBeCloseTo((3 * Math.PI) / 180, 9);
-    expect(quakeLean(m, 13)).toBe(0);
+    expect(quakeLean(m, 9)).toBeCloseTo(full, 9);
+    expect(quakeLean(m, 13)).toBeCloseTo(full / 2, 9);
+    expect(quakeLean(m, 14)).toBe(0);
+    // No sudden jumps anywhere in the cycle.
+    for (let t = 0; t < 28; t += 0.05) expect(Math.abs(quakeLean(m, t + 0.05) - quakeLean(m, t))).toBeLessThan(full / 20);
     expect(quakeLean(quake('chicago'), 9)).toBe(0);
   });
 });

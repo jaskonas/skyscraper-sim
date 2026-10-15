@@ -55,6 +55,23 @@ describe('<ForcesView />', () => {
     expect(Math.abs(sway.topX)).toBeGreaterThan(0.1 * design.floors * 4);
   });
 
+  it('shrinks the whole motion to fit instead of clipping it, so a failing tower still leans downwind and visibly sways', async () => {
+    const { r, sway, design } = await view('wind', 'chicago', { floors: 120 });
+    const height = design.floors * 4;
+    await r.advanceFrames(40, 0.05); // past the 2 s ease-in
+    const tops: number[] = [];
+    for (let i = 0; i < 160; i++) {
+      await r.advanceFrames(1, 0.05);
+      tops.push(sway.topX);
+    }
+    expect(Math.min(...tops)).toBeGreaterThanOrEqual(0);
+    expect(Math.max(...tops)).toBeLessThanOrEqual(0.15 * height + 1e-9);
+    // Not pinned flat against the cap: it keeps a clear swing.
+    expect(Math.max(...tops) - Math.min(...tops)).toBeGreaterThan(0.05 * height);
+    // And not stuck at the cap for long stretches.
+    expect(tops.filter((x) => x > 0.149 * height).length).toBeLessThan(tops.length / 4);
+  });
+
   it('stops the sway when the force is switched off', async () => {
     const { r, sway } = await view('wind', 'chicago');
     await r.advanceFrames(10, 0.05);

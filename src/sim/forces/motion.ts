@@ -51,11 +51,23 @@ export function windMotion(_site: Site, design: Design, analysis: Analysis): Win
   };
 }
 
+/**
+ * Size of the drawn back-and-forth swing, real metres: doubled when the tower would fail, but never more
+ * than the lean, so the tower always bends downwind (the wind never pulls it upwind).
+ */
+export function windSwing(m: WindMotion): number {
+  return Math.min(m.swayM * (m.strength === 'fail' ? 2 : 1), m.leanM);
+}
+
+/** The biggest drawn offset of the top, metres (lean plus swing, exaggerated). */
+export function windPeak(m: WindMotion): number {
+  return m.exaggeration * (m.leanM + windSwing(m));
+}
+
 /** Drawn sideways offset of the top, metres, `t` seconds after the wind was switched on. */
 export function windTop(m: WindMotion, t: number): number {
   const ramp = Math.min(1, Math.max(0, t / 2));
-  const sway = m.swayM * (m.strength === 'fail' ? 2 : 1) * Math.sin((2 * Math.PI * t) / m.periodS);
-  return m.exaggeration * ramp * (m.leanM + sway);
+  return m.exaggeration * ramp * (m.leanM + windSwing(m) * Math.sin((2 * Math.PI * t) / m.periodS));
 }
 
 export interface QuakeMotion {
@@ -111,10 +123,10 @@ export function quakeTop(m: QuakeMotion, t: number): number {
   return m.responseM * quakeEnvelope(lag) * Math.sin((2 * Math.PI * lag) / m.periodS);
 }
 
-/** A failing tower's lean, radians: grows through the strong shaking, holds, and resets in the pause. */
+/** A failing tower's lean, radians: grows through the strong shaking, holds, and eases back upright in the pause. */
 export function quakeLean(m: QuakeMotion, t: number): number {
   if (m.failLeanDeg === 0) return 0;
   const c = cycle(t);
-  const progress = c < 4 ? 0 : c < 9 ? (c - 4) / 5 : c < 12 ? 1 : 0;
+  const progress = c < 4 ? 0 : c < 9 ? (c - 4) / 5 : c < 12 ? 1 : 1 - (c - 12) / 2;
   return (m.failLeanDeg * Math.PI * progress) / 180;
 }

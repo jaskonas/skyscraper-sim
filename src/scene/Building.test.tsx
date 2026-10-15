@@ -167,6 +167,19 @@ describe('<Building sway />', () => {
     for (let i = 0; i < 20; i++) expect(xOf(body, i)).toBeCloseTo(0, 9);
   });
 
+  it('keeps a swaying crown on screen: no culling by its resting position while it moves', async () => {
+    const { site, design } = designFor('chicago', { floors: 30, crown: 'spire' });
+    const sway = { ...createSway(), active: true, topX: 18, height: 120 };
+    const r = await ReactThreeTestRenderer.create(<Building site={site} design={design} sway={sway} />);
+    await r.advanceFrames(1, 0.016);
+    const crown = instancedIn(r, 'crown');
+    expect(crown.length).toBeGreaterThan(0);
+    for (const m of crown) expect(m.frustumCulled).toBe(false);
+    sway.active = false;
+    await r.advanceFrames(1, 0.016);
+    for (const m of crown) expect(m.frustumCulled).toBe(true);
+  });
+
   it('can hide its top floors (for the see-through damper)', async () => {
     const { site, design } = designFor('chicago', { floors: 20 });
     const r = await ReactThreeTestRenderer.create(<Building site={site} design={design} hideTopFloors={3} />);

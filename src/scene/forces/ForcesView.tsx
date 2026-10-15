@@ -1,7 +1,7 @@
 import { useFrame } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, type ReactNode } from 'react';
 import * as THREE from 'three';
-import { groundOffset, quakeEnvelope, quakeLean, quakeMotion, quakeTop, windMotion, windTop, type WindMotion } from '../../sim/forces/motion';
+import { groundOffset, quakeEnvelope, quakeLean, quakeMotion, quakeTop, windMotion, windPeak, windTop, type WindMotion } from '../../sim/forces/motion';
 import { FLOOR_HEIGHT, floorSlices, plateDims, type FloorSlice } from '../../sim/geometry';
 import type { Analysis, Design, Site } from '../../sim/types';
 import { unitGeometry } from '../buildingGeometry';
@@ -214,22 +214,24 @@ export function ForcesView({
       sway.groundX = sway.baseX = sway.topX = sway.lean = 0;
     };
   }, [force, sway]);
+  // However far off the scale a failing design is, the drawing stays readable: the whole motion is scaled
+  // down to fit (not clipped), so it keeps its shape.
+  const height = design.floors * FLOOR_HEIGHT;
+  const windScale = Math.min(1, (MAX_DRAWN_SWAY * height) / Math.max(1e-9, windPeak(wind)));
+  const quakeScale = Math.min(1, (MAX_DRAWN_SWAY * height) / Math.max(1e-9, quake.responseM));
   useFrame((_, delta) => {
     const t = (sway.time += Math.min(delta, 0.1));
     sway.active = true;
-    sway.height = design.floors * FLOOR_HEIGHT;
-    // However far off the scale a failing design is, the drawing stays readable.
-    const cap = MAX_DRAWN_SWAY * sway.height;
-    const capped = (x: number) => Math.max(-cap, Math.min(cap, x));
+    sway.height = height;
     if (force === 'wind') {
       sway.groundX = 0;
       sway.baseX = 0;
-      sway.topX = capped(windTop(wind, t));
+      sway.topX = windScale * windTop(wind, t);
       sway.lean = 0;
     } else {
       sway.groundX = groundOffset(t, quake.groundM);
       sway.baseX = sway.groundX * quake.baseShare;
-      sway.topX = capped(quakeTop(quake, t));
+      sway.topX = quakeScale * quakeTop(quake, t);
       sway.lean = quakeLean(quake, t);
     }
   });

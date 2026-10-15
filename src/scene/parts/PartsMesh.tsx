@@ -58,6 +58,8 @@ function Group({ group, palette, plan, night, sway }: { group: PartGroup; palett
     // Runs while spinning or swaying, and once more after the sway stops to put every part back.
     if (!mesh || (!spin && !swayOn && !swaying.current)) return;
     swaying.current = swayOn;
+    // The bounding sphere is the resting one; while swaying, don't let it cull parts that have moved into view.
+    mesh.frustumCulled = !swayOn;
     const t = spin ? clock.getElapsedTime() * 1.5 : 0;
     parts.forEach((p, i) => {
       partMatrix(p, t, mat);
