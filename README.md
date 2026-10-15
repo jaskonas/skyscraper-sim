@@ -13,6 +13,8 @@ In the game, the **🔍 Close-up** window (bottom-right of the 3D view) shows a 
 
 Pressing **Build it!** builds the tower one stage at a time: digging, the foundation, the core and frame, the facade, the crown, then the interiors. Each stage explains what is happening and how it goes for your tower; press **Next** to move on, or **Skip to finished**. The bare structure you see while it rises depends on the structural system and material you chose.
 
+**💨 Wind** and **〰️ Earthquake** (bottom-left of the 3D view) show those forces acting on your tower, while you design or after it is built: the tower sways (drawn much bigger than real), the ground shakes, and dampers and base isolation visibly do their jobs. The card beside them explains what you are seeing with your tower's own numbers.
+
 ## Develop
 
     npm test          # unit and component tests
