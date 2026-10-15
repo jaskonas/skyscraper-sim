@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { partBounds, type Part } from '../../sim/parts';
 import type { Palette, PlanShape } from '../../sim/types';
+import { swayAt, type SwaySignal } from '../forces/sway';
 import { partGeometry } from './geometries';
 import { glowColor, materialLook } from './materials';
 
@@ -37,8 +38,9 @@ export function partMatrix(p: Part, extraZ = 0, out = new THREE.Matrix4()): THRE
   return out.compose(pos.set(...p.position), quat, scl.set(...p.scale));
 }
 
-function Group({ group, palette, plan, night }: { group: PartGroup; palette: Palette; plan: PlanShape; night: boolean }) {
+function Group({ group, palette, plan, night, sway }: { group: PartGroup; palette: Palette; plan: PlanShape; night: boolean; sway?: SwaySignal }) {
   const ref = useRef<THREE.InstancedMesh>(null);
+  const swaying = useRef(false);
   const { sample, parts } = group;
   const look = materialLook(sample.material, palette);
   const lit = night && !!sample.glow;
@@ -51,9 +53,17 @@ function Group({ group, palette, plan, night }: { group: PartGroup; palette: Pal
   }, [parts]);
   useFrame(({ clock }) => {
     const mesh = ref.current;
-    if (!mesh || sample.animate !== 'spin') return;
-    const t = clock.getElapsedTime() * 1.5;
-    parts.forEach((p, i) => mesh.setMatrixAt(i, partMatrix(p, t, mat)));
+    const spin = sample.animate === 'spin';
+    const swayOn = !!sway?.active;
+    // Runs while spinning or swaying, and once more after the sway stops to put every part back.
+    if (!mesh || (!spin && !swayOn && !swaying.current)) return;
+    swaying.current = swayOn;
+    const t = spin ? clock.getElapsedTime() * 1.5 : 0;
+    parts.forEach((p, i) => {
+      partMatrix(p, t, mat);
+      if (swayOn) mat.elements[12] += swayAt(sway!, p.position[1]);
+      mesh.setMatrixAt(i, mat);
+    });
     mesh.instanceMatrix.needsUpdate = true;
   });
   return (
@@ -76,7 +86,8 @@ function Group({ group, palette, plan, night }: { group: PartGroup; palette: Pal
 }
 
 /** Red aircraft-warning lights on top of masts and spires, blinking about once a second at night. */
-function AircraftLights({ parts }: { parts: Part[] }) {
+function AircraftLights({ parts, sway }: { parts: Part[]; sway?: SwaySignal }) {
+  const group = useRef<THREE.Group>(null);
   const material = useMemo(() => new THREE.MeshStandardMaterial({ color: '#ff2020', emissive: '#ff2020' }), []);
   const sphere = useMemo(() => new THREE.SphereGeometry(0.6, 8, 6), []);
   useEffect(() => () => material.dispose(), [material]);
@@ -91,9 +102,10 @@ function AircraftLights({ parts }: { parts: Part[] }) {
   );
   useFrame(({ clock }) => {
     material.emissiveIntensity = Math.sin(clock.getElapsedTime() * Math.PI * 2) > 0 ? 3 : 0.2;
+    group.current?.children.forEach((c, i) => (c.position.x = tops[i][0] + (sway?.active ? swayAt(sway, tops[i][1]) : 0)));
   });
   return (
-    <group name="aircraft-lights">
+    <group name="aircraft-lights" ref={group}>
       {tops.map((t, i) => (
         <mesh key={i} position={t} geometry={sphere} material={material} />
       ))}
@@ -108,21 +120,24 @@ export function PartsMesh({
   plan,
   night = false,
   name,
+  sway,
 }: {
   parts: Part[];
   palette: Palette;
   plan: PlanShape;
   night?: boolean;
   name: string;
+  /** Parts follow the tower's bend at their own height while a force acts on it. */
+  sway?: SwaySignal;
 }) {
   const groups = useMemo(() => groupParts(parts), [parts]);
   const blinkers = useMemo(() => parts.filter((p) => p.animate === 'blink'), [parts]);
   return (
     <group name={name}>
       {groups.map((g) => (
-        <Group key={g.key} group={g} palette={palette} plan={plan} night={night} />
+        <Group key={g.key} group={g} palette={palette} plan={plan} night={night} sway={sway} />
       ))}
-      {night && blinkers.length > 0 && <AircraftLights parts={blinkers} />}
+      {night && blinkers.length > 0 && <AircraftLights parts={blinkers} sway={sway} />}
     </group>
   );
 }

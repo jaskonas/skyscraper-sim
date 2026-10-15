@@ -1,11 +1,12 @@
 import ReactThreeTestRenderer from '@react-three/test-renderer';
-import type * as THREE from 'three';
+import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { CROWN_IDS, ORNAMENT_IDS } from '../sim/catalog/ids';
 import { designFor } from '../sim/testUtils';
 import type { PlanShape } from '../sim/types';
 import { Building } from './Building';
 import { crownParts } from './crownParts';
+import { createSway, swayAt } from './forces/sway';
 import { ornamentParts } from './ornaments';
 
 type Renderer = Awaited<ReturnType<typeof ReactThreeTestRenderer.create>>;
@@ -123,5 +124,52 @@ describe('<Building reveal />', () => {
     const lit = body.geometry.getAttribute('aLit').array as Float32Array;
     expect(Array.from(lit.slice(0, 8)).every((v) => v > 0)).toBe(true);
     expect(Array.from(lit.slice(8)).every((v) => v === 0)).toBe(true);
+  });
+});
+
+describe('<Building sway />', () => {
+  const xOf = (mesh: THREE.InstancedMesh, i: number) => {
+    const m = new THREE.Matrix4();
+    mesh.getMatrixAt(i, m);
+    return m.elements[12];
+  };
+
+  it('bends the tower with the sway signal: the top floor and top ornaments move most', async () => {
+    const { site, design } = designFor('chicago', { floors: 30, ornaments: ['stone-ribs', 'rusticated-base'], ornament: 'high' });
+    const sway = { ...createSway(), active: true, topX: 10, baseX: 1, height: 120 };
+    const r = await ReactThreeTestRenderer.create(<Building site={site} design={design} sway={sway} />);
+    await r.advanceFrames(1, 0.016);
+    const body = r.scene.findAll((n) => n.props.name === 'body')[0].instance as THREE.InstancedMesh;
+    expect(xOf(body, 29)).toBeGreaterThan(xOf(body, 0) + 5);
+    expect(xOf(body, 0)).toBeGreaterThanOrEqual(1);
+    const ornaments = ornamentParts(design);
+    const meshes = instancedIn(r, 'ornaments');
+    // Every instance sits at its own x plus the sway at its height.
+    let checked = 0;
+    for (const mesh of meshes)
+      for (let i = 0; i < mesh.count; i++) {
+        const x = xOf(mesh, i);
+        const moved = ornaments.some((p) => Math.abs(p.position[0] + swayAt(sway, p.position[1]) - x) < 1e-6);
+        expect(moved).toBe(true);
+        checked++;
+      }
+    expect(checked).toBeGreaterThan(0);
+  });
+
+  it('puts every floor back when the sway stops', async () => {
+    const { site, design } = designFor('chicago', { floors: 20 });
+    const sway = { ...createSway(), active: true, topX: 10, height: 80 };
+    const r = await ReactThreeTestRenderer.create(<Building site={site} design={design} sway={sway} />);
+    await r.advanceFrames(1, 0.016);
+    sway.active = false;
+    await r.advanceFrames(1, 0.016);
+    const body = r.scene.findAll((n) => n.props.name === 'body')[0].instance as THREE.InstancedMesh;
+    for (let i = 0; i < 20; i++) expect(xOf(body, i)).toBeCloseTo(0, 9);
+  });
+
+  it('can hide its top floors (for the see-through damper)', async () => {
+    const { site, design } = designFor('chicago', { floors: 20 });
+    const r = await ReactThreeTestRenderer.create(<Building site={site} design={design} hideTopFloors={3} />);
+    expect((r.scene.findAll((n) => n.props.name === 'body')[0].instance as THREE.InstancedMesh).count).toBe(17);
   });
 });

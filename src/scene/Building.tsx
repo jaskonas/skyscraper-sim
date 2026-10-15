@@ -1,4 +1,5 @@
-import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
+import { useEffect, useLayoutEffect, useMemo, useRef, type ReactNode, type RefObject } from 'react';
 import * as THREE from 'three';
 import { FLOOR_HEIGHT, floorSlices } from '../sim/geometry';
 import type { Design, Site } from '../sim/types';
@@ -9,13 +10,42 @@ import { TILE_HEIGHT_M } from './facadeTile';
 import { facadeTextures } from './facadeTexture';
 import { nightWindowAttributes } from './nightWindows';
 import { crownParts } from './crownParts';
+import { swayAt, type SwaySignal } from './forces/sway';
 import { lotCenter } from './layout';
 import { bracingParts, ornamentParts } from './ornaments';
 import { PartsMesh } from './parts/PartsMesh';
 import { partBounds, type Part } from '../sim/parts';
 
-function Instanced({ geometry, items, color, name, count }: { geometry: THREE.BufferGeometry; items: BoxInstance[]; color: string; name: string; count?: number }) {
+const swayMatrix = new THREE.Matrix4();
+
+/** While the tower sways, re-sets each floor's matrix every frame; once more when it stops, to put it back. */
+function useSwayedInstances(ref: RefObject<THREE.InstancedMesh | null>, items: BoxInstance[], sway?: SwaySignal) {
+  const swaying = useRef(false);
+  useFrame(() => {
+    const mesh = ref.current;
+    if (!mesh || !sway || (!sway.active && !swaying.current)) return;
+    swaying.current = sway.active;
+    items.forEach((it, i) => {
+      swayMatrix.copy(instanceMatrix(it));
+      if (sway.active) swayMatrix.elements[12] += swayAt(sway, it.position[1]);
+      mesh.setMatrixAt(i, swayMatrix);
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+  });
+}
+
+/** Moves its children sideways with the sway at height `y` (for one-off meshes such as amenities). */
+function SwayFollow({ y, sway, children }: { y: number; sway?: SwaySignal; children: ReactNode }) {
+  const ref = useRef<THREE.Group>(null);
+  useFrame(() => {
+    if (ref.current && sway) ref.current.position.x = sway.active ? swayAt(sway, y) : 0;
+  });
+  return <group ref={ref}>{children}</group>;
+}
+
+function Instanced({ geometry, items, color, name, count, sway }: { geometry: THREE.BufferGeometry; items: BoxInstance[]; color: string; name: string; count?: number; sway?: SwaySignal }) {
   const ref = useRef<THREE.InstancedMesh>(null);
+  useSwayedInstances(ref, items, sway);
   useLayoutEffect(() => {
     const mesh = ref.current;
     if (!mesh) return;
@@ -41,9 +71,10 @@ function useDisposable<T extends { dispose: () => void }>(resource: T): T {
  * The glazed part of every floor, wearing the painted facade tile; windows light up at night.
  * During construction only the lowest `floors` are drawn, and only floors below `litFloors` light up.
  */
-function Body({ design, night, floors, litFloors }: { design: Design; night: boolean; floors?: number; litFloors?: number }) {
+function Body({ design, night, floors, litFloors, sway }: { design: Design; night: boolean; floors?: number; litFloors?: number; sway?: SwaySignal }) {
   const ref = useRef<THREE.InstancedMesh>(null);
   const items = useMemo(() => bodyInstances(design), [design]);
+  useSwayedInstances(ref, items, sway);
   const recipe = useMemo(() => facadeRecipe(design), [design]);
   const textures = useMemo(() => facadeTextures(recipe), [recipe]);
   const geometry = useDisposable(
@@ -91,7 +122,7 @@ function Body({ design, night, floors, litFloors }: { design: Design; night: boo
   return <instancedMesh key={items.length} name="body" ref={ref} args={[geometry, material, items.length]} />;
 }
 
-function Amenities({ design, geometry }: { design: Design; geometry: THREE.BufferGeometry }) {
+function Amenities({ design, geometry, sway }: { design: Design; geometry: THREE.BufferGeometry; sway?: SwaySignal }) {
   const slices = floorSlices(design);
   const top = slices[slices.length - 1];
   const roofY = design.floors * FLOOR_HEIGHT;
@@ -101,26 +132,34 @@ function Amenities({ design, geometry }: { design: Design; geometry: THREE.Buffe
   return (
     <group name="amenities">
       {design.amenities.includes('helipad') && (
-        <mesh position={[0, roofY + 0.4, 0]}>
-          <cylinderGeometry args={[Math.min(top.width, top.depth) * 0.35, Math.min(top.width, top.depth) * 0.35, 0.6, 24]} />
-          <meshStandardMaterial color="#3b3f45" />
-        </mesh>
+        <SwayFollow y={roofY} sway={sway}>
+          <mesh position={[0, roofY + 0.4, 0]}>
+            <cylinderGeometry args={[Math.min(top.width, top.depth) * 0.35, Math.min(top.width, top.depth) * 0.35, 0.6, 24]} />
+            <meshStandardMaterial color="#3b3f45" />
+          </mesh>
+        </SwayFollow>
       )}
       {design.amenities.includes('pool') && (
-        <mesh position={[0, roofY + 0.5, 0]} rotation={[0, top.rotation, 0]} scale={[top.width * 0.5, 0.6, top.depth * 0.3]}>
-          <boxGeometry />
-          <meshStandardMaterial color="#3fa9f5" />
-        </mesh>
+        <SwayFollow y={roofY} sway={sway}>
+          <mesh position={[0, roofY + 0.5, 0]} rotation={[0, top.rotation, 0]} scale={[top.width * 0.5, 0.6, top.depth * 0.3]}>
+            <boxGeometry />
+            <meshStandardMaterial color="#3fa9f5" />
+          </mesh>
+        </SwayFollow>
       )}
       {design.amenities.includes('observation-deck') && (
-        <mesh geometry={geometry} position={[0, deck.y + FLOOR_HEIGHT * 0.75, 0]} rotation={[0, deck.rotation, 0]} scale={[deck.width * 1.12, FLOOR_HEIGHT * 1.5, deck.depth * 1.12]}>
-          <meshStandardMaterial color="#bfe9ff" transparent opacity={0.65} />
-        </mesh>
+        <SwayFollow y={deck.y + FLOOR_HEIGHT * 0.75} sway={sway}>
+          <mesh geometry={geometry} position={[0, deck.y + FLOOR_HEIGHT * 0.75, 0]} rotation={[0, deck.rotation, 0]} scale={[deck.width * 1.12, FLOOR_HEIGHT * 1.5, deck.depth * 1.12]}>
+            <meshStandardMaterial color="#bfe9ff" transparent opacity={0.65} />
+          </mesh>
+        </SwayFollow>
       )}
       {design.amenities.includes('sky-garden') && (
-        <mesh geometry={geometry} position={[0, garden.y + FLOOR_HEIGHT / 2, 0]} rotation={[0, garden.rotation, 0]} scale={[garden.width * 1.06, FLOOR_HEIGHT, garden.depth * 1.06]}>
-          <meshStandardMaterial color="#4caf50" flatShading />
-        </mesh>
+        <SwayFollow y={garden.y + FLOOR_HEIGHT / 2} sway={sway}>
+          <mesh geometry={geometry} position={[0, garden.y + FLOOR_HEIGHT / 2, 0]} rotation={[0, garden.rotation, 0]} scale={[garden.width * 1.06, FLOOR_HEIGHT, garden.depth * 1.06]}>
+            <meshStandardMaterial color="#4caf50" flatShading />
+          </mesh>
+        </SwayFollow>
       )}
     </group>
   );
@@ -147,7 +186,23 @@ function upTo(parts: Part[], share: number): Part[] {
   return parts.filter((_, i) => bottoms[i] <= share * top);
 }
 
-export function Building({ site, design, night = false, reveal }: { site: Site; design: Design; night?: boolean; reveal?: BuildingReveal }) {
+export function Building({
+  site,
+  design,
+  night = false,
+  reveal,
+  sway,
+  hideTopFloors = 0,
+}: {
+  site: Site;
+  design: Design;
+  night?: boolean;
+  reveal?: BuildingReveal;
+  /** While a force acts on the tower, it bends with this signal every frame. */
+  sway?: SwaySignal;
+  /** Leave out this many top floors (the see-through damper view draws them instead). */
+  hideTopFloors?: number;
+}) {
   const [lx, lz] = lotCenter(site);
   const geometry = useDisposable(useMemo(() => unitGeometry(design.shape), [design.shape]));
   const slabs = useMemo(() => slabInstances(design), [design]);
@@ -160,16 +215,17 @@ export function Building({ site, design, night = false, reveal }: { site: Site; 
     const shown = new Set(upTo([...ornaments, ...crown], share));
     return { crown: crown.filter((p) => shown.has(p)), ornaments: ornaments.filter((p) => shown.has(p)) };
   }, [ornaments, crown, share]);
-  const look = { palette: design.palette, plan: design.shape, night };
+  const look = { palette: design.palette, plan: design.shape, night, sway };
+  const floors = Math.min(reveal?.floors ?? design.floors, design.floors - hideTopFloors);
   return (
     <group name="building" position={[lx, 0, lz]}>
-      <Body design={design} night={night || !!reveal?.lights} floors={reveal?.floors} litFloors={reveal?.litFloors} />
-      <Instanced name="slabs" geometry={geometry} items={slabs} color={design.palette.accent} count={reveal?.floors} />
+      <Body design={design} night={night || !!reveal?.lights} floors={floors} litFloors={reveal?.litFloors} sway={sway} />
+      <Instanced name="slabs" geometry={geometry} items={slabs} color={design.palette.accent} count={floors} sway={sway} />
       <PartsMesh name="crown" parts={top.crown} {...look} />
       <PartsMesh name="ornaments" parts={top.ornaments} {...look} />
       {/* While building, exposed bracing is part of the bare structure instead. */}
       <PartsMesh name="bracing" parts={reveal ? [] : bracing} {...look} />
-      {share > 0.5 && <Amenities design={design} geometry={geometry} />}
+      {share > 0.5 && <Amenities design={design} geometry={geometry} sway={sway} />}
     </group>
   );
 }
