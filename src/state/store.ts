@@ -8,6 +8,8 @@ import { setBuildProgress } from './buildProgress';
 
 export type GameMode = 'challenge' | 'sandbox';
 export type TimeOfDay = 'day' | 'night';
+/** Which force the 3D view is showing acting on the tower. */
+export type ForceView = 'none' | 'wind' | 'quake';
 
 export interface Project {
   siteId: SiteId;
@@ -27,6 +29,8 @@ export interface GameState {
   detailLevel: DetailLevel;
   /** View only — not part of the design, its history, or the export. */
   timeOfDay: TimeOfDay;
+  /** View only, like `timeOfDay`. Hidden while building, but remembered through it. */
+  force: ForceView;
   /** Construction stage being shown (0..5) while building. */
   buildStage: number;
   /** The current stage has finished playing, so Next is allowed. */
@@ -47,6 +51,8 @@ export interface GameState {
   skipBuild: () => void;
   newProject: () => void;
   setTimeOfDay: (t: TimeOfDay) => void;
+  /** Show this force, or turn it off if it is already showing. */
+  toggleForce: (f: Exclude<ForceView, 'none'>) => void;
 }
 
 export type DispatchResult = Pick<ApplyResult, 'applied' | 'rejected'>;
@@ -59,6 +65,7 @@ export const useGame = create<GameState>((set, get) => ({
   lastCoalesceKey: null,
   detailLevel: 'standard',
   timeOfDay: 'day',
+  force: 'none',
   buildStage: 0,
   stageDone: false,
   stageRun: 0,
@@ -145,11 +152,14 @@ export const useGame = create<GameState>((set, get) => ({
       historyIndex: -1,
       lastCoalesceKey: null,
       timeOfDay: 'day',
+      force: 'none',
       buildStage: 0,
       stageDone: false,
     }),
 
   setTimeOfDay: (timeOfDay) => set({ timeOfDay }),
+
+  toggleForce: (f) => set({ force: get().force === f ? 'none' : f }),
 }));
 
 export const selectDesign = (s: GameState): Design | undefined => s.history[s.historyIndex];
