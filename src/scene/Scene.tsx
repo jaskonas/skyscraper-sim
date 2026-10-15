@@ -5,6 +5,7 @@ import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import { useCurrent } from '../state/hooks';
 import { useGame } from '../state/store';
 import { DetailInset } from '../ui/DetailInset';
+import { ForceBanner, ForceButtons, ForceReadout } from '../ui/ForceControls';
 import { SoilLegend } from '../ui/SoilLegend';
 import { Building } from './Building';
 import { ConstructionView } from './construction/ConstructionView';
@@ -82,12 +83,14 @@ export function Scene() {
         <CameraFramer frame={frame} nonce={nonce} />
       </Canvas>
       <DetailInset />
+      <ForceBanner />
       <div className="scene-overlay">
-        <SoilLegend site={site} design={design} />
+        {forceOn ? <ForceReadout /> : <SoilLegend site={site} design={design} />}
         <button onClick={reframe}>Fit tower in view</button>
         <button aria-pressed={night} onClick={() => setTimeOfDay(night ? 'day' : 'night')}>
           {night ? '☀️ Day' : '🌙 Night'}
         </button>
+        <ForceButtons />
       </div>
     </div>
   );

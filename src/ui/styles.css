@@ -145,3 +145,11 @@ details.group > summary { cursor: pointer; font-weight: 600; }
 .construction .yours { margin: 0 0 12px; color: var(--accent); }
 .construction-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
 .construction-buttons .build-button { flex: 1 1 100%; }
+.force-buttons { display: flex; gap: 6px; }
+.force-buttons button[aria-pressed='true'] { border-color: var(--accent); color: var(--accent); }
+.force-readout { background: rgba(17, 22, 28, 0.86); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 0.8em; max-width: 300px; }
+.force-readout ul { list-style: none; padding: 0; margin: 4px 0; display: flex; flex-direction: column; gap: 4px; }
+.force-readout li.marginal { color: var(--marginal); }
+.force-readout li.fail { color: var(--fail); }
+.force-readout p { margin: 2px 0; }
+.force-banner { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); background: var(--fail); color: #fff; font-weight: 700; padding: 8px 16px; border-radius: 8px; pointer-events: none; }
