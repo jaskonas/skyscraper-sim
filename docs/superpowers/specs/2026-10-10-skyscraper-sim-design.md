@@ -170,6 +170,6 @@ Top to bottom: header (site, mode, phase) → brief card with live requirement s
 1. **Plan 1 — Core sim and design screen.** Done (merged 2026-10-10).
 2. **Plan 2 — Architectural detail.** Done (merged 2026-10-10). Style-driven facades, 28-crown catalog, ornament controls, day/night toggle. Separate spec. Deployed to GitHub Pages (www.jaskonas.com/skyscraper-sim/).
 3. **Plan 3 — Detail window.** Done (merged and deployed 2026-10-13). A close-up inset (Facade / Corner / Base) built at real scale in true 3D. Spec: `2026-10-11-detail-window-design.md`.
-4. **Plan 4 — Construction animation.** The Build phase as six step-by-step stages driven by `analysis.schedule`, with a skeleton tailored to each structural system and material, a climbing crane, site vehicles and the dig in the soil cutaway. Spec: `2026-10-13-construction-animation-design.md`.
+4. **Plan 4 — Construction animation.** Done (merged and deployed 2026-10-13). The Build phase as six step-by-step stages driven by `analysis.schedule`, with a skeleton tailored to each structural system and material, a climbing crane, site vehicles and the dig in the soil cutaway. Spec: `2026-10-13-construction-animation-design.md`.
 5. **Plan 5 — Overlays and people simulation.**
 6. **Future iteration — Design chat (LLM).** §11. Text box at the bottom of the sidebar; Claude turns requests into catalog actions and explains tradeoffs.
