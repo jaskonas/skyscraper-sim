@@ -23,7 +23,7 @@ export type PartShape =
   | 'plan-cone';
 
 export const PART_MATERIALS = [
-  'body', 'accent', 'glass', 'stone', 'concrete', 'copper', 'gold', 'steel', 'foliage', 'ruby', 'light', 'interior', 'girder',
+  'body', 'accent', 'glass', 'stone', 'concrete', 'copper', 'gold', 'steel', 'foliage', 'ruby', 'light', 'interior', 'girder', 'wood',
 ] as const;
 export type PartMaterial = (typeof PART_MATERIALS)[number];
 

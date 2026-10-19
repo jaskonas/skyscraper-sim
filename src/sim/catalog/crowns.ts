@@ -56,6 +56,8 @@ export interface CrownDef {
   landmark: boolean;
   /** Makes electricity (wind turbines). */
   generatesPower?: true;
+  /** The crown leaves the roof open, so rooftop machinery, a parapet and a cleaning crane go on it. */
+  openRoof?: true;
   /** Built from stages unless `custom` — then scene/crowns must provide a builder. */
   stages?: readonly CrownStage[];
   custom?: true;
@@ -66,6 +68,7 @@ const S = 'standard' as const;
 
 const CROWN_DATA = {
   cornice: {
+    openRoof: true,
     id: 'cornice', label: 'Heavy cornice', family: 'classic', seenOn: 'Reliance Building, Chicago',
     blurb: 'A deep stone ledge that "caps" the tower like the top of a classical column.',
     height: { kind: 'metres', value: 2 }, officialHeight: true, landmark: false, minDetailLevel: S,
@@ -169,6 +172,7 @@ const CROWN_DATA = {
     ],
   },
   flat: {
+    openRoof: true,
     id: 'flat', label: 'Flat roof', family: 'modern', seenOn: 'Seagram Building, New York',
     blurb: 'A simple flat top with the machinery hidden behind a low wall. Good for a helipad or pool.',
     height: { kind: 'metres', value: 2 }, officialHeight: true, landmark: false, minDetailLevel: S,
@@ -179,6 +183,7 @@ const CROWN_DATA = {
     ],
   },
   'concrete-cap': {
+    openRoof: true,
     id: 'concrete-cap', label: 'Concrete cap', family: 'modern', seenOn: 'Barbican towers, London',
     blurb: 'A chunky overhanging concrete top — bold and blocky, the Brutalist way.',
     height: { kind: 'floors', value: 1 }, officialHeight: true, landmark: false, minDetailLevel: S,
@@ -210,6 +215,7 @@ const CROWN_DATA = {
     ],
   },
   'lattice-mast': {
+    openRoof: true,
     id: 'lattice-mast', label: 'Lattice mast', family: 'modern', seenOn: "Lloyd's Building, London",
     blurb: 'An open steel frame with a mast — High-Tech towers show off their engineering.',
     height: { kind: 'fraction', value: 0.1 }, officialHeight: true, landmark: true, minDetailLevel: S,
@@ -222,6 +228,7 @@ const CROWN_DATA = {
     ],
   },
   'twin-antennas': {
+    openRoof: true,
     id: 'twin-antennas', label: 'Twin antennas', family: 'modern', seenOn: 'Willis Tower, Chicago',
     blurb: 'Broadcast antennas. They make the tower look taller, but official height rankings don\'t count them!',
     height: { kind: 'fraction', value: 0.15 }, officialHeight: false, landmark: false, minDetailLevel: S,
@@ -324,6 +331,7 @@ const CROWN_DATA = {
     custom: true,
   },
   'wind-turbines': {
+    openRoof: true,
     id: 'wind-turbines', label: 'Wind turbines', family: 'eco', seenOn: 'Strata SE1, London',
     blurb: 'Three turbines in the roof make a little electricity — about 5% of what the building uses.',
     height: { kind: 'floors', value: 2 }, officialHeight: true, landmark: true, generatesPower: true, minDetailLevel: S,
