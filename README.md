@@ -15,6 +15,8 @@ Pressing **Build it!** builds the tower one stage at a time: digging, the founda
 
 **💨 Wind** and **〰️ Earthquake** (bottom-left of the 3D view) show those forces acting on your tower, while you design or after it is built: the tower sways (drawn much bigger than real), the ground shakes, and dampers and base isolation visibly do their jobs. The card beside them explains what you are seeing with your tower's own numbers.
 
+Up close, every window has a room behind it — with depth, blinds and furniture — and the glass sits back from the wall and reflects the sky. Homes get balconies and tall towers get louvred plant floors every 30 floors. If your computer struggles, switch **✨ Detail** to Simple.
+
 ## Develop
 
     npm test          # unit and component tests
