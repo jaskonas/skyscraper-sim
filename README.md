@@ -17,6 +17,8 @@ Pressing **Build it!** builds the tower one stage at a time: digging, the founda
 
 Up close, every window has a room behind it — with depth, blinds and furniture — and the glass sits back from the wall and reflects the sky. Homes get balconies and tall towers get louvred plant floors every 30 floors. If your computer struggles, switch **✨ Detail** to Simple.
 
+Open roofs carry real rooftop kit — cooling towers, a plant room, a window-cleaning crane on its rail, an antenna with a blinking light (and wooden water tanks on old New York styles) — setback ledges become planted terraces, and the front door gets a canopy and revolving doors.
+
 ## Develop
 
     npm test          # unit and component tests
