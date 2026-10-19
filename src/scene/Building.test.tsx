@@ -6,6 +6,8 @@ import { designFor } from '../sim/testUtils';
 import type { PlanShape } from '../sim/types';
 import { balconyParts } from './balconies';
 import { Building } from './Building';
+import { unitGeometry } from './buildingGeometry';
+import { dressingParts } from './dressing/dressing';
 import { crownParts } from './crownParts';
 import { createSway, swayAt } from './forces/sway';
 import { ornamentParts } from './ornaments';
@@ -51,6 +53,26 @@ describe('<Building />', () => {
     const half = await ReactThreeTestRenderer.create(<Building site={site} design={design} reveal={{ floors: 10, crown: 0, litFloors: 0, lights: false }} />);
     expect(instanceTotal(half, 'balconies')).toBe(all.filter((p) => p.position[1] < 10 * 4).length);
     expect(instanceTotal(half, 'balconies')).toBeLessThan(all.length);
+  });
+
+  it('dresses the tower: rooftop machinery, terraces and the entrance, added from the bottom up while building', async () => {
+    const { site, design } = designFor('new-york', { floors: 30, crown: 'flat', setbacks: 'few', ornament: 'high' });
+    const all = dressingParts(site, design);
+    expect(all.length).toBeGreaterThan(20);
+    const r = await ReactThreeTestRenderer.create(<Building site={site} design={design} />);
+    expect(instanceTotal(r, 'dressing')).toBe(all.length);
+    await r.unmount();
+    const none = await ReactThreeTestRenderer.create(<Building site={site} design={design} reveal={{ floors: 30, crown: 0, litFloors: 0, lights: false }} />);
+    expect(instanceTotal(none, 'dressing')).toBe(0);
+    await none.unmount();
+    const part = await ReactThreeTestRenderer.create(<Building site={site} design={design} reveal={{ floors: 30, crown: 0.5, litFloors: 0, lights: false }} />);
+    expect(instanceTotal(part, 'dressing')).toBeGreaterThan(0);
+    expect(instanceTotal(part, 'dressing')).toBeLessThan(all.length);
+  });
+
+  it('draws round towers smoothly (48 sides)', () => {
+    const g = unitGeometry('circle') as THREE.CylinderGeometry;
+    expect(g.parameters.radialSegments).toBe(48);
   });
 
   it('renders every crown, with every ornament and amenity, without throwing', async () => {

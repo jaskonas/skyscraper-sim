@@ -12,6 +12,7 @@ import { facadeTextures } from './facadeTexture';
 import { nightWindowAttributes } from './nightWindows';
 import { balconyParts } from './balconies';
 import { crownParts } from './crownParts';
+import { dressingParts } from './dressing/dressing';
 import { swayAt, type SwaySignal } from './forces/sway';
 import { lotCenter } from './layout';
 import { bracingParts, ornamentParts } from './ornaments';
@@ -239,12 +240,17 @@ export function Building({
   const ornaments = useMemo(() => ornamentParts(design), [design]);
   const bracing = useMemo(() => bracingParts(design), [design]);
   const balconies = useMemo(() => balconyParts(design), [design]);
+  const dressing = useMemo(() => dressingParts(site, design), [site, design]);
   const share = reveal ? reveal.crown : 1;
   const top = useMemo(() => {
-    if (share >= 1) return { crown, ornaments };
-    const shown = new Set(upTo([...ornaments, ...crown], share));
-    return { crown: crown.filter((p) => shown.has(p)), ornaments: ornaments.filter((p) => shown.has(p)) };
-  }, [ornaments, crown, share]);
+    if (share >= 1) return { crown, ornaments, dressing };
+    const shown = new Set(upTo([...ornaments, ...crown, ...dressing], share));
+    return {
+      crown: crown.filter((p) => shown.has(p)),
+      ornaments: ornaments.filter((p) => shown.has(p)),
+      dressing: dressing.filter((p) => shown.has(p)),
+    };
+  }, [ornaments, crown, dressing, share]);
   const look = { palette: design.palette, plan: design.shape, night, sway };
   const floors = Math.min(reveal?.floors ?? design.floors, design.floors - hideTopFloors);
   // During construction, balconies only on the floors finished so far.
@@ -267,6 +273,7 @@ export function Building({
       <PartsMesh name="crown" parts={top.crown} {...look} />
       <PartsMesh name="ornaments" parts={top.ornaments} {...look} />
       <PartsMesh name="balconies" parts={shownBalconies} {...look} />
+      <PartsMesh name="dressing" parts={top.dressing} {...look} />
       {/* While building, exposed bracing is part of the bare structure instead. */}
       <PartsMesh name="bracing" parts={reveal ? [] : bracing} {...look} />
       {share > 0.5 && <Amenities design={design} geometry={geometry} sway={sway} />}
