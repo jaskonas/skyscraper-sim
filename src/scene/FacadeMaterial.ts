@@ -134,6 +134,12 @@ const float ROOM_DEPTH = 3.0;
 const float GLASS_RECESS = 0.3;
 // How bright rooms read through the glass by day (they are much dimmer than the sky outside).
 const float ROOM_DAYLIGHT = 0.4;
+
+/** Hard stripes (0 or 1, a duty share of each period dark) that fade to their average once finer than a pixel. */
+float stripes(float x, float duty) {
+  float w = fwidth(x);
+  return mix(step(duty, fract(x)), 1.0 - duty, clamp(w * 2.0 - 0.5, 0.0, 1.0));
+}
 // Set while shading the surface and used again for the night glow and the reflections.
 float facadeGlass = 0.0;
 float facadeRoomShade = 1.0;
@@ -162,7 +168,7 @@ vec3 facadeRoom(vec2 cell, vec3 ray, vec3 tint, float bay, float floorIndex, out
   shade = clamp(dot(c, vec3(0.333)) / max(dot(tint, vec3(0.333)), 0.05), 0.0, 1.2);
   float blinds = roomBlinds(bay, floorIndex);
   if (blinds > 0.0 && cell.y > 1.0 - blinds) {
-    c = vec3(0.86, 0.85, 0.8) * (0.85 + 0.15 * step(0.5, fract(cell.y * uTileSize.y * 12.0)));
+    c = vec3(0.86, 0.85, 0.8) * (0.85 + 0.15 * stripes(cell.y * uTileSize.y * 12.0, 0.5));
     shade = 0.8;
   }
   if (roomDark(bay, floorIndex) > 0.5) c *= 0.25;
@@ -184,7 +190,7 @@ if (uDetail > 0.5 && abs(vFacadeNormal.y) < 0.5) {
   float floorIndex = floor(vFloor + 0.5) + floor(vFacadeUv.y);
   if (vMech > 0.5) {
     // A plant floor: louvres in place of windows, and nothing behind them to light up.
-    float slat = step(0.45, fract(vFacadeUv.y * uTileSize.y * 2.5));
+    float slat = stripes(vFacadeUv.y * uTileSize.y * 2.5, 0.45);
     diffuseColor.rgb *= mix(0.55, 1.05, slat);
     facadeGlass = 0.0;
   } else if (facadeGlass > 0.5) {
@@ -192,7 +198,11 @@ if (uDetail > 0.5 && abs(vFacadeNormal.y) < 0.5) {
     vec2 shift = (ray.xy / max(-ray.z, 0.15)) * GLASS_RECESS / uTileSize;
     if (texture2D( uGlowMap, vFacadeUv + shift ).r < 0.5) {
       // The inside face of the opening (its reveal), in the wall's colour.
+#ifdef USE_MAP
       diffuseColor.rgb = texture2D( map, vFacadeUv + shift ).rgb * 0.7;
+#else
+      diffuseColor.rgb *= 0.7;
+#endif
       facadeGlass = 0.0;
     } else {
       vec3 room = facadeRoom(fract(vFacadeUv), ray, vRoomTint, bay, floorIndex, facadeRoomShade);

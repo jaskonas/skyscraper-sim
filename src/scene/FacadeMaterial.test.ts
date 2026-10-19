@@ -45,6 +45,10 @@ describe('facade material', () => {
     expect(shader.fragmentShader).toContain('uSunDir');
     // Plant floors.
     expect(shader.fragmentShader).toContain('vMech > 0.5');
+    // Fine stripes fade to their average once they are smaller than a pixel, so they don't shimmer.
+    expect(shader.fragmentShader).toContain('fwidth(');
+    // The reveal's wall colour is only read when there is a texture (a canvas-less browser has none).
+    expect(shader.fragmentShader).toMatch(/#ifdef USE_MAP\s+diffuseColor\.rgb = texture2D\( map, vFacadeUv \+ shift \)/);
     expect(shader.uniforms.uDetail).toBeDefined();
   });
 
