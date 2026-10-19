@@ -171,7 +171,10 @@ Top to bottom: header (site, mode, phase) → brief card with live requirement s
 2. **Plan 2 — Architectural detail.** Done (merged 2026-10-10). Style-driven facades, 28-crown catalog, ornament controls, day/night toggle. Separate spec. Deployed to GitHub Pages (www.jaskonas.com/skyscraper-sim/).
 3. **Plan 3 — Detail window.** Done (merged and deployed 2026-10-13). A close-up inset (Facade / Corner / Base) built at real scale in true 3D. Spec: `2026-10-11-detail-window-design.md`.
 4. **Plan 4 — Construction animation.** Done (merged and deployed 2026-10-13). The Build phase as six step-by-step stages driven by `analysis.schedule`, with a skeleton tailored to each structural system and material, a climbing crane, site vehicles and the dig in the soil cutaway. Spec: `2026-10-13-construction-animation-design.md`.
-5. **Plan 5 — Wind and earthquake.** Watch the forces act on the tower, live while designing and on the finished tower: wind streaks and eddies, bending sway, a shaking site, dampers and base isolation at work. Spec: `2026-10-15-forces-design.md`.
-6. **Plan 6 — Inside the tower.** Structure, elevators, electrical, plumbing and HVAC overlays (§9).
-7. **Plan 7 — People simulation** (§9).
-8. **Future iteration — Design chat (LLM).** §11. Text box at the bottom of the sidebar; Claude turns requests into catalog actions and explains tradeoffs.
+5. **Plan 5 — Wind and earthquake.** Done (merged and deployed 2026-10-15). Watch the forces act on the tower, live while designing and on the finished tower: wind streaks and eddies, bending sway, a shaking site, dampers and base isolation at work. Spec: `2026-10-15-forces-design.md`.
+6. **Plan 6 — Facade surface and granular detail.** Rooms behind the glass, recessed windows, sky reflections, window variety, mechanical floors, balconies. Spec: `2026-10-18-visual-detail-design.md` §3.
+7. **Plan 7 — Tower dressing.** Rooftop machinery, setback terraces, entrance and lobby, smoother shapes. Same spec, §4.
+8. **Plan 8 — Close-range 3D.** True 3D wall bays near the camera. Same spec, §5.
+9. **Plan 9 — Inside the tower.** Structure, elevators, electrical, plumbing and HVAC overlays (§9).
+10. **Plan 10 — People simulation** (§9).
+11. **Future iteration — Design chat (LLM).** §11. Text box at the bottom of the sidebar; Claude turns requests into catalog actions and explains tradeoffs.
