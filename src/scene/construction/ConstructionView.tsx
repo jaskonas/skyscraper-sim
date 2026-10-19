@@ -31,6 +31,7 @@ interface SceneProps {
 /** The building site at one moment: the finished tower so far, the bare structure above it, the ground and the props. */
 export function ConstructionScene({ site, design, parts, state, clock, night }: SceneProps) {
   const [lx, lz] = lotCenter(site);
+  const facadeDetail = useGame((s) => s.facadeDetail === 'high');
   const floors = Math.floor(state.facadeTop / FLOOR_HEIGHT + 1e-6);
   // Recomputed only when a height crosses a floor, not on every redraw.
   const key = [state.coreTop, state.frameTop, state.slabTop, state.facadeTop].map((h) => Math.floor(h / FLOOR_HEIGHT + 1e-6)).join('|');
@@ -45,6 +46,7 @@ export function ConstructionScene({ site, design, parts, state, clock, night }: 
         site={site}
         design={design}
         night={night}
+        facadeDetail={facadeDetail}
         reveal={{ floors, crown: Math.round(state.crown * 20) / 20, litFloors: state.litFloors, lights: state.litFloors > 0 }}
       />
       <FoundationView site={site} design={design} dig={Math.round(state.dig * 40) / 40} built={Math.round(state.foundation * 40) / 40} />
