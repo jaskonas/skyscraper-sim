@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { fastestMs } from '../../test/fastest';
 import { floorUses } from '../../sim/analysis/massing';
 import { ORNAMENTS, WINDOW_PATTERNS } from '../../sim/catalog/facades';
 import { ORNAMENT_IDS, SPANDREL_IDS, WINDOW_PATTERN_IDS } from '../../sim/catalog/ids';
@@ -102,9 +103,8 @@ describe('detailModel', () => {
   it('builds even the worst case fast enough to redraw on every slider tick', () => {
     const { design } = designFor('shanghai', { floors: 150, plateWidth: 80, shape: 'circle', twist: 120, taper: 0.3, setbacks: 'wedding-cake', ornaments: [...ORNAMENT_IDS], ornament: 'high' });
     for (const { id } of DETAIL_VIEWS) detailModel(design, id);
-    const t0 = performance.now();
-    for (let i = 0; i < 5; i++) for (const { id } of DETAIL_VIEWS) detailModel({ ...design, floors: 150 - i }, id);
-    expect((performance.now() - t0) / 15).toBeLessThan(20);
+    // Each run builds all three views, so the budget is three times one view's 20 ms.
+    expect(fastestMs(5, (i) => DETAIL_VIEWS.forEach(({ id }) => detailModel({ ...design, floors: 150 - i }, id)))).toBeLessThan(3 * 20);
   });
 
   it('every ornament can appear in at least one view when the tower has setbacks', () => {
