@@ -10,6 +10,7 @@ import { ForceBanner, ForceButtons, ForceReadout } from '../ui/ForceControls';
 import { SoilLegend } from '../ui/SoilLegend';
 import { Building } from './Building';
 import { ConstructionView } from './construction/ConstructionView';
+import { DevCameraHook } from './DevCameraHook';
 import { FoundationView } from './FoundationView';
 import { ForcesView, GroundShake } from './forces/ForcesView';
 import { createSway } from './forces/sway';
@@ -84,6 +85,7 @@ export function Scene() {
         {forceOn && <ForcesView site={site} design={design} analysis={analysis} force={forceOn} sway={sway} />}
         <OrbitControls makeDefault maxPolarAngle={Math.PI * 0.62} minDistance={40} maxDistance={2500} />
         <CameraFramer frame={frame} nonce={nonce} />
+        <DevCameraHook />
       </Canvas>
       <DetailInset />
       <ForceBanner />
