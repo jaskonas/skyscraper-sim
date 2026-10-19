@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { unitGeometry } from './buildingGeometry';
-import { createFacadeMaterial, facadeAcross, patchFacadeShader, setFacadeNight, type FacadeUniforms } from './FacadeMaterial';
+import { createFacadeMaterial, facadeAcross, facadeUniforms, patchFacadeShader, setFacadeDetail, setFacadeNight, setFacadeSky, type FacadeUniforms } from './FacadeMaterial';
 
 const options = { map: null, glowMap: null, tileWidth: 3, tileHeight: 3.4, roughness: 0.5, metalness: 0.2, color: '#808080', round: false };
 
@@ -12,7 +12,8 @@ describe('facade material', () => {
       fragmentShader: THREE.ShaderLib.standard.fragmentShader,
       uniforms: {} as Record<string, unknown>,
     };
-    const uniforms: FacadeUniforms = { uNight: { value: 0 }, uTileSize: { value: new THREE.Vector2(3, 3.4) }, uGlowMap: { value: null }, uRound: { value: 0 } };
+    const uniforms: FacadeUniforms = facadeUniforms(null);
+    uniforms.uTileSize.value.set(3, 3.4);
     patchFacadeShader(shader, uniforms);
     expect(shader.vertexShader).toContain('vFacadeUv = vec2(');
     expect(shader.vertexShader).toContain('attribute float aFloor;');
@@ -22,6 +23,44 @@ describe('facade material', () => {
     expect(shader.vertexShader).toContain('uRound > 0.5');
     expect(shader.fragmentShader).not.toContain('texture2D( map, vMapUv )');
     expect(shader.uniforms.uNight).toBe(uniforms.uNight);
+  });
+
+  it('adds rooms behind the glass, recessed windows, sky reflections and louvred plant floors', () => {
+    const shader = {
+      vertexShader: THREE.ShaderLib.standard.vertexShader,
+      fragmentShader: THREE.ShaderLib.standard.fragmentShader,
+      uniforms: {} as Record<string, unknown>,
+    };
+    patchFacadeShader(shader, facadeUniforms(null));
+    expect(shader.vertexShader).toContain('attribute vec3 aRoomTint;');
+    expect(shader.vertexShader).toContain('attribute float aMech;');
+    expect(shader.vertexShader).toContain('vFacadeWorld =');
+    // Rooms: a ray traced into a box behind each pane.
+    expect(shader.fragmentShader).toContain('roomBlinds(');
+    expect(shader.fragmentShader).toContain('ROOM_DEPTH');
+    // Recess: the glass mask looked up again, shifted by the view direction.
+    expect(shader.fragmentShader).toContain('GLASS_RECESS');
+    // Reflections and the sun glint go into the emitted light.
+    expect(shader.fragmentShader).toContain('totalEmissiveRadiance += facadeRefl');
+    expect(shader.fragmentShader).toContain('uSunDir');
+    // Plant floors.
+    expect(shader.fragmentShader).toContain('vMech > 0.5');
+    expect(shader.uniforms.uDetail).toBeDefined();
+  });
+
+  it('turns the detail on and off and follows the sky without rebuilding the material', () => {
+    const m = createFacadeMaterial(options);
+    const u = m.userData.facadeUniforms as FacadeUniforms;
+    // Off unless asked for: neighbouring buildings share this material and stay simple.
+    expect(u.uDetail.value).toBe(0);
+    setFacadeDetail(m, true);
+    expect(u.uDetail.value).toBe(1);
+    setFacadeDetail(m, false);
+    expect(u.uDetail.value).toBe(0);
+    setFacadeSky(m, '#123456', [0, 1, 0]);
+    expect('#' + u.uSkyColor.value.getHexString()).toBe('#123456');
+    expect(u.uSunDir.value.toArray()).toEqual([0, 1, 0]);
+    expect(m.customProgramCacheKey()).toBe('facade-v3');
   });
 
   it('falls back to a plain colour without a texture, and only lights up with a glow map', () => {
