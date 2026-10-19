@@ -8,7 +8,7 @@ import { designFor } from '../../sim/testUtils';
 import type { Design, PlanShape } from '../../sim/types';
 import { planFaces, setbackLevels } from '../parts/placement';
 import { fastestMs } from '../../test/fastest';
-import { dressingParts, entranceParts, roofParts, terraceParts } from './dressing';
+import { dressingParts, entranceParts, helipadRadius, roofDeck, roofParts, terraceParts } from './dressing';
 
 const NY = SITES['new-york'];
 const build = (patch: Partial<Design>) => designFor('new-york', { shape: 'square', plateWidth: 36, floors: 40, setbacks: 'none', taper: 0, twist: 0, crown: 'flat', amenities: [], ...patch }).design;
@@ -58,6 +58,38 @@ describe('roof machinery', () => {
   });
 });
 
+describe('roof machinery on crowns with their own roof slab', () => {
+  it('stands on the crown\'s deck (a cornice or cap), never buried in it, with no second parapet', () => {
+    for (const crown of CROWN_IDS.filter((c) => CROWNS[c].openRoof)) {
+      const design = build({ crown });
+      const deck = roofDeck(design);
+      expect(deck, crown).toBeGreaterThanOrEqual(design.floors * FLOOR_HEIGHT);
+      for (const p of roofParts(NY, design)) expect(partBounds(p).min[1], `${crown} ${p.shape} ${p.material}`).toBeGreaterThanOrEqual(deck - 1e-6);
+    }
+    const cornice = build({ crown: 'cornice' });
+    expect(roofDeck(cornice)).toBeGreaterThan(cornice.floors * FLOOR_HEIGHT);
+    // The cornice's own overhanging edge is the parapet; a flat roof's slab has none, so it gets one.
+    expect(roofParts(NY, cornice).some((p) => p.material === 'stone')).toBe(false);
+    expect(roofParts(NY, build({ crown: 'flat' })).some((p) => p.material === 'stone')).toBe(true);
+  });
+
+  it('keeps everything, parapet and crane included, off the helipad on every shape and size', () => {
+    for (const shape of SHAPES)
+      for (const plateWidth of [15, 36]) {
+        const design = build({ shape, plateWidth, plateDepth: plateWidth, amenities: ['helipad'] });
+        const r = helipadRadius(design);
+        const top = floorSlices(design).at(-1)!;
+        // A triangle's helipad shrinks to fit inside it.
+        if (shape === 'triangle') expect(r).toBeLessThanOrEqual((top.width / (2 * Math.sqrt(3))) * 0.9);
+        for (const p of roofParts(NY, design)) {
+          if (p.animate) continue;
+          const reachIn = Math.min(p.scale[0], p.scale[2]) / 2;
+          expect(Math.hypot(p.position[0], p.position[2]) - reachIn, `${shape} ${plateWidth} ${p.material}`).toBeGreaterThanOrEqual(r - 1e-6);
+        }
+      }
+  });
+});
+
 describe('setback terraces', () => {
   it('plants every setback ledge, inside the ledge, with a railing at its edge', () => {
     for (const shape of SHAPES) {
@@ -68,11 +100,13 @@ describe('setback terraces', () => {
       for (const level of levels) {
         const y = level.slice.y + FLOOR_HEIGHT;
         const here = parts.filter((p) => Math.abs(partBounds(p).min[1] - y) < 0.01);
-        expect(here.some((p) => p.material === 'foliage'), `${shape} @${y}`).toBe(true);
-        expect(here.some((p) => p.material === 'glass'), `${shape} @${y}`).toBe(true);
         const above = floorSlices(design)[level.slice.index + 1];
         // The floor above's walls are this far from the middle at their closest (a triangle's are much closer than half its width).
         const inner = Math.min(...planFaces(design.shape, above.width, above.depth).map((f) => Math.hypot(f.x, f.z)));
+        const outer = Math.min(...planFaces(design.shape, level.slice.width, level.slice.depth).map((f) => Math.hypot(f.x, f.z)));
+        // Plants only where the ledge is at least 1.2 m deep (a triangle's ledges here are narrower).
+        expect(here.some((p) => p.material === 'foliage'), `${shape} @${y}`).toBe(outer - inner >= 1.2);
+        expect(here.some((p) => p.material === 'glass'), `${shape} @${y}`).toBe(true);
         for (const p of here) {
           const d = Math.hypot(p.position[0], p.position[2]);
           // On the ledge: outside the floor above, inside the floor below.
@@ -82,6 +116,32 @@ describe('setback terraces', () => {
       }
       expect(parts.every(partIsFinite)).toBe(true);
     }
+  });
+
+  it('keeps hedges and trees on the ledge, out of the wall above, even on triangles', () => {
+    for (const shape of SHAPES) {
+      const design = build({ shape, setbacks: 'wedding-cake', ornament: 'high' });
+      const slices = floorSlices(design);
+      for (const level of setbackLevels(design).filter((l) => !l.isRoof)) {
+        const y = level.slice.y + FLOOR_HEIGHT;
+        const above = slices[level.slice.index + 1];
+        const inner = Math.min(...planFaces(design.shape, above.width, above.depth).map((f) => Math.hypot(f.x, f.z)));
+        for (const p of terraceParts(design).filter((q) => q.material === 'foliage' && partBounds(q).min[1] >= y - 0.01 && partBounds(q).min[1] < y + 3)) {
+          const extent = Math.max(p.scale[0], p.scale[2]) / 2;
+          expect(Math.hypot(p.position[0], p.position[2]) - extent, `${shape} @${y}`).toBeGreaterThanOrEqual(inner - 0.05);
+        }
+      }
+    }
+  });
+
+  it('runs a round terrace\'s railing along its edge, not cutting across it', () => {
+    const design = build({ shape: 'circle', setbacks: 'few', ornament: 'high' });
+    const level = setbackLevels(design).filter((l) => !l.isRoof)[0];
+    const y = level.slice.y + FLOOR_HEIGHT;
+    const r = level.slice.width / 2;
+    const rails = terraceParts(design).filter((p) => p.material === 'glass' && Math.abs(partBounds(p).min[1] - y) < 0.01);
+    expect(rails.length).toBeGreaterThan(0);
+    for (const p of rails) expect(Math.hypot(p.position[0], p.position[2])).toBeGreaterThan(r - 0.3 - 0.1);
   });
 
   it('has no terraces without setbacks, and only railings when ornament amount is None', () => {

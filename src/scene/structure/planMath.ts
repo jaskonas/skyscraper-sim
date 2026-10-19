@@ -59,9 +59,9 @@ export function chord(shape: PlanShape, width: number, depth: number, axis: 'x' 
   return hi > lo ? [lo, hi] : null;
 }
 
-/** Points round the outside, as straight segments: the plan's corners, or 12 points round a circle. */
-export function ringPoints(shape: PlanShape, width: number, depth: number, inset: number): [number, number][] {
-  const n = shape === 'circle' ? 12 : shape === 'triangle' ? 3 : 4;
+/** Points round the outside, as straight segments: the plan's corners, or `circleSides` points round a circle. */
+export function ringPoints(shape: PlanShape, width: number, depth: number, inset: number, circleSides = 12): [number, number][] {
+  const n = shape === 'circle' ? circleSides : shape === 'triangle' ? 3 : 4;
   if (shape === 'circle') return Array.from({ length: n }, (_, i) => perimeterAt(shape, width, depth, i / n, inset));
   return planCorners(shape, width, depth).map((p) => {
     const r = Math.hypot(p.x, p.z);

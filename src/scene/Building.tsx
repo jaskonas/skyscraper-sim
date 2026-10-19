@@ -12,7 +12,7 @@ import { facadeTextures } from './facadeTexture';
 import { nightWindowAttributes } from './nightWindows';
 import { balconyParts } from './balconies';
 import { crownParts } from './crownParts';
-import { dressingParts } from './dressing/dressing';
+import { dressingParts, helipadRadius, roofDeck } from './dressing/dressing';
 import { swayAt, type SwaySignal } from './forces/sway';
 import { lotCenter } from './layout';
 import { bracingParts, ornamentParts } from './ornaments';
@@ -152,7 +152,9 @@ function Body({
 function Amenities({ design, geometry, sway }: { design: Design; geometry: THREE.BufferGeometry; sway?: SwaySignal }) {
   const slices = floorSlices(design);
   const top = slices[slices.length - 1];
-  const roofY = design.floors * FLOOR_HEIGHT;
+  // On top of a cornice or cap, if the crown has one.
+  const roofY = roofDeck(design);
+  const pad = helipadRadius(design);
   const band = (fraction: number) => slices[Math.min(slices.length - 1, Math.floor(slices.length * fraction))];
   const deck = band(0.9);
   const garden = band(0.5);
@@ -161,7 +163,7 @@ function Amenities({ design, geometry, sway }: { design: Design; geometry: THREE
       {design.amenities.includes('helipad') && (
         <SwayFollow y={roofY} sway={sway}>
           <mesh position={[0, roofY + 0.4, 0]}>
-            <cylinderGeometry args={[Math.min(top.width, top.depth) * 0.35, Math.min(top.width, top.depth) * 0.35, 0.6, 24]} />
+            <cylinderGeometry args={[pad, pad, 0.6, 24]} />
             <meshStandardMaterial color="#3b3f45" />
           </mesh>
         </SwayFollow>

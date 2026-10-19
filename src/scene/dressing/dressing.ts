@@ -1,7 +1,8 @@
 import { CROWNS } from '../../sim/catalog/crowns';
 import { FLOOR_HEIGHT, floorSlices, type FloorSlice } from '../../sim/geometry';
-import { rotateYXZ, strutPart, type Part, type PartMaterial, type Vec3 } from '../../sim/parts';
+import { partBounds, rotateYXZ, strutPart, type Part, type PartMaterial, type Vec3 } from '../../sim/parts';
 import type { Design, Site } from '../../sim/types';
+import { crownParts } from '../crownParts';
 import { placeAtAnchor, worldAnchor } from '../detail/frame';
 import { alongFace, planFaces, setbackLevels } from '../parts/placement';
 import { insidePlan, ringPoints } from '../structure/planMath';
@@ -20,7 +21,8 @@ const turned = (s: FloorSlice, x: number, z: number): [number, number] => {
 
 /** Straight segments round the outside of a floor, `inset` metres in, at height y: a parapet, rail or railing. */
 function ring(s: FloorSlice, design: Design, inset: number, y: number, height: number, thickness: number, material: PartMaterial): Part[] {
-  const pts = ringPoints(design.shape, s.width, s.depth, inset).map(([x, z]) => turned(s, x, z));
+  // 48 sides round a circle, matching the round tower's own outline.
+  const pts = ringPoints(design.shape, s.width, s.depth, inset, 48).map(([x, z]) => turned(s, x, z));
   return pts.map((p, i) => {
     const q = pts[(i + 1) % pts.length];
     const len = Math.hypot(q[0] - p[0], q[1] - p[1]);
@@ -36,6 +38,34 @@ function reach(design: Design, s: FloorSlice, a: number, margin: number): number
 }
 
 /**
+ * Height the roof kit (and the helipad and pool) stands at: the top of the crown's own roof slab, a
+ * cornice or cap that covers the whole roof, or the bare roof when there is none.
+ */
+export function roofDeck(design: Design): number {
+  const roof = design.floors * FLOOR_HEIGHT;
+  return Math.max(roof, ...roofSlabs(design).map((p) => partBounds(p).max[1]));
+}
+
+/** The crown's slabs that cover the whole roof. */
+function roofSlabs(design: Design): Part[] {
+  const top = floorSlices(design).at(-1)!;
+  return crownParts(design).filter((p) => p.shape === 'plan' && p.scale[0] >= 0.9 * top.width);
+}
+
+/** Whether the crown's roof slab overhangs the walls (a cornice or cap), so its edge already acts as a parapet. */
+function deckHasEdge(design: Design): boolean {
+  const top = floorSlices(design).at(-1)!;
+  return roofSlabs(design).some((p) => p.scale[0] > top.width * 1.02);
+}
+
+/** The helipad's radius: a third of the roof's width, shrunk on a triangle to fit inside it. */
+export function helipadRadius(design: Design): number {
+  const top = floorSlices(design).at(-1)!;
+  const r = Math.min(top.width, top.depth) * 0.35;
+  return design.shape === 'triangle' ? Math.min(r, (0.85 * top.width) / (2 * Math.sqrt(3))) : r;
+}
+
+/**
  * Rooftop machinery on roofs the crown leaves open: two cooling towers, a plant room, a wooden water
  * tank (old New York styles), a window-cleaning crane on a rail round the edge, a blinking antenna (unless
  * the crown has masts), and a parapet with a coping. Machinery keeps to the corners, clear of a helipad or pool.
@@ -44,9 +74,12 @@ export function roofParts(site: Site, design: Design): Part[] {
   if (!CROWNS[design.crown].openRoof) return [];
   const slices = floorSlices(design);
   const top = slices[slices.length - 1];
-  const y = design.floors * FLOOR_HEIGHT;
+  // On top of a cornice or cap, if the crown has one.
+  const y = roofDeck(design);
   const min = Math.min(top.width, top.depth);
-  const clear = design.amenities.includes('helipad') || design.amenities.includes('pool') ? min * 0.35 : 0;
+  const clear = Math.max(design.amenities.includes('helipad') ? helipadRadius(design) : 0, design.amenities.includes('pool') ? min * 0.35 : 0);
+  /** Keeps parts whose inner side stays clear of a helipad or pool. */
+  const clearOf = (ps: Part[]) => ps.filter((p) => Math.hypot(p.position[0], p.position[2]) - Math.min(p.scale[0], p.scale[2]) / 2 >= clear);
   const parts: Part[] = [];
   /** A spot at angle `a` (degrees) for something `size` across, or null if it can't clear the helipad. */
   const spot = (deg: number, size: number): [number, number] | null => {
@@ -72,13 +105,15 @@ export function roofParts(site: Site, design: Design): Part[] {
     }
   }
   // The window-cleaning crane: a yellow gantry on a rail round the roof edge, its arm out over the side.
-  parts.push(...ring(top, design, 1.5, y, 0.2, 0.3, 'steel'));
-  const a0 = 0;
-  const r0 = reach(design, top, a0, 1.5);
-  const [gx, gz] = turned(top, 0, r0);
-  const [ax, az] = turned(top, 0, r0 + 4);
-  parts.push(box([gx, y + 1, gz], [3, 2, 2.5], 'gold', [0, top.rotation, 0]));
-  parts.push(strutPart([gx, y + 2, gz], [ax, y + 3.5, az], 0.35, 'gold'));
+  // Left out where it would sit on the helipad (small or triangular roofs).
+  parts.push(...clearOf(ring(top, design, 1.5, y, 0.2, 0.3, 'steel')));
+  const r0 = reach(design, top, 0, 1.5);
+  if (r0 - 1.25 >= clear) {
+    const [gx, gz] = turned(top, 0, r0);
+    const [ax, az] = turned(top, 0, r0 + 4);
+    parts.push(box([gx, y + 1, gz], [3, 2, 2.5], 'gold', [0, top.rotation, 0]));
+    parts.push(strutPart([gx, y + 2, gz], [ax, y + 3.5, az], 0.35, 'gold'));
+  }
   // An antenna with an aircraft light, unless the crown already has masts.
   if (design.crown !== 'twin-antennas' && design.crown !== 'lattice-mast') {
     const mast = spot(180, 2);
@@ -87,9 +122,11 @@ export function roofParts(site: Site, design: Design): Part[] {
       parts.push({ shape: 'sphere', position: [mast[0], y + 12.3, mast[1]], scale: [0.6, 0.6, 0.6], material: 'ruby', glow: true, animate: 'blink' });
     }
   }
-  // Parapet and coping round the edge.
-  parts.push(...ring(top, design, 0.2, y, 1.1, 0.4, 'stone'));
-  parts.push(...ring(top, design, 0.2, y + 1.1, 0.15, 0.6, 'stone'));
+  // Parapet and coping round the edge — unless a cornice or cap already forms the roof's edge.
+  if (!deckHasEdge(design)) {
+    parts.push(...clearOf(ring(top, design, 0.2, y, 1.1, 0.4, 'stone')));
+    parts.push(...clearOf(ring(top, design, 0.2, y + 1.1, 0.15, 0.6, 'stone')));
+  }
   return parts;
 }
 
@@ -105,20 +142,27 @@ export function terraceParts(design: Design): Part[] {
     const below = level.slice;
     const above = slices[below.index + 1];
     const y = below.y + FLOOR_HEIGHT;
-    const ledge = Math.min(below.width - above.width, below.depth - above.depth) / 2;
+    // The real gap between this floor's walls and the walls above (a triangle's is much less than half
+    // the change in width).
+    const aboveFaces = planFaces(design.shape, above.width, above.depth);
+    const belowFaces = planFaces(design.shape, below.width, below.depth);
+    const ledge = Math.min(...belowFaces.map((f, i) => Math.hypot(f.x, f.z) - Math.hypot(aboveFaces[i].x, aboveFaces[i].z)));
     parts.push(...ring(below, design, 0.3, y, 1.1, 0.06, 'glass'));
     if (design.ornament === 'none' || ledge < 1.2) continue;
-    for (const face of planFaces(design.shape, below.width, below.depth)) {
+    // Hedges and trees sized to fit between the railing and the wall above.
+    const hedge = Math.min(0.7, ledge * 0.45);
+    const crown = Math.min(1.6, ledge * 0.7);
+    for (const face of belowFaces) {
       const n = Math.floor(face.length / 6);
       for (let k = 0; k < n; k++) {
         const s = (k - (n - 1) / 2) * 6;
         const a = worldAnchor(below, alongFace(design.shape, below.width, below.depth, face, s));
         // Half-way across the ledge, in the anchor's frame (z points out of the wall below).
         const z = -ledge / 2;
-        parts.push(placeAtAnchor(box([0, 0.4, z], [1.4, 0.8, 0.7], 'foliage'), { ...a, position: [a.position[0], y, a.position[2]] }));
+        parts.push(placeAtAnchor(box([0, 0.4, z], [1.4, 0.8, hedge], 'foliage'), { ...a, position: [a.position[0], y, a.position[2]] }));
         if (k % 2 === 0) {
           parts.push(placeAtAnchor(cyl([1.6, 0.9, z], [0.25, 1.8, 0.25], 'wood'), { ...a, position: [a.position[0], y, a.position[2]] }));
-          parts.push(placeAtAnchor({ shape: 'sphere', position: [1.6, 2.4, z], scale: [1.6, 1.6, 1.6], material: 'foliage' }, { ...a, position: [a.position[0], y, a.position[2]] }));
+          parts.push(placeAtAnchor({ shape: 'sphere', position: [1.6, 1.6 + crown / 2, z], scale: [crown, crown, crown], material: 'foliage' }, { ...a, position: [a.position[0], y, a.position[2]] }));
         }
       }
     }
