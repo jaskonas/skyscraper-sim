@@ -10,6 +10,7 @@ import { lighting } from './lighting';
 import { TILE_HEIGHT_M } from './facadeTile';
 import { facadeTextures } from './facadeTexture';
 import { nightWindowAttributes } from './nightWindows';
+import { balconyParts } from './balconies';
 import { crownParts } from './crownParts';
 import { swayAt, type SwaySignal } from './forces/sway';
 import { lotCenter } from './layout';
@@ -237,6 +238,7 @@ export function Building({
   const crown = useMemo(() => crownParts(design), [design]);
   const ornaments = useMemo(() => ornamentParts(design), [design]);
   const bracing = useMemo(() => bracingParts(design), [design]);
+  const balconies = useMemo(() => balconyParts(design), [design]);
   const share = reveal ? reveal.crown : 1;
   const top = useMemo(() => {
     if (share >= 1) return { crown, ornaments };
@@ -245,6 +247,11 @@ export function Building({
   }, [ornaments, crown, share]);
   const look = { palette: design.palette, plan: design.shape, night, sway };
   const floors = Math.min(reveal?.floors ?? design.floors, design.floors - hideTopFloors);
+  // During construction, balconies only on the floors finished so far.
+  const shownBalconies = useMemo(
+    () => (floors >= design.floors ? balconies : balconies.filter((p) => p.position[1] < floors * FLOOR_HEIGHT)),
+    [balconies, floors, design.floors],
+  );
   return (
     <group name="building" position={[lx, 0, lz]}>
       <Body
@@ -259,6 +266,7 @@ export function Building({
       <Instanced name="slabs" geometry={geometry} items={slabs} color={design.palette.accent} count={floors} sway={sway} />
       <PartsMesh name="crown" parts={top.crown} {...look} />
       <PartsMesh name="ornaments" parts={top.ornaments} {...look} />
+      <PartsMesh name="balconies" parts={shownBalconies} {...look} />
       {/* While building, exposed bracing is part of the bare structure instead. */}
       <PartsMesh name="bracing" parts={reveal ? [] : bracing} {...look} />
       {share > 0.5 && <Amenities design={design} geometry={geometry} sway={sway} />}

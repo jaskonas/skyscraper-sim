@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { CROWN_IDS, ORNAMENT_IDS } from '../sim/catalog/ids';
 import { designFor } from '../sim/testUtils';
 import type { PlanShape } from '../sim/types';
+import { balconyParts } from './balconies';
 import { Building } from './Building';
 import { crownParts } from './crownParts';
 import { createSway, swayAt } from './forces/sway';
@@ -39,6 +40,17 @@ describe('<Building />', () => {
     const simple = await ReactThreeTestRenderer.create(<Building site={site} design={design} facadeDetail={false} />);
     const plain = simple.scene.findAll((n) => n.props.name === 'body')[0].instance as THREE.InstancedMesh;
     expect((plain.material as THREE.MeshStandardMaterial).userData.facadeUniforms.uDetail.value).toBe(0);
+  });
+
+  it('draws balconies on home floors, and only up to the floors built so far during construction', async () => {
+    const { site, design } = designFor('chicago', { floors: 30, useMix: { retail: 0, office: 0, hotel: 0, residential: 100 } });
+    const all = balconyParts(design);
+    const r = await ReactThreeTestRenderer.create(<Building site={site} design={design} />);
+    expect(instanceTotal(r, 'balconies')).toBe(all.length);
+    await r.unmount();
+    const half = await ReactThreeTestRenderer.create(<Building site={site} design={design} reveal={{ floors: 10, crown: 0, litFloors: 0, lights: false }} />);
+    expect(instanceTotal(half, 'balconies')).toBe(all.filter((p) => p.position[1] < 10 * 4).length);
+    expect(instanceTotal(half, 'balconies')).toBeLessThan(all.length);
   });
 
   it('renders every crown, with every ornament and amenity, without throwing', async () => {
