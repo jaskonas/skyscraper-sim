@@ -7,6 +7,7 @@ import { useGame } from '../state/store';
 import { DetailInset } from '../ui/DetailInset';
 import { FacadeDetailToggle } from '../ui/FacadeDetailToggle';
 import { ForceBanner, ForceButtons, ForceReadout } from '../ui/ForceControls';
+import { ShadowToggle } from '../ui/ShadowToggle';
 import { SoilLegend } from '../ui/SoilLegend';
 import { Building } from './Building';
 import { ConstructionView } from './construction/ConstructionView';
@@ -97,6 +98,7 @@ export function Scene() {
         </button>
         <ForceButtons />
         <FacadeDetailToggle />
+        <ShadowToggle />
       </div>
     </div>
   );
