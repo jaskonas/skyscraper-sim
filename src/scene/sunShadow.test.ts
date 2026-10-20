@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DIORAMA } from './layout';
-import { SHADOW_MAP_SIZE, SUN_DIRECTION, SUN_DISTANCE, shadowFrame, snapToTexel } from './sunShadow';
+import { CONTACT_MARGIN, SHADOW_MAP_SIZE, SUN_DIRECTION, SUN_DISTANCE, contactPatches, shadowFrame, snapToTexel } from './sunShadow';
 
 const sub = (a: number[], b: number[]) => a.map((v, i) => v - b[i]);
 const len = (a: number[]) => Math.hypot(...a);
@@ -34,5 +34,13 @@ describe('shadow frame', () => {
     expect(len(sub(q, p))).toBeLessThanOrEqual(texel);
     const again = snapToTexel(q, 300);
     expect(len(sub(again, q))).toBeLessThan(1e-9);
+  });
+});
+
+describe('contact patches', () => {
+  it('grows each footprint by the margin and keeps its turn', () => {
+    expect(CONTACT_MARGIN).toBe(6);
+    expect(contactPatches([{ x: 1, z: 2, width: 30, depth: 20, rotation: 0.3 }])).toEqual([{ x: 1, z: 2, width: 42, depth: 32, rotation: 0.3 }]);
+    expect(contactPatches([{ x: 0, z: 0, width: 10, depth: 10 }])[0].rotation).toBe(0);
   });
 });

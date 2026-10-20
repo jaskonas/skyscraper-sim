@@ -12,6 +12,7 @@ import { ShadowToggle } from '../ui/ShadowToggle';
 import { SoilLegend } from '../ui/SoilLegend';
 import { Building } from './Building';
 import { ConstructionView } from './construction/ConstructionView';
+import { ContactShade } from './ContactShade';
 import { DevCameraHook } from './DevCameraHook';
 import { FoundationView } from './FoundationView';
 import { ForcesView, GroundShake } from './forces/ForcesView';
@@ -71,6 +72,7 @@ export function Scene() {
         <GroundShake sway={sway}>
           <SiteDiorama site={site} />
           <Neighbors site={site} night={night} />
+          {facadeDetail && !building && <ContactShade site={site} design={design} />}
           {!building && <FoundationView site={site} design={design} />}
         </GroundShake>
         <Landmark kind={site.visuals.landmark} />

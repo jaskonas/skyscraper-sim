@@ -53,3 +53,25 @@ export function shadowFlags(material: { transparent?: boolean; opacity?: number 
   const seeThrough = !!material.transparent && (material.opacity ?? 1) < 1;
   return { castShadow: !seeThrough, receiveShadow: true };
 }
+
+/** How far the soft contact shade spreads beyond a building's footprint, metres. */
+export const CONTACT_MARGIN = 6;
+
+export interface Footprint {
+  x: number;
+  z: number;
+  width: number;
+  depth: number;
+  rotation?: number;
+}
+
+/** The ground patches darkened where buildings meet it: each footprint grown by the margin all round. */
+export function contactPatches(footprints: Footprint[]): Required<Footprint>[] {
+  return footprints.map((f) => ({
+    x: f.x,
+    z: f.z,
+    width: f.width + 2 * CONTACT_MARGIN,
+    depth: f.depth + 2 * CONTACT_MARGIN,
+    rotation: f.rotation ?? 0,
+  }));
+}
