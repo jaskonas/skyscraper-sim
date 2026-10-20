@@ -30,11 +30,11 @@ describe('<Building />', () => {
     expect((body.instance as THREE.InstancedMesh).count).toBe(25);
   });
 
-  it('gives every floor its room colour and plant-floor flag, with the facade detail on unless turned off', async () => {
+  it('gives every floor its plant-floor flag and no room colour, with the facade detail on unless turned off', async () => {
     const { site, design } = designFor('chicago', { floors: 70 });
     const r = await ReactThreeTestRenderer.create(<Building site={site} design={design} />);
     const body = r.scene.findAll((n) => n.props.name === 'body')[0].instance as THREE.InstancedMesh;
-    expect(body.geometry.getAttribute('aRoomTint').count).toBe(70);
+    expect(body.geometry.getAttribute('aRoomTint')).toBeUndefined();
     expect((body.geometry.getAttribute('aMech').array as Float32Array)[29]).toBe(1);
     const material = body.material as THREE.MeshStandardMaterial;
     expect(material.userData.facadeUniforms.uDetail.value).toBe(1);

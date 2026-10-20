@@ -25,19 +25,23 @@ describe('facade material', () => {
     expect(shader.uniforms.uNight).toBe(uniforms.uNight);
   });
 
-  it('adds rooms behind the glass, recessed windows, sky reflections and louvred plant floors', () => {
+  it('recessed glass, sky reflections and louvred plant floors, without rooms', () => {
     const shader = {
       vertexShader: THREE.ShaderLib.standard.vertexShader,
       fragmentShader: THREE.ShaderLib.standard.fragmentShader,
       uniforms: {} as Record<string, unknown>,
     };
     patchFacadeShader(shader, facadeUniforms(null));
-    expect(shader.vertexShader).toContain('attribute vec3 aRoomTint;');
+    expect(shader.vertexShader).not.toContain('aRoomTint');
     expect(shader.vertexShader).toContain('attribute float aMech;');
     expect(shader.vertexShader).toContain('vFacadeWorld =');
-    // Rooms: a ray traced into a box behind each pane.
+    // No rooms: the glass shows a dark interior tone, its own tint and blinds.
+    expect(shader.fragmentShader).not.toContain('facadeRoom(');
+    expect(shader.fragmentShader).not.toContain('ROOM_DEPTH');
     expect(shader.fragmentShader).toContain('roomBlinds(');
-    expect(shader.fragmentShader).toContain('ROOM_DEPTH');
+    expect(shader.fragmentShader).toContain('paneTint(');
+    // The frame darkens the glass right next to it.
+    expect(shader.fragmentShader).toContain('facadeReveal(');
     // Recess: the glass mask looked up again, shifted by the view direction.
     expect(shader.fragmentShader).toContain('GLASS_RECESS');
     // Reflections and the sun glint go into the emitted light.
@@ -50,6 +54,7 @@ describe('facade material', () => {
     // The reveal's wall colour is only read when there is a texture (a canvas-less browser has none).
     expect(shader.fragmentShader).toMatch(/#ifdef USE_MAP\s+diffuseColor\.rgb = texture2D\( map, vFacadeUv \+ shift \)/);
     expect(shader.uniforms.uDetail).toBeDefined();
+    expect(createFacadeMaterial(options).customProgramCacheKey()).toBe('facade-v4');
   });
 
   it('turns the detail on and off and follows the sky without rebuilding the material', () => {
@@ -64,7 +69,7 @@ describe('facade material', () => {
     setFacadeSky(m, '#123456', [0, 1, 0]);
     expect('#' + u.uSkyColor.value.getHexString()).toBe('#123456');
     expect(u.uSunDir.value.toArray()).toEqual([0, 1, 0]);
-    expect(m.customProgramCacheKey()).toBe('facade-v3');
+    expect(m.customProgramCacheKey()).toBe('facade-v4');
   });
 
   it('falls back to a plain colour without a texture, and only lights up with a glow map', () => {

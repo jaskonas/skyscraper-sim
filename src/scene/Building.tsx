@@ -90,7 +90,7 @@ function Body({
   floors?: number;
   litFloors?: number;
   sway?: SwaySignal;
-  /** Rooms behind the glass, recessed windows, reflections and louvred plant floors. */
+  /** Recessed windows, reflections, glass variety and louvred plant floors. */
   detail: boolean;
   /** The sky colour the glass reflects. */
   sky: string;
@@ -107,7 +107,6 @@ function Body({
       g.setAttribute('aFloor', new THREE.InstancedBufferAttribute(a.floor, 1));
       g.setAttribute('aLit', new THREE.InstancedBufferAttribute(a.lit, 1));
       g.setAttribute('aLitColor', new THREE.InstancedBufferAttribute(a.color, 3));
-      g.setAttribute('aRoomTint', new THREE.InstancedBufferAttribute(a.room, 3));
       g.setAttribute('aMech', new THREE.InstancedBufferAttribute(a.mech, 1));
       return g;
     }, [design]),
@@ -232,7 +231,7 @@ export function Building({
   sway?: SwaySignal;
   /** Leave out this many top floors (the see-through damper view draws them instead). */
   hideTopFloors?: number;
-  /** Rooms behind the glass, recessed windows and reflections (on unless turned off). */
+  /** Recessed windows, reflections and glass variety (on unless turned off). */
   facadeDetail?: boolean;
 }) {
   const [lx, lz] = lotCenter(site);

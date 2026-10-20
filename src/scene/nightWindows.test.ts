@@ -29,5 +29,7 @@ describe('night windows', () => {
     expect(a.lit[3]).toBeCloseTo(NIGHT_LIGHTS.office.lit);
     expect(a.lit[9]).toBeCloseTo(NIGHT_LIGHTS.residential.lit);
     expect(a.color).toHaveLength(30);
+    // No rooms behind the glass any more, so no room colours.
+    expect('room' in a).toBe(false);
   });
 });

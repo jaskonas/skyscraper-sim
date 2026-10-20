@@ -5,7 +5,6 @@ import {
   BLINDS_SHARE,
   DARK_SHARE,
   FACADE_DETAIL_GLSL,
-  ROOM_TINT,
   isMechanicalFloor,
   mechanicalFloors,
   paneTint,
@@ -20,10 +19,6 @@ const many = (f: (bay: number, floor: number) => number | boolean) => {
 };
 
 describe('window variety', () => {
-  it('gives each use its own room colour', () => {
-    expect(new Set(Object.values(ROOM_TINT)).size).toBe(4);
-  });
-
   it('pulls blinds on about 30% of windows, covering 20–90% of the pane, the same every time', () => {
     const blinds = many(roomBlinds) as number[];
     const covered = blinds.filter((b) => b > 0);
@@ -78,12 +73,5 @@ describe('mechanical floors', () => {
     expect(a.lit[29]).toBe(0);
     expect(a.mech[30]).toBe(0);
     expect(a.lit[30]).toBeCloseTo(NIGHT_LIGHTS.office.lit, 6);
-  });
-
-  it('gives every floor its room colour', () => {
-    const { design } = designFor('chicago', { floors: 20, useMix: { retail: 0, office: 0, hotel: 0, residential: 100 } });
-    const a = nightWindowAttributes(design);
-    expect(a.room.length).toBe(20 * 3);
-    expect(Array.from(a.room.slice(0, 3)).every((v) => v > 0 && v <= 1)).toBe(true);
   });
 });

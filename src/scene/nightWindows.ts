@@ -1,6 +1,6 @@
 import { floorUses } from '../sim/analysis/massing';
 import type { Design, UseType } from '../sim/types';
-import { ROOM_TINT, isMechanicalFloor } from './facadeDetail';
+import { isMechanicalFloor } from './facadeDetail';
 
 /** Share of windows lit at night, and their colour, by what the floor is used for. */
 export const NIGHT_LIGHTS: Record<UseType, { lit: number; color: string }> = {
@@ -39,29 +39,26 @@ function rgb(hex: string): [number, number, number] {
 }
 
 /**
- * Per-floor instance data for the facade shader: floor index, lit share and light colour, the colour of
- * the rooms behind the glass, and whether it is a mechanical floor (louvres, never lit).
+ * Per-floor instance data for the facade shader: floor index, lit share and light colour, and whether
+ * it is a mechanical floor (louvres, never lit).
  */
 export function nightWindowAttributes(design: Design): {
   floor: Float32Array;
   lit: Float32Array;
   color: Float32Array;
-  room: Float32Array;
   mech: Float32Array;
 } {
   const uses = floorUses(design);
   const floor = new Float32Array(uses.length);
   const lit = new Float32Array(uses.length);
   const color = new Float32Array(uses.length * 3);
-  const room = new Float32Array(uses.length * 3);
   const mech = new Float32Array(uses.length);
   uses.forEach((u, i) => {
     const plant = isMechanicalFloor(i, uses.length);
     floor[i] = i;
     lit[i] = plant ? 0 : NIGHT_LIGHTS[u].lit;
     color.set(rgb(NIGHT_LIGHTS[u].color), i * 3);
-    room.set(rgb(ROOM_TINT[u]), i * 3);
     mech[i] = plant ? 1 : 0;
   });
-  return { floor, lit, color, room, mech };
+  return { floor, lit, color, mech };
 }

@@ -1,18 +1,8 @@
-import type { UseType } from '../sim/types';
-
 /**
- * Window-to-window variety for the facade: room colours, blinds, dark rooms and glass tint. Every choice
+ * Window-to-window variety for the facade: blinds, dark panes and glass tint. Every choice
  * is a fixed pseudo-random number per (bay, floor) — the same every frame, here and in the shader — salted
  * so it is independent of the night-light choice.
  */
-
-/** Colour of the rooms behind the glass, by what the floor is used for. */
-export const ROOM_TINT: Record<UseType, string> = {
-  office: '#c9cfd6',
-  residential: '#e3d2b8',
-  hotel: '#efe3c8',
-  retail: '#f6f6f2',
-};
 
 /** Share of windows with blinds pulled. */
 export const BLINDS_SHARE = 0.3;

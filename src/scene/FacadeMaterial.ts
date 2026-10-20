@@ -24,7 +24,7 @@ export interface FacadeUniforms {
   uTileSize: { value: THREE.Vector2 };
   uGlowMap: { value: THREE.Texture | null };
   uRound: { value: number };
-  /** 1: rooms behind the glass, recessed windows, reflections, louvred plant floors. 0: the plain painted tile. */
+  /** 1: recessed windows, reflections, glass variety, louvred plant floors. 0: the plain painted tile. */
   uDetail: { value: number };
   uSkyColor: { value: THREE.Color };
   /** Direction toward the sun, world space, normalised. */
@@ -68,14 +68,12 @@ uniform float uRound;
 attribute float aFloor;
 attribute float aLit;
 attribute vec3 aLitColor;
-attribute vec3 aRoomTint;
 attribute float aMech;
 uniform vec2 uTileSize;
 varying vec2 vFacadeUv;
 varying float vFloor;
 varying float vLit;
 varying vec3 vLitColor;
-varying vec3 vRoomTint;
 varying float vMech;
 varying vec3 vFacadeWorld;
 varying vec3 vFacadeNormal;
@@ -84,7 +82,7 @@ varying vec3 vFacadeNormal;
 /**
  * Facade UVs in metres: across = distance along the wall, up = height from the bottom of the instance.
  * Scale comes from the instance matrix, so a tapered floor keeps full-size window bays. Also passes the
- * world position and wall normal on, for the rooms, recess and reflections.
+ * world position and wall normal on, for the recess and reflections.
  */
 const VERTEX_UV = /* glsl */ `
 #include <begin_vertex>
@@ -107,7 +105,6 @@ vFacadeUv = vec2(u / uTileSize.x, (facadePos.y + 0.5 * facadeScale.y) / uTileSiz
 vFloor = aFloor;
 vLit = aLit;
 vLitColor = aLitColor;
-vRoomTint = aRoomTint;
 vMech = aMech;
 vFacadeWorld = (facadeModel * vec4(transformed, 1.0)).xyz;
 vFacadeNormal = normalize(mat3(facadeModel) * normal);
@@ -124,16 +121,14 @@ varying vec2 vFacadeUv;
 varying float vFloor;
 varying float vLit;
 varying vec3 vLitColor;
-varying vec3 vRoomTint;
 varying float vMech;
 varying vec3 vFacadeWorld;
 varying vec3 vFacadeNormal;
 ${WINDOW_HASH_GLSL}
 ${FACADE_DETAIL_GLSL}
-const float ROOM_DEPTH = 3.0;
 const float GLASS_RECESS = 0.3;
-// How bright rooms read through the glass by day (they are much dimmer than the sky outside).
-const float ROOM_DAYLIGHT = 0.4;
+// What you see through the glass by day: a dark interior, much dimmer than the sky outside.
+const vec3 GLASS_INTERIOR = vec3(0.10, 0.12, 0.15);
 
 /** Hard stripes (0 or 1, a duty share of each period dark) that fade to their average once finer than a pixel. */
 float stripes(float x, float duty) {
@@ -142,37 +137,19 @@ float stripes(float x, float duty) {
 }
 // Set while shading the surface and used again for the night glow and the reflections.
 float facadeGlass = 0.0;
-float facadeRoomShade = 1.0;
+float facadeGlowShade = 1.0;
 vec3 facadeRefl = vec3(0.0);
 
-/** Traces the view ray into a box room behind the pane; returns its colour by day, and a 0..1.2 light shade. */
-vec3 facadeRoom(vec2 cell, vec3 ray, vec3 tint, float bay, float floorIndex, out float shade) {
-  vec3 p = vec3(cell.x * uTileSize.x, cell.y * uTileSize.y, 0.0);
-  vec3 d = ray;
-  float tx = d.x > 0.0 ? (uTileSize.x - p.x) / max(d.x, 1e-4) : p.x / max(-d.x, 1e-4);
-  float ty = d.y > 0.0 ? (uTileSize.y - p.y) / max(d.y, 1e-4) : p.y / max(-d.y, 1e-4);
-  float tz = ROOM_DEPTH / max(-d.z, 1e-4);
-  float t = min(tx, min(ty, tz));
-  vec3 hit = p + d * t;
-  vec3 c;
-  if (t == tz) {
-    c = tint;
-    // Desks, sofas and cabinets: a darker band along the back wall, broken into pieces.
-    if (hit.y < 1.0 && fract(hit.x / 1.7 + bay * 0.37) > 0.25) c *= 0.5;
-  } else if (t == ty) {
-    c = d.y < 0.0 ? tint * 0.55 : tint * 1.15;
-  } else {
-    c = tint * 0.8;
-  }
-  c *= mix(1.0, 0.7, clamp(-hit.z / ROOM_DEPTH, 0.0, 1.0));
-  shade = clamp(dot(c, vec3(0.333)) / max(dot(tint, vec3(0.333)), 0.05), 0.0, 1.2);
-  float blinds = roomBlinds(bay, floorIndex);
-  if (blinds > 0.0 && cell.y > 1.0 - blinds) {
-    c = vec3(0.86, 0.85, 0.8) * (0.85 + 0.15 * stripes(cell.y * uTileSize.y * 12.0, 0.5));
-    shade = 0.8;
-  }
-  if (roomDark(bay, floorIndex) > 0.5) c *= 0.25;
-  return c * (1.0 + paneTint(bay, floorIndex));
+/** Share (0..1) of four lookups around this point of glass that land on wall: how close the frame is. */
+float facadeReveal(vec2 uv, vec2 shift) {
+  // Not called "step": that would hide the built-in.
+  vec2 d = 0.25 / uTileSize;
+  float wall = 0.0;
+  wall += 1.0 - step(0.5, texture2D( uGlowMap, uv + shift * 1.8 ).r);
+  wall += 1.0 - step(0.5, texture2D( uGlowMap, uv + vec2(d.x, 0.0) ).r);
+  wall += 1.0 - step(0.5, texture2D( uGlowMap, uv - vec2(d.x, 0.0) ).r);
+  wall += 1.0 - step(0.5, texture2D( uGlowMap, uv + vec2(0.0, d.y) ).r);
+  return wall * 0.25;
 }
 `;
 
@@ -205,12 +182,18 @@ if (uDetail > 0.5 && abs(vFacadeNormal.y) < 0.5) {
 #endif
       facadeGlass = 0.0;
     } else {
-      vec3 room = facadeRoom(fract(vFacadeUv), ray, vRoomTint, bay, floorIndex, facadeRoomShade);
       float fresnel = pow(1.0 - clamp(-ray.z, 0.0, 1.0), 3.0);
       float mirror = (0.08 + 0.5 * fresnel) * (1.0 - 0.75 * uNight);
       vec3 sky = mix(uSkyColor, vec3(1.0), 0.15 * (1.0 - clamp(reflect(V, N).y, 0.0, 1.0)));
-      // Seen from outside by day, rooms read much darker than the sky on the glass.
-      diffuseColor.rgb = mix(room * mix(ROOM_DAYLIGHT, 0.15, uNight), diffuseColor.rgb, 0.5) * (1.0 - mirror);
+      vec3 glass = mix(GLASS_INTERIOR, diffuseColor.rgb, 0.45) * (1.0 + paneTint(bay, floorIndex));
+      float blinds = roomBlinds(bay, floorIndex);
+      if (blinds > 0.0 && fract(vFacadeUv.y) > 1.0 - blinds) {
+        glass = vec3(0.86, 0.85, 0.8) * (0.85 + 0.15 * stripes(vFacadeUv.y * uTileSize.y * 12.0, 0.5));
+        facadeGlowShade = 0.8;
+      }
+      if (roomDark(bay, floorIndex) > 0.5) glass *= 0.4;
+      glass *= 1.0 - 0.45 * facadeReveal(vFacadeUv, shift);
+      diffuseColor.rgb = glass * (1.0 - mirror);
       float glint = pow(max(dot(reflect(V, N), normalize(uSunDir)), 0.0), 220.0) * (1.0 - uNight);
       facadeRefl = sky * mirror * 0.7 + vec3(glint);
     }
@@ -223,12 +206,12 @@ const FRAGMENT_GLOW = /* glsl */ `
 if (uNight > 0.0) {
   // vFloor is the same at every vertex but interpolation can wobble it, so round it.
   float on = step( windowHash( floor( vFacadeUv.x ), floor( vFloor + 0.5 ) + floor( vFacadeUv.y ) ), vLit );
-  totalEmissiveRadiance += uNight * facadeGlass * on * vLitColor * 1.3 * mix(1.0, facadeRoomShade, uDetail);
+  totalEmissiveRadiance += uNight * facadeGlass * on * vLitColor * 1.3 * mix(1.0, facadeGlowShade, uDetail);
 }
 totalEmissiveRadiance += facadeRefl;
 `;
 
-/** Rewrites a standard material's shaders so the facade tile repeats in metres, with rooms, recess and reflections. */
+/** Rewrites a standard material's shaders so the facade tile repeats in metres, with recessed glass and reflections. */
 export function patchFacadeShader(shader: { vertexShader: string; fragmentShader: string; uniforms: Record<string, unknown> }, uniforms: FacadeUniforms): void {
   Object.assign(shader.uniforms, uniforms);
   shader.vertexShader = shader.vertexShader
@@ -255,7 +238,7 @@ export function createFacadeMaterial(o: FacadeMaterialOptions): THREE.MeshStanda
   const uniforms = facadeUniforms(o.glowMap);
   material.userData.facadeUniforms = uniforms;
   material.onBeforeCompile = (shader) => patchFacadeShader(shader, uniforms);
-  material.customProgramCacheKey = () => 'facade-v3';
+  material.customProgramCacheKey = () => 'facade-v4';
   setFacadeLook(material, o);
   return material;
 }
@@ -272,7 +255,7 @@ export function setFacadeNight(material: THREE.Material, night: boolean): void {
   if (u) u.uNight.value = night && u.uGlowMap.value ? 1 : 0;
 }
 
-/** Rooms behind the glass, recessed windows and reflections on (or the plain painted tile). */
+/** Recessed windows, reflections and glass variety on (or the plain painted tile). */
 export function setFacadeDetail(material: THREE.Material, on: boolean): void {
   const u = material.userData.facadeUniforms as FacadeUniforms | undefined;
   if (u) u.uDetail.value = on ? 1 : 0;
