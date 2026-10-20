@@ -8,7 +8,8 @@ import { createSway } from './forces/sway';
 import { Landmark } from './Landmark';
 import { Neighbors } from './Neighbors';
 import { SiteDiorama } from './SiteDiorama';
-import { shadowFlags } from './sunShadow';
+import { useGame } from '../state/store';
+import { shadowFlags, sunDirection } from './sunShadow';
 
 type Renderer = Awaited<ReturnType<typeof ReactThreeTestRenderer.create>>;
 
@@ -70,5 +71,21 @@ describe('shadow flags', () => {
     const parts = meshes(r).filter((m) => m.name.startsWith('parts:'));
     expect(parts.length).toBeGreaterThan(0);
     for (const m of parts) expect([m.frustumCulled, m.castShadow]).toEqual([false, true]);
+  });
+
+  it("the glass glints in the sun the light actually comes from", async () => {
+    const { site, design } = designFor('chicago', { floors: 10 });
+    const sunDir = async () => {
+      const r = await ReactThreeTestRenderer.create(<Building site={site} design={design} />);
+      const body = r.scene.findAll((n) => n.props.name === 'body')[0].instance as THREE.InstancedMesh;
+      const v = ((body.material as THREE.Material).userData.facadeUniforms.uSunDir.value as THREE.Vector3).clone();
+      await r.unmount();
+      return v;
+    };
+    useGame.getState().setShadows(true);
+    expect((await sunDir()).toArray()).toEqual(new THREE.Vector3(...sunDirection(true)).normalize().toArray());
+    useGame.getState().setShadows(false);
+    expect((await sunDir()).toArray()).toEqual(new THREE.Vector3(...sunDirection(false)).normalize().toArray());
+    useGame.getState().setShadows(true);
   });
 });

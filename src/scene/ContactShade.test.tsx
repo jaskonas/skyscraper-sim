@@ -18,4 +18,14 @@ describe('<ContactShade />', () => {
     expect(material.blending).toBe(THREE.MultiplyBlending);
     expect(material.depthWrite).toBe(false);
   });
+
+  it('multiplies the ground by its own shade only: no tone mapping or fog tint, so its edge is invisible', async () => {
+    const site = SITES['new-york'];
+    const { design } = designFor('new-york', { floors: 30 });
+    const r = await ReactThreeTestRenderer.create(<ContactShade site={site} design={design} />);
+    const mesh = r.scene.findAll((n) => n.props.name === 'contact-shade')[0].instance as THREE.InstancedMesh;
+    const material = mesh.material as THREE.MeshBasicMaterial;
+    expect(material.toneMapped).toBe(false);
+    expect(material.fog).toBe(false);
+  });
 });

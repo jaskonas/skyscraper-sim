@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DIORAMA } from './layout';
-import { CONTACT_MARGIN, SHADOW_MAP_SIZE, SUN_DIRECTION, SUN_DISTANCE, contactPatches, shadowFrame, snapToTexel } from './sunShadow';
+import { CONTACT_MARGIN, SHADOW_MAP_SIZE, SUN_DIRECTION, SUN_DISTANCE, contactPatches, shadowFrame, snapToTexel, sunDirection } from './sunShadow';
 
 const sub = (a: number[], b: number[]) => a.map((v, i) => v - b[i]);
 const len = (a: number[]) => Math.hypot(...a);
@@ -42,5 +42,19 @@ describe('contact patches', () => {
     expect(CONTACT_MARGIN).toBe(6);
     expect(contactPatches([{ x: 1, z: 2, width: 30, depth: 20, rotation: 0.3 }])).toEqual([{ x: 1, z: 2, width: 42, depth: 32, rotation: 0.3 }]);
     expect(contactPatches([{ x: 0, z: 0, width: 10, depth: 10 }])[0].rotation).toBe(0);
+  });
+});
+
+describe('sun direction', () => {
+  it('moves the sun to the front-left only when shadows are on; otherwise the light is as before', () => {
+    expect(sunDirection(true)).toEqual(SUN_DIRECTION);
+    expect(sunDirection(false)).toEqual([300, 600, 250]);
+  });
+
+  it('fits the shadow frame along the sun it is given', () => {
+    const f = shadowFrame([0, 0, 0], 300, sunDirection(false));
+    const d = sub(f.position, f.target);
+    const old = [300, 600, 250].map((v) => v / Math.hypot(300, 600, 250));
+    expect(d.reduce((s, v, i) => s + (v / len(d)) * old[i], 0)).toBeGreaterThan(0.999);
   });
 });

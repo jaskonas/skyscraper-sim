@@ -46,6 +46,9 @@ export function ContactShade({ site, design }: { site: Site; design: Design }) {
         map: shadeTexture(),
         transparent: true,
         depthWrite: false,
+        // Multiplied as-is: tone mapping would turn its white edge grey, and fog would tint it the sky's colour.
+        toneMapped: false,
+        fog: false,
         blending: THREE.MultiplyBlending,
         premultipliedAlpha: true,
         polygonOffset: true,

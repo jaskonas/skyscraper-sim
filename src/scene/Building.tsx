@@ -17,11 +17,11 @@ import { swayAt, type SwaySignal } from './forces/sway';
 import { lotCenter } from './layout';
 import { bracingParts, ornamentParts } from './ornaments';
 import { PartsMesh } from './parts/PartsMesh';
-import { SUN_DIRECTION } from './sunShadow';
+import { selectShadowsOn, useGame } from '../state/store';
+import { sunDirection } from './sunShadow';
 import { partBounds, type Part } from '../sim/parts';
 
 const swayMatrix = new THREE.Matrix4();
-/** Where the scene's sun shines from (the main view's directional light). */
 
 /** While the tower sways, re-sets each floor's matrix every frame; once more when it stops, to put it back. */
 function useSwayedInstances(ref: RefObject<THREE.InstancedMesh | null>, items: BoxInstance[], sway?: SwaySignal) {
@@ -125,11 +125,13 @@ function Body({
       [textures, recipe.roughness, recipe.metalness],
     ),
   );
+  // The glass glints in the same sun the light comes from (it moves when shadows are on).
+  const sunDir = sunDirection(useGame(selectShadowsOn));
   useLayoutEffect(() => {
     setFacadeLook(material, look);
     setFacadeNight(material, night);
     setFacadeDetail(material, detail);
-    setFacadeSky(material, sky, SUN_DIRECTION);
+    setFacadeSky(material, sky, sunDir);
   });
   useLayoutEffect(() => {
     const mesh = ref.current;

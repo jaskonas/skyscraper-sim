@@ -6,6 +6,13 @@ export type Vec3 = [number, number, number];
  * back and to the right where you can see them, and the tower's right face is in shade, which shows its depth.
  */
 export const SUN_DIRECTION: Vec3 = [-450, 420, 300];
+/** The sun used before shadows existed: high and behind the default camera. Shadows off keeps today's look. */
+const PLAIN_SUN_DIRECTION: Vec3 = [300, 600, 250];
+
+/** Toward the sun: front-left when it casts shadows, otherwise where it always was. */
+export function sunDirection(shadows: boolean): Vec3 {
+  return shadows ? SUN_DIRECTION : PLAIN_SUN_DIRECTION;
+}
 /** How far back along the sun's direction the shadow camera sits from what it looks at. */
 export const SUN_DISTANCE = 1500;
 /** One shadow map, square: the most a low-end Chromebook GPU should be asked for. */
@@ -24,8 +31,8 @@ const norm = (v: Vec3): Vec3 => {
  * and as wide as the view (three quarters of the camera's distance), so shadows are crisp up close and
  * still there from far out. Deep enough to take in the tallest tower and its long shadow.
  */
-export function shadowFrame(target: Vec3, cameraDistance: number): { position: Vec3; target: Vec3; halfSize: number; near: number; far: number } {
-  const sun = norm(SUN_DIRECTION);
+export function shadowFrame(target: Vec3, cameraDistance: number, sunDir: Vec3 = SUN_DIRECTION): { position: Vec3; target: Vec3; halfSize: number; near: number; far: number } {
+  const sun = norm(sunDir);
   const halfSize = Math.min(MAX_HALF, Math.max(MIN_HALF, 0.75 * cameraDistance));
   return {
     position: [target[0] + sun[0] * SUN_DISTANCE, target[1] + sun[1] * SUN_DISTANCE, target[2] + sun[2] * SUN_DISTANCE],
