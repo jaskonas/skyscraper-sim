@@ -4,7 +4,9 @@ import * as THREE from 'three';
 import type { Design, Site } from '../../sim/types';
 import { PartsMesh, partMatrix } from '../parts/PartsMesh';
 import { partGeometry } from '../parts/geometries';
+import { selectShadowsOn, useGame } from '../../state/store';
 import { lighting } from '../lighting';
+import { shadowFlags } from '../sunShadow';
 import { cameraPose, dragBy, easeBack, type Drag } from './camera';
 import { detailModel, type DetailFocus, type DetailView, type DetailWindow } from './detailModel';
 
@@ -62,7 +64,7 @@ function WindowGroup({ items, lit, color, glass }: { items: DetailWindow[]; lit:
   const box = partGeometry('box', 'square');
   return (
     <>
-      <instancedMesh key={`p${items.length}`} ref={panes} args={[box, undefined, items.length]}>
+      <instancedMesh key={`p${items.length}`} ref={panes} args={[box, undefined, items.length]} {...shadowFlags({ transparent: !lit, opacity: lit ? 1 : 0.75 })}>
         <meshStandardMaterial
           color={lit ? color : glass}
           emissive={lit ? color : '#000000'}
@@ -73,7 +75,7 @@ function WindowGroup({ items, lit, color, glass }: { items: DetailWindow[]; lit:
           opacity={lit ? 1 : 0.75}
         />
       </instancedMesh>
-      <instancedMesh key={`r${items.length}`} ref={rooms} args={[box, undefined, items.length]}>
+      <instancedMesh key={`r${items.length}`} ref={rooms} args={[box, undefined, items.length]} castShadow receiveShadow>
         <meshStandardMaterial color="#2a2f36" emissive={lit ? color : '#000000'} emissiveIntensity={lit ? 0.25 : 0} roughness={0.9} />
       </instancedMesh>
     </>
@@ -87,15 +89,45 @@ interface DetailProps {
   night: boolean;
 }
 
+/** Toward the close-up's sun: front-left and high, like the main view's. The section's wall faces +z. */
+const DETAIL_SUN = new THREE.Vector3(-35, 45, 50).normalize();
+
+/** The close-up's sun, aimed at the framed section; its shadow camera just covers the section. */
+function DetailSun({ focus, on, intensity, color }: { focus: DetailFocus; on: boolean; intensity: number; color: string }) {
+  const ref = useRef<THREE.DirectionalLight>(null);
+  useLayoutEffect(() => {
+    const light = ref.current;
+    if (!light) return;
+    const target = new THREE.Vector3(...focus.target);
+    light.position.copy(target).addScaledVector(DETAIL_SUN, 80);
+    light.target.position.copy(target);
+    light.target.updateMatrixWorld();
+    const half = Math.max(12, focus.distance * 0.8);
+    const cam = light.shadow.camera;
+    cam.left = -half;
+    cam.right = half;
+    cam.top = half;
+    cam.bottom = -half;
+    cam.near = 1;
+    cam.far = 200;
+    cam.updateProjectionMatrix();
+    light.shadow.mapSize.set(1024, 1024);
+    light.shadow.bias = -0.0002;
+    light.shadow.normalBias = 0.02;
+  }, [focus]);
+  return <directionalLight ref={ref} castShadow={on} intensity={intensity} color={color} />;
+}
+
 /** Everything inside the close-up's canvas: lights, the section's parts, its windows and the camera. */
 export function DetailScene({ site, design, view, night, drag }: DetailProps & { drag: Drag }) {
   const model = useMemo(() => detailModel(design, view), [design, view]);
-  const light = lighting(site, night);
+  const shadows = useGame(selectShadowsOn) && !night;
+  const light = lighting(site, night, shadows);
   return (
     <>
       <color attach="background" args={[light.sky]} />
       <hemisphereLight args={[light.hemiSky, site.visuals.ground, light.hemi]} />
-      <directionalLight position={[30, 60, 80]} intensity={light.sun} color={light.sunColor} />
+      <DetailSun focus={model.focus} on={shadows} intensity={light.sun} color={light.sunColor} />
       <PartsMesh name="detail" parts={model.parts} palette={design.palette} plan={design.shape} night={night} />
       <Windows windows={model.windows} night={night} glass={design.palette.glass} />
       <CameraRig focus={model.focus} drag={drag} />
@@ -152,7 +184,7 @@ export function DetailCanvas(props: DetailProps) {
 
   return (
     <div className="detail-canvas" onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp}>
-      <Canvas frameloop="demand" camera={{ fov: 40, near: 0.1, far: 500 }} fallback={<p className="detail-fallback">Close-up needs 3D graphics.</p>}>
+      <Canvas frameloop="demand" shadows={{ type: THREE.PCFShadowMap }} camera={{ fov: 40, near: 0.1, far: 500 }} fallback={<p className="detail-fallback">Close-up needs 3D graphics.</p>}>
         <DetailScene {...props} drag={drag} />
       </Canvas>
     </div>
