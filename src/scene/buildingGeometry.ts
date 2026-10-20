@@ -16,7 +16,8 @@ const BODY_FRACTION = 0.85;
 export function unitGeometry(shape: PlanShape): THREE.BufferGeometry {
   switch (shape) {
     case 'circle':
-      return new THREE.CylinderGeometry(0.5, 0.5, 1, 24);
+      // 48 sides: smooth enough that a round tower's outline doesn't show facets up close.
+      return new THREE.CylinderGeometry(0.5, 0.5, 1, 48);
     case 'triangle': {
       // Flat normals per wall (a 3-sided cylinder has rounded ones), so facades can tell the walls apart.
       const g = new THREE.CylinderGeometry(1 / Math.sqrt(3), 1 / Math.sqrt(3), 1, 3).toNonIndexed();

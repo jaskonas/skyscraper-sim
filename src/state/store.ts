@@ -10,6 +10,8 @@ export type GameMode = 'challenge' | 'sandbox';
 export type TimeOfDay = 'day' | 'night';
 /** Which force the 3D view is showing acting on the tower. */
 export type ForceView = 'none' | 'wind' | 'quake';
+/** How much detail the facade is drawn with: rooms, recess and reflections, or the plain painted tile. */
+export type FacadeDetail = 'high' | 'simple';
 
 export interface Project {
   siteId: SiteId;
@@ -31,6 +33,8 @@ export interface GameState {
   timeOfDay: TimeOfDay;
   /** View only, like `timeOfDay`. Hidden while building, but remembered through it. */
   force: ForceView;
+  /** View only, and kept for new projects: it is about what the computer can draw smoothly, not the design. */
+  facadeDetail: FacadeDetail;
   /** Construction stage being shown (0..5) while building. */
   buildStage: number;
   /** The current stage has finished playing, so Next is allowed. */
@@ -53,6 +57,7 @@ export interface GameState {
   setTimeOfDay: (t: TimeOfDay) => void;
   /** Show this force, or turn it off if it is already showing. */
   toggleForce: (f: Exclude<ForceView, 'none'>) => void;
+  setFacadeDetail: (d: FacadeDetail) => void;
 }
 
 export type DispatchResult = Pick<ApplyResult, 'applied' | 'rejected'>;
@@ -66,6 +71,7 @@ export const useGame = create<GameState>((set, get) => ({
   detailLevel: 'standard',
   timeOfDay: 'day',
   force: 'none',
+  facadeDetail: 'high',
   buildStage: 0,
   stageDone: false,
   stageRun: 0,
@@ -160,6 +166,8 @@ export const useGame = create<GameState>((set, get) => ({
   setTimeOfDay: (timeOfDay) => set({ timeOfDay }),
 
   toggleForce: (f) => set({ force: get().force === f ? 'none' : f }),
+
+  setFacadeDetail: (facadeDetail) => set({ facadeDetail }),
 }));
 
 export const selectDesign = (s: GameState): Design | undefined => s.history[s.historyIndex];

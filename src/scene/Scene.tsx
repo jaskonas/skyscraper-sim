@@ -5,10 +5,12 @@ import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import { useCurrent } from '../state/hooks';
 import { useGame } from '../state/store';
 import { DetailInset } from '../ui/DetailInset';
+import { FacadeDetailToggle } from '../ui/FacadeDetailToggle';
 import { ForceBanner, ForceButtons, ForceReadout } from '../ui/ForceControls';
 import { SoilLegend } from '../ui/SoilLegend';
 import { Building } from './Building';
 import { ConstructionView } from './construction/ConstructionView';
+import { DevCameraHook } from './DevCameraHook';
 import { FoundationView } from './FoundationView';
 import { ForcesView, GroundShake } from './forces/ForcesView';
 import { createSway } from './forces/sway';
@@ -52,6 +54,7 @@ export function Scene() {
   // Forces wait while the tower is being built.
   const forceOn = force !== 'none' && !building ? force : null;
   const [sway] = useState(createSway);
+  const facadeDetail = useGame((s) => s.facadeDetail === 'high');
   const light = lighting(site, night);
   const frame = cameraFrame(site, analysis.tipHeightM);
   return (
@@ -76,11 +79,13 @@ export function Scene() {
             night={night}
             sway={sway}
             hideTopFloors={forceOn === 'wind' && design.damping === 'tmd' ? 3 : 0}
+            facadeDetail={facadeDetail}
           />
         )}
         {forceOn && <ForcesView site={site} design={design} analysis={analysis} force={forceOn} sway={sway} />}
         <OrbitControls makeDefault maxPolarAngle={Math.PI * 0.62} minDistance={40} maxDistance={2500} />
         <CameraFramer frame={frame} nonce={nonce} />
+        <DevCameraHook />
       </Canvas>
       <DetailInset />
       <ForceBanner />
@@ -91,6 +96,7 @@ export function Scene() {
           {night ? '☀️ Day' : '🌙 Night'}
         </button>
         <ForceButtons />
+        <FacadeDetailToggle />
       </div>
     </div>
   );

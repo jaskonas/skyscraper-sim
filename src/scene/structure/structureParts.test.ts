@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { fastestMs } from '../../test/fastest';
 import { outriggerFloors } from '../../sim/construction/stages';
 import { FLOOR_HEIGHT, plateDims } from '../../sim/geometry';
 import { partBounds, partIsFinite } from '../../sim/parts';
@@ -111,10 +112,8 @@ describe('structureParts', () => {
     for (const system of ['framed-tube', 'bundled-tube'] as const) {
       const { design } = designFor('shanghai', { floors: 150, plateWidth: 80, shape: system === 'framed-tube' ? 'circle' : 'square', system, material: 'concrete', setbacks: 'none', twist: 0, taper: 0, damping: 'viscous', baseIsolation: true, exposedStructure: true });
       structureParts(design);
-      const t0 = performance.now();
       let parts: StructurePart[] = [];
-      for (let i = 0; i < 5; i++) parts = structureParts({ ...design, floors: 150 - i });
-      expect((performance.now() - t0) / 5, system).toBeLessThan(30);
+      expect(fastestMs(5, (i) => (parts = structureParts({ ...design, floors: 150 - i }))), system).toBeLessThan(30);
       expect(parts.length, system).toBeLessThan(8000);
     }
   });

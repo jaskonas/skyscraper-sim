@@ -5,11 +5,14 @@ import { FLOOR_HEIGHT, floorSlices } from '../sim/geometry';
 import type { Design, Site } from '../sim/types';
 import { facadeRecipe } from '../sim/facade';
 import { bodyInstances, facadeColor, instanceMatrix, slabInstances, unitGeometry, type BoxInstance } from './buildingGeometry';
-import { createFacadeMaterial, setFacadeLook, setFacadeNight } from './FacadeMaterial';
+import { createFacadeMaterial, setFacadeDetail, setFacadeLook, setFacadeNight, setFacadeSky } from './FacadeMaterial';
+import { lighting } from './lighting';
 import { TILE_HEIGHT_M } from './facadeTile';
 import { facadeTextures } from './facadeTexture';
 import { nightWindowAttributes } from './nightWindows';
+import { balconyParts } from './balconies';
 import { crownParts } from './crownParts';
+import { dressingParts, helipadRadius, roofDeck } from './dressing/dressing';
 import { swayAt, type SwaySignal } from './forces/sway';
 import { lotCenter } from './layout';
 import { bracingParts, ornamentParts } from './ornaments';
@@ -17,6 +20,8 @@ import { PartsMesh } from './parts/PartsMesh';
 import { partBounds, type Part } from '../sim/parts';
 
 const swayMatrix = new THREE.Matrix4();
+/** Where the scene's sun shines from (the main view's directional light). */
+const SUN_DIRECTION: [number, number, number] = [300, 600, 250];
 
 /** While the tower sways, re-sets each floor's matrix every frame; once more when it stops, to put it back. */
 function useSwayedInstances(ref: RefObject<THREE.InstancedMesh | null>, items: BoxInstance[], sway?: SwaySignal) {
@@ -71,7 +76,25 @@ function useDisposable<T extends { dispose: () => void }>(resource: T): T {
  * The glazed part of every floor, wearing the painted facade tile; windows light up at night.
  * During construction only the lowest `floors` are drawn, and only floors below `litFloors` light up.
  */
-function Body({ design, night, floors, litFloors, sway }: { design: Design; night: boolean; floors?: number; litFloors?: number; sway?: SwaySignal }) {
+function Body({
+  design,
+  night,
+  floors,
+  litFloors,
+  sway,
+  detail,
+  sky,
+}: {
+  design: Design;
+  night: boolean;
+  floors?: number;
+  litFloors?: number;
+  sway?: SwaySignal;
+  /** Rooms behind the glass, recessed windows, reflections and louvred plant floors. */
+  detail: boolean;
+  /** The sky colour the glass reflects. */
+  sky: string;
+}) {
   const ref = useRef<THREE.InstancedMesh>(null);
   const items = useMemo(() => bodyInstances(design), [design]);
   useSwayedInstances(ref, items, sway);
@@ -84,6 +107,8 @@ function Body({ design, night, floors, litFloors, sway }: { design: Design; nigh
       g.setAttribute('aFloor', new THREE.InstancedBufferAttribute(a.floor, 1));
       g.setAttribute('aLit', new THREE.InstancedBufferAttribute(a.lit, 1));
       g.setAttribute('aLitColor', new THREE.InstancedBufferAttribute(a.color, 3));
+      g.setAttribute('aRoomTint', new THREE.InstancedBufferAttribute(a.room, 3));
+      g.setAttribute('aMech', new THREE.InstancedBufferAttribute(a.mech, 1));
       return g;
     }, [design]),
   );
@@ -104,6 +129,8 @@ function Body({ design, night, floors, litFloors, sway }: { design: Design; nigh
   useLayoutEffect(() => {
     setFacadeLook(material, look);
     setFacadeNight(material, night);
+    setFacadeDetail(material, detail);
+    setFacadeSky(material, sky, SUN_DIRECTION);
   });
   useLayoutEffect(() => {
     const mesh = ref.current;
@@ -125,7 +152,9 @@ function Body({ design, night, floors, litFloors, sway }: { design: Design; nigh
 function Amenities({ design, geometry, sway }: { design: Design; geometry: THREE.BufferGeometry; sway?: SwaySignal }) {
   const slices = floorSlices(design);
   const top = slices[slices.length - 1];
-  const roofY = design.floors * FLOOR_HEIGHT;
+  // On top of a cornice or cap, if the crown has one.
+  const roofY = roofDeck(design);
+  const pad = helipadRadius(design);
   const band = (fraction: number) => slices[Math.min(slices.length - 1, Math.floor(slices.length * fraction))];
   const deck = band(0.9);
   const garden = band(0.5);
@@ -134,7 +163,7 @@ function Amenities({ design, geometry, sway }: { design: Design; geometry: THREE
       {design.amenities.includes('helipad') && (
         <SwayFollow y={roofY} sway={sway}>
           <mesh position={[0, roofY + 0.4, 0]}>
-            <cylinderGeometry args={[Math.min(top.width, top.depth) * 0.35, Math.min(top.width, top.depth) * 0.35, 0.6, 24]} />
+            <cylinderGeometry args={[pad, pad, 0.6, 24]} />
             <meshStandardMaterial color="#3b3f45" />
           </mesh>
         </SwayFollow>
@@ -193,6 +222,7 @@ export function Building({
   reveal,
   sway,
   hideTopFloors = 0,
+  facadeDetail = true,
 }: {
   site: Site;
   design: Design;
@@ -202,6 +232,8 @@ export function Building({
   sway?: SwaySignal;
   /** Leave out this many top floors (the see-through damper view draws them instead). */
   hideTopFloors?: number;
+  /** Rooms behind the glass, recessed windows and reflections (on unless turned off). */
+  facadeDetail?: boolean;
 }) {
   const [lx, lz] = lotCenter(site);
   const geometry = useDisposable(useMemo(() => unitGeometry(design.shape), [design.shape]));
@@ -209,20 +241,41 @@ export function Building({
   const crown = useMemo(() => crownParts(design), [design]);
   const ornaments = useMemo(() => ornamentParts(design), [design]);
   const bracing = useMemo(() => bracingParts(design), [design]);
+  const balconies = useMemo(() => balconyParts(design), [design]);
+  const dressing = useMemo(() => dressingParts(site, design), [site, design]);
   const share = reveal ? reveal.crown : 1;
   const top = useMemo(() => {
-    if (share >= 1) return { crown, ornaments };
-    const shown = new Set(upTo([...ornaments, ...crown], share));
-    return { crown: crown.filter((p) => shown.has(p)), ornaments: ornaments.filter((p) => shown.has(p)) };
-  }, [ornaments, crown, share]);
+    if (share >= 1) return { crown, ornaments, dressing };
+    const shown = new Set(upTo([...ornaments, ...crown, ...dressing], share));
+    return {
+      crown: crown.filter((p) => shown.has(p)),
+      ornaments: ornaments.filter((p) => shown.has(p)),
+      dressing: dressing.filter((p) => shown.has(p)),
+    };
+  }, [ornaments, crown, dressing, share]);
   const look = { palette: design.palette, plan: design.shape, night, sway };
   const floors = Math.min(reveal?.floors ?? design.floors, design.floors - hideTopFloors);
+  // During construction, balconies only on the floors finished so far.
+  const shownBalconies = useMemo(
+    () => (floors >= design.floors ? balconies : balconies.filter((p) => p.position[1] < floors * FLOOR_HEIGHT)),
+    [balconies, floors, design.floors],
+  );
   return (
     <group name="building" position={[lx, 0, lz]}>
-      <Body design={design} night={night || !!reveal?.lights} floors={floors} litFloors={reveal?.litFloors} sway={sway} />
+      <Body
+        design={design}
+        night={night || !!reveal?.lights}
+        floors={floors}
+        litFloors={reveal?.litFloors}
+        sway={sway}
+        detail={facadeDetail}
+        sky={lighting(site, night).sky}
+      />
       <Instanced name="slabs" geometry={geometry} items={slabs} color={design.palette.accent} count={floors} sway={sway} />
       <PartsMesh name="crown" parts={top.crown} {...look} />
       <PartsMesh name="ornaments" parts={top.ornaments} {...look} />
+      <PartsMesh name="balconies" parts={shownBalconies} {...look} />
+      <PartsMesh name="dressing" parts={top.dressing} {...look} />
       {/* While building, exposed bracing is part of the bare structure instead. */}
       <PartsMesh name="bracing" parts={reveal ? [] : bracing} {...look} />
       {share > 0.5 && <Amenities design={design} geometry={geometry} sway={sway} />}

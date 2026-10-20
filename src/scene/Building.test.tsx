@@ -4,7 +4,10 @@ import { describe, expect, it } from 'vitest';
 import { CROWN_IDS, ORNAMENT_IDS } from '../sim/catalog/ids';
 import { designFor } from '../sim/testUtils';
 import type { PlanShape } from '../sim/types';
+import { balconyParts } from './balconies';
 import { Building } from './Building';
+import { unitGeometry } from './buildingGeometry';
+import { dressingParts } from './dressing/dressing';
 import { crownParts } from './crownParts';
 import { createSway, swayAt } from './forces/sway';
 import { ornamentParts } from './ornaments';
@@ -25,6 +28,51 @@ describe('<Building />', () => {
     const r = await ReactThreeTestRenderer.create(<Building site={site} design={design} />);
     const body = r.scene.findAll((n) => n.props.name === 'body')[0];
     expect((body.instance as THREE.InstancedMesh).count).toBe(25);
+  });
+
+  it('gives every floor its room colour and plant-floor flag, with the facade detail on unless turned off', async () => {
+    const { site, design } = designFor('chicago', { floors: 70 });
+    const r = await ReactThreeTestRenderer.create(<Building site={site} design={design} />);
+    const body = r.scene.findAll((n) => n.props.name === 'body')[0].instance as THREE.InstancedMesh;
+    expect(body.geometry.getAttribute('aRoomTint').count).toBe(70);
+    expect((body.geometry.getAttribute('aMech').array as Float32Array)[29]).toBe(1);
+    const material = body.material as THREE.MeshStandardMaterial;
+    expect(material.userData.facadeUniforms.uDetail.value).toBe(1);
+    await r.unmount();
+    const simple = await ReactThreeTestRenderer.create(<Building site={site} design={design} facadeDetail={false} />);
+    const plain = simple.scene.findAll((n) => n.props.name === 'body')[0].instance as THREE.InstancedMesh;
+    expect((plain.material as THREE.MeshStandardMaterial).userData.facadeUniforms.uDetail.value).toBe(0);
+  });
+
+  it('draws balconies on home floors, and only up to the floors built so far during construction', async () => {
+    const { site, design } = designFor('chicago', { floors: 30, useMix: { retail: 0, office: 0, hotel: 0, residential: 100 } });
+    const all = balconyParts(design);
+    const r = await ReactThreeTestRenderer.create(<Building site={site} design={design} />);
+    expect(instanceTotal(r, 'balconies')).toBe(all.length);
+    await r.unmount();
+    const half = await ReactThreeTestRenderer.create(<Building site={site} design={design} reveal={{ floors: 10, crown: 0, litFloors: 0, lights: false }} />);
+    expect(instanceTotal(half, 'balconies')).toBe(all.filter((p) => p.position[1] < 10 * 4).length);
+    expect(instanceTotal(half, 'balconies')).toBeLessThan(all.length);
+  });
+
+  it('dresses the tower: rooftop machinery, terraces and the entrance, added from the bottom up while building', async () => {
+    const { site, design } = designFor('new-york', { floors: 30, crown: 'flat', setbacks: 'few', ornament: 'high' });
+    const all = dressingParts(site, design);
+    expect(all.length).toBeGreaterThan(20);
+    const r = await ReactThreeTestRenderer.create(<Building site={site} design={design} />);
+    expect(instanceTotal(r, 'dressing')).toBe(all.length);
+    await r.unmount();
+    const none = await ReactThreeTestRenderer.create(<Building site={site} design={design} reveal={{ floors: 30, crown: 0, litFloors: 0, lights: false }} />);
+    expect(instanceTotal(none, 'dressing')).toBe(0);
+    await none.unmount();
+    const part = await ReactThreeTestRenderer.create(<Building site={site} design={design} reveal={{ floors: 30, crown: 0.5, litFloors: 0, lights: false }} />);
+    expect(instanceTotal(part, 'dressing')).toBeGreaterThan(0);
+    expect(instanceTotal(part, 'dressing')).toBeLessThan(all.length);
+  });
+
+  it('draws round towers smoothly (48 sides)', () => {
+    const g = unitGeometry('circle') as THREE.CylinderGeometry;
+    expect(g.parameters.radialSegments).toBe(48);
   });
 
   it('renders every crown, with every ornament and amenity, without throwing', async () => {
