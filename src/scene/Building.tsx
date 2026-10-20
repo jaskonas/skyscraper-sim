@@ -60,7 +60,7 @@ function Instanced({ geometry, items, color, name, count, sway }: { geometry: TH
     mesh.count = Math.min(items.length, count ?? items.length);
   }, [items, count]);
   return (
-    <instancedMesh key={items.length} name={name} ref={ref} args={[geometry, undefined, items.length]}>
+    <instancedMesh key={items.length} name={name} ref={ref} args={[geometry, undefined, items.length]} castShadow receiveShadow>
       <meshStandardMaterial color={color} flatShading roughness={0.5} metalness={0.2} />
     </instancedMesh>
   );
@@ -145,7 +145,7 @@ function Body({
     for (let i = 0; i < base.length; i++) attr.array[i] = litFloors === undefined || i < litFloors ? base[i] : 0;
     attr.needsUpdate = true;
   }, [geometry, design, litFloors]);
-  return <instancedMesh key={items.length} name="body" ref={ref} args={[geometry, material, items.length]} />;
+  return <instancedMesh key={items.length} name="body" ref={ref} args={[geometry, material, items.length]} castShadow receiveShadow />;
 }
 
 function Amenities({ design, geometry, sway }: { design: Design; geometry: THREE.BufferGeometry; sway?: SwaySignal }) {
@@ -161,7 +161,7 @@ function Amenities({ design, geometry, sway }: { design: Design; geometry: THREE
     <group name="amenities">
       {design.amenities.includes('helipad') && (
         <SwayFollow y={roofY} sway={sway}>
-          <mesh position={[0, roofY + 0.4, 0]}>
+          <mesh position={[0, roofY + 0.4, 0]} castShadow receiveShadow>
             <cylinderGeometry args={[pad, pad, 0.6, 24]} />
             <meshStandardMaterial color="#3b3f45" />
           </mesh>
@@ -169,7 +169,7 @@ function Amenities({ design, geometry, sway }: { design: Design; geometry: THREE
       )}
       {design.amenities.includes('pool') && (
         <SwayFollow y={roofY} sway={sway}>
-          <mesh position={[0, roofY + 0.5, 0]} rotation={[0, top.rotation, 0]} scale={[top.width * 0.5, 0.6, top.depth * 0.3]}>
+          <mesh position={[0, roofY + 0.5, 0]} rotation={[0, top.rotation, 0]} scale={[top.width * 0.5, 0.6, top.depth * 0.3]} castShadow receiveShadow>
             <boxGeometry />
             <meshStandardMaterial color="#3fa9f5" />
           </mesh>
@@ -177,14 +177,14 @@ function Amenities({ design, geometry, sway }: { design: Design; geometry: THREE
       )}
       {design.amenities.includes('observation-deck') && (
         <SwayFollow y={deck.y + FLOOR_HEIGHT * 0.75} sway={sway}>
-          <mesh geometry={geometry} position={[0, deck.y + FLOOR_HEIGHT * 0.75, 0]} rotation={[0, deck.rotation, 0]} scale={[deck.width * 1.12, FLOOR_HEIGHT * 1.5, deck.depth * 1.12]}>
+          <mesh geometry={geometry} position={[0, deck.y + FLOOR_HEIGHT * 0.75, 0]} rotation={[0, deck.rotation, 0]} scale={[deck.width * 1.12, FLOOR_HEIGHT * 1.5, deck.depth * 1.12]} receiveShadow>
             <meshStandardMaterial color="#bfe9ff" transparent opacity={0.65} />
           </mesh>
         </SwayFollow>
       )}
       {design.amenities.includes('sky-garden') && (
         <SwayFollow y={garden.y + FLOOR_HEIGHT / 2} sway={sway}>
-          <mesh geometry={geometry} position={[0, garden.y + FLOOR_HEIGHT / 2, 0]} rotation={[0, garden.rotation, 0]} scale={[garden.width * 1.06, FLOOR_HEIGHT, garden.depth * 1.06]}>
+          <mesh geometry={geometry} position={[0, garden.y + FLOOR_HEIGHT / 2, 0]} rotation={[0, garden.rotation, 0]} scale={[garden.width * 1.06, FLOOR_HEIGHT, garden.depth * 1.06]} castShadow receiveShadow>
             <meshStandardMaterial color="#4caf50" flatShading />
           </mesh>
         </SwayFollow>

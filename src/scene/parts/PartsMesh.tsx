@@ -74,6 +74,8 @@ function Group({ group, palette, plan, night, sway }: { group: PartGroup; palett
       ref={ref}
       name={`parts:${group.key}`}
       args={[partGeometry(sample.shape, plan), undefined, parts.length]}
+      castShadow
+      receiveShadow
     >
       <meshStandardMaterial
         color={look.color}
@@ -109,7 +111,7 @@ function AircraftLights({ parts, sway }: { parts: Part[]; sway?: SwaySignal }) {
   return (
     <group name="aircraft-lights" ref={group}>
       {tops.map((t, i) => (
-        <mesh key={i} position={t} geometry={sphere} material={material} />
+        <mesh key={i} position={t} geometry={sphere} material={material} castShadow receiveShadow />
       ))}
     </group>
   );

@@ -43,3 +43,9 @@ export function snapToTexel(p: Vec3, halfSize: number): Vec3 {
   const du = Math.round(dot(p, up) / texel) * texel - dot(p, up);
   return [p[0] + right[0] * dr + up[0] * du, p[1] + right[1] * dr + up[1] * du, p[2] + right[2] * dr + up[2] * du];
 }
+
+/** Solid things cast shadows and receive them; see-through things (a pool's water, ghosted floors) only receive. */
+export function shadowFlags(material: { transparent?: boolean; opacity?: number }): { castShadow: boolean; receiveShadow: boolean } {
+  const seeThrough = !!material.transparent && (material.opacity ?? 1) < 1;
+  return { castShadow: !seeThrough, receiveShadow: true };
+}

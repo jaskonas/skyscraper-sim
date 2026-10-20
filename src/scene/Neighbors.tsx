@@ -56,5 +56,5 @@ export function Neighbors({ site, night = false }: { site: Site; night?: boolean
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
     mesh.computeBoundingSphere();
   }, [blocks]);
-  return <instancedMesh key={site.id} name="neighbors" ref={ref} args={[box, material, blocks.length]} />;
+  return <instancedMesh key={site.id} name="neighbors" ref={ref} args={[box, material, blocks.length]} castShadow receiveShadow />;
 }

@@ -6,11 +6,11 @@ export function SiteDiorama({ site }: { site: Site }) {
   const bands = soilBands(site);
   return (
     <group name="diorama">
-      <mesh position={[0, -0.5, 0]}>
+      <mesh position={[0, -0.5, 0]} receiveShadow>
         <boxGeometry args={[DIORAMA.width, 1, DIORAMA.depth]} />
         <meshStandardMaterial color={site.visuals.ground} />
       </mesh>
-      <mesh position={[lx, 0.05, lz]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh position={[lx, 0.05, lz]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[site.lot.width, site.lot.depth]} />
         <meshStandardMaterial color="#d6cfbf" />
       </mesh>
