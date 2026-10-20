@@ -1,9 +1,10 @@
 import { OrbitControls } from '@react-three/drei';
 import { Canvas, useThree } from '@react-three/fiber';
 import { useEffect, useRef, useState } from 'react';
+import * as THREE from 'three';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import { useCurrent } from '../state/hooks';
-import { useGame } from '../state/store';
+import { selectShadowsOn, useGame } from '../state/store';
 import { DetailInset } from '../ui/DetailInset';
 import { FacadeDetailToggle } from '../ui/FacadeDetailToggle';
 import { ForceBanner, ForceButtons, ForceReadout } from '../ui/ForceControls';
@@ -20,6 +21,7 @@ import { Landmark } from './Landmark';
 import { lighting } from './lighting';
 import { Neighbors } from './Neighbors';
 import { SiteDiorama } from './SiteDiorama';
+import { SunLight } from './SunLight';
 import { cameraFrame, type CameraFrame } from './layout';
 
 /** Moves the camera to `frame` when the controls first exist and whenever `nonce` changes — never on design edits. */
@@ -56,15 +58,16 @@ export function Scene() {
   const forceOn = force !== 'none' && !building ? force : null;
   const [sway] = useState(createSway);
   const facadeDetail = useGame((s) => s.facadeDetail === 'high');
-  const light = lighting(site, night);
+  const shadowsOn = useGame(selectShadowsOn);
+  const light = lighting(site, night, shadowsOn);
   const frame = cameraFrame(site, analysis.tipHeightM);
   return (
     <div className="scene">
-      <Canvas key={site.id} camera={{ position: frame.position, fov: 45, near: 1, far: 6000 }}>
+      <Canvas key={site.id} shadows={{ type: THREE.PCFShadowMap }} camera={{ position: frame.position, fov: 45, near: 1, far: 6000 }}>
         <color attach="background" args={[light.sky]} />
         <fog attach="fog" args={[light.sky, 1400, 3600]} />
         <hemisphereLight args={[light.hemiSky, site.visuals.ground, light.hemi]} />
-        <directionalLight position={[300, 600, 250]} intensity={light.sun} color={light.sunColor} />
+        <SunLight on={shadowsOn} intensity={light.sun} color={light.sunColor} />
         <GroundShake sway={sway}>
           <SiteDiorama site={site} />
           <Neighbors site={site} night={night} />

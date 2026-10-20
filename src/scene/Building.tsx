@@ -17,11 +17,11 @@ import { swayAt, type SwaySignal } from './forces/sway';
 import { lotCenter } from './layout';
 import { bracingParts, ornamentParts } from './ornaments';
 import { PartsMesh } from './parts/PartsMesh';
+import { SUN_DIRECTION } from './sunShadow';
 import { partBounds, type Part } from '../sim/parts';
 
 const swayMatrix = new THREE.Matrix4();
 /** Where the scene's sun shines from (the main view's directional light). */
-const SUN_DIRECTION: [number, number, number] = [300, 600, 250];
 
 /** While the tower sways, re-sets each floor's matrix every frame; once more when it stops, to put it back. */
 function useSwayedInstances(ref: RefObject<THREE.InstancedMesh | null>, items: BoxInstance[], sway?: SwaySignal) {
