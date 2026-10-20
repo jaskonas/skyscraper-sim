@@ -7,6 +7,8 @@ import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 export interface DevCamera {
   /** Points the camera from `position` at `target` (world metres). */
   look: (position: [number, number, number], target: [number, number, number]) => void;
+  /** The renderer and scene, for inspecting them from a script. */
+  three: () => { gl: unknown; scene: unknown };
 }
 
 /**
@@ -16,6 +18,8 @@ export interface DevCamera {
 export function DevCameraHook() {
   const camera = useThree((s) => s.camera);
   const controls = useThree((s) => s.controls) as OrbitControlsImpl | null;
+  const gl = useThree((s) => s.gl);
+  const scene = useThree((s) => s.scene);
   useEffect(() => {
     if (!import.meta.env.DEV) return;
     const w = window as unknown as { __devCamera?: DevCamera };
@@ -27,10 +31,11 @@ export function DevCameraHook() {
           controls.update();
         } else camera.lookAt(...target);
       },
+      three: () => ({ gl, scene }),
     };
     return () => {
       delete w.__devCamera;
     };
-  }, [camera, controls]);
+  }, [camera, controls, gl, scene]);
   return null;
 }

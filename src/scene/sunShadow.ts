@@ -1,7 +1,11 @@
 export type Vec3 = [number, number, number];
 
-/** Toward the sun, world space (not normalised). Shared by the light, its shadows and the glass glint. */
-export const SUN_DIRECTION: Vec3 = [300, 600, 250];
+/**
+ * Toward the sun, world space (not normalised). Shared by the light, its shadows and the glass glint.
+ * The sun is front-left and about 40° up, while the default camera looks from the front-right: shadows fall
+ * back and to the right where you can see them, and the tower's right face is in shade, which shows its depth.
+ */
+export const SUN_DIRECTION: Vec3 = [-450, 420, 300];
 /** How far back along the sun's direction the shadow camera sits from what it looks at. */
 export const SUN_DISTANCE = 1500;
 /** One shadow map, square: the most a low-end Chromebook GPU should be asked for. */

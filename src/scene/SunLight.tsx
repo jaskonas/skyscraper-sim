@@ -2,7 +2,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { useLayoutEffect, useRef } from 'react';
 import * as THREE from 'three';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
-import { SHADOW_MAP_SIZE, shadowFrame, snapToTexel, type Vec3 } from './sunShadow';
+import { SHADOW_MAP_SIZE, SUN_DIRECTION, shadowFrame, snapToTexel, type Vec3 } from './sunShadow';
 
 const origin = new THREE.Vector3();
 
@@ -17,7 +17,8 @@ export function SunLight({ on, intensity, color }: { on: boolean; intensity: num
     const light = ref.current;
     if (!light) return;
     light.shadow.mapSize.set(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE);
-    light.shadow.bias = -0.0005;
+    // Depth bias is a share of the shadow camera's 3 km depth: keep it to a few centimetres, or small ledges lose their shadows.
+    light.shadow.bias = -0.00002;
   }, []);
   useFrame(({ camera }) => {
     const light = ref.current;
@@ -42,5 +43,5 @@ export function SunLight({ on, intensity, color }: { on: boolean; intensity: num
       light.shadow.normalBias = 0.6 * ((2 * f.halfSize) / SHADOW_MAP_SIZE);
     }
   });
-  return <directionalLight ref={ref} castShadow={on} intensity={intensity} color={color} position={[300, 600, 250]} />;
+  return <directionalLight ref={ref} castShadow={on} intensity={intensity} color={color} position={SUN_DIRECTION} />;
 }
