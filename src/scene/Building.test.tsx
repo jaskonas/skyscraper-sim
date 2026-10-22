@@ -138,9 +138,10 @@ describe('<Building />', () => {
   it("tiers of a crown follow a round tower's shape", async () => {
     const { site, design } = designFor('chicago', { shape: 'circle', crown: 'stepped' });
     const r = await ReactThreeTestRenderer.create(<Building site={site} design={design} />);
-    const meshes = instancedIn(r, 'crown');
-    expect(meshes).toHaveLength(1);
-    expect(meshes[0].geometry.type).toBe('CylinderGeometry');
+    // The tiers are slabs of the plan shape: on a round tower, cylinders (the rich crown adds piers, windows and a roof).
+    const tiers = instancedIn(r, 'crown').filter((m) => m.name.startsWith('parts:plan|'));
+    expect(tiers.length).toBeGreaterThan(0);
+    for (const m of tiers) expect(m.geometry.type).toBe('CylinderGeometry');
   });
 
   it('lights aircraft-warning beacons on masts only at night', async () => {
