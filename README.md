@@ -19,6 +19,8 @@ Up close, the glass sits back from the wall, reflects the sky and varies from pa
 
 Open roofs carry real rooftop kit — cooling towers, a plant room, a window-cleaning crane on its rail, an antenna with a blinking light (and wooden water tanks on old New York styles) — setback ledges become planted terraces, and the front door gets a canopy and revolving doors.
 
+Walls and parts wear real materials, true to scale: red or buff brick, limestone, granite, terracotta, board-formed or precast concrete, metal panels, copper patina and wood. The colours still come from the design's palette — the textures only add the light and dark of mortar, grain and seams — and walls weather a little: patchy tone, streaks under the windows, grime near the street. The textures are CC0 from [Poly Haven](https://polyhaven.com) (credits in `public/textures/LICENSES.md`); `scripts/textures/build_textures.py` rebuilds them.
+
 ## Develop
 
     npm test          # unit and component tests
