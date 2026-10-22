@@ -57,7 +57,7 @@ describe('rich modern crowns', () => {
 
   it('Seagram: a bronze fascia with mullions running past the roof; the deck stays where it was', () => {
     const p = rich('flat');
-    expect(count(p, (q) => !!q.fine && q.shape === 'box' && q.material === 'accent')).toBeGreaterThanOrEqual(40);
+    expect(count(p, (q) => q.shape === 'box' && q.material === 'accent' && q.scale[0] < 0.2)).toBeGreaterThanOrEqual(40);
     expect(count(p, (q) => q.material === 'steel' && q.shape === 'box' && !q.fine)).toBe(0);
   });
 

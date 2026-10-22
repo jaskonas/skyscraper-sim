@@ -23,6 +23,8 @@ Walls and parts wear real materials, true to scale: red or buff brick, limestone
 
 Zoom in close and the walls nearest you turn into true 3D: window frames stand proud, the glass sits back in its opening, and sills and mullion caps catch the light — on square, round, tapered and twisted towers alike. Further out the walls stay painted, so it stays smooth.
 
+Every crown is modelled on a real building: One World Trade Center's segmented mast, the Chrysler's stainless sunburst arches and eagles, Woolworth's copper roof and crocketed pinnacles, the Gherkin's diagrid, Jin Mao's flared eaves and more. The smallest pieces appear as you zoom in; Detail: Simple and the sidebar icons use plainer versions.
+
 ## Develop
 
     npm test          # unit and component tests

@@ -127,7 +127,8 @@ const boaPlaza: CrownBuilder = (ctx) => {
 const seagram: CrownBuilder = (ctx) => {
   const { H } = ctx;
   const parts: Part[] = [slab(ctx, 0, 0.42 * H, 0.96, 'accent'), slab(ctx, 0.42 * H, 0.5 * H, 0.965, 'accent')];
-  parts.push(...aroundPlan(ctx, 0, 1.5, 0.5 * H, () => ({ shape: 'box', position: [0, 0, 0.05], scale: [0.12, H, 0.15], material: 'accent', fine: true }), 0.96));
+  // The mullions are the crown's outline (its tallest part), so they are drawn at every distance.
+  parts.push(...aroundPlan(ctx, 0, 1.5, 0.5 * H, () => ({ shape: 'box', position: [0, 0, 0.05], scale: [0.12, H, 0.15], material: 'accent' }), 0.96));
   return parts;
 };
 

@@ -18,6 +18,7 @@ import { lotCenter } from './layout';
 import { bracingParts, ornamentParts } from './ornaments';
 import { PartsMesh } from './parts/PartsMesh';
 import { CloseWalls, createChunkSignal, type ChunkSignal } from './closeWalls/CloseWalls';
+import { CrownFine } from './crowns/CrownFine';
 import { selectShadowsOn, useGame } from '../state/store';
 import { sunDirection } from './sunShadow';
 import { facadeWall, surfacesFor } from './materials/library';
@@ -285,6 +286,10 @@ export function Building({
     };
   }, [ornaments, crown, dressing, share]);
   const look = { palette: design.palette, plan: design.shape, night, sway, surfaces: surfacesFor(design), detail: facadeDetail };
+  // Small crown pieces are drawn only up close; the rest always.
+  const crownCoarse = useMemo(() => top.crown.filter((p) => !p.fine), [top.crown]);
+  const crownFine = useMemo(() => top.crown.filter((p) => p.fine), [top.crown]);
+  const crownCentre = useMemo<[number, number, number]>(() => [0, design.floors * FLOOR_HEIGHT + 10, 0], [design.floors]);
   const floors = Math.min(reveal?.floors ?? design.floors, design.floors - hideTopFloors);
   // During construction, balconies only on the floors finished so far.
   const shownBalconies = useMemo(
@@ -305,7 +310,8 @@ export function Building({
       />
       {facadeDetail && !reveal && <CloseWalls site={site} design={design} signal={chunks} sway={sway} night={night} floors={floors} />}
       <Instanced name="slabs" geometry={geometry} items={slabs} color={design.palette.accent} count={floors} sway={sway} />
-      <PartsMesh name="crown" parts={top.crown} {...look} />
+      <PartsMesh name="crown" parts={crownCoarse} {...look} />
+      <CrownFine parts={crownFine} centre={crownCentre} offset={[lx, lz]} {...look} />
       <PartsMesh name="ornaments" parts={top.ornaments} {...look} />
       <PartsMesh name="balconies" parts={shownBalconies} {...look} />
       <PartsMesh name="dressing" parts={top.dressing} {...look} />
