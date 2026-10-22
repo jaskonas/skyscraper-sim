@@ -1,6 +1,6 @@
 import type { Part, PartMaterial, Vec3 } from '../../../sim/parts';
 import { planFaces } from '../../parts/placement';
-import { aroundPlan, atCorners, finial, lattice, pinnacle, placeAt, ribs, ring, roofSize, tier } from '../kit';
+import { aroundPlan, atCorners, finial, lattice, pinnacle, placeAt, ribs, ring, roofSize, tier, windowPane } from '../kit';
 import type { CrownBuilder } from '../types';
 
 /** Spires and needles, each modelled on the building in its catalog entry. y = 0 is the roof; the tip is at H. */
@@ -154,7 +154,7 @@ const empireState: CrownBuilder = (ctx) => {
   parts.push({ shape: 'box', position: [0, (l0 + l1) / 2, 0], scale: [lw, l1 - l0, lw], material: 'accent' });
   // Tall windows on every side and aluminium fins between them.
   parts.push(
-    ...ring(12, lw / 2 + 0.02, (l0 + l1) / 2, () => ({ shape: 'box', position: [0, 0, 0], scale: [lw * 0.12, (l1 - l0) * 0.75, 0.1], material: 'light', glow: true, fine: true }), Math.PI / 12),
+    ...ring(12, lw / 2 + 0.02, (l0 + l1) / 2, () => windowPane([lw * 0.12, (l1 - l0) * 0.75, 0.1]), Math.PI / 12),
   );
   parts.push(...ring(12, lw / 2 + 0.15, (l0 + l1) / 2, () => ({ shape: 'box', position: [0, 0, 0], scale: [0.18, (l1 - l0) * 0.98, 0.3], material: 'steel' })));
   parts.push({ shape: 'dome', position: [0, 0.4 * H, 0], scale: [lw * 1.05, 0.08 * H, lw * 1.05], material: 'accent' });

@@ -1,6 +1,6 @@
 import { strutPart, type Part, type PartMaterial } from '../../../sim/parts';
 import { planCorners, planFaces } from '../../parts/placement';
-import { aroundPlan, atCorners, finial, pinnacle, placeAt, ring, roofSize, tier } from '../kit';
+import { aroundPlan, atCorners, finial, pinnacle, placeAt, ring, roofSize, tier, windowPane } from '../kit';
 import type { CrownBuilder, CrownContext } from '../types';
 
 /** Gothic and classical crowns. y = 0 is the roof; the tip is at H. */
@@ -23,7 +23,7 @@ const solid = (shape: Part['shape'], y0: number, y1: number, w: number, material
 /** A dormer: a little gabled window standing on a sloping roof, facing out. */
 const dormer = (w: number, h: number, roof: PartMaterial): Part[] => [
   { shape: 'box', position: [0, h * 0.35, 0], scale: [w, h * 0.7, w * 0.8], material: 'body', fine: true },
-  { shape: 'box', position: [0, h * 0.35, w * 0.41], scale: [w * 0.6, h * 0.5, 0.05], material: 'light', glow: true, fine: true },
+  windowPane([w * 0.6, h * 0.5, 0.05], [0, h * 0.35, w * 0.41]),
   { shape: 'pyramid', position: [0, h * 0.85, 0], scale: [w * 1.1, h * 0.3, w * 0.9], material: roof, fine: true },
 ];
 

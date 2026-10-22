@@ -50,7 +50,7 @@ describe('rich spires and needles', () => {
     const p = rich('star-spire');
     expect(count(p, (q) => q.shape === 'plan' && q.material === 'body')).toBeGreaterThanOrEqual(3);
     expect(count(p, (q) => q.shape === 'octagon')).toBeGreaterThanOrEqual(12);
-    expect(count(p, (q) => !!q.glow && !!q.fine && q.material === 'light')).toBeGreaterThanOrEqual(12);
+    expect(count(p, (q) => !!q.glow && !!q.fine && q.material === 'pane')).toBeGreaterThanOrEqual(12);
     expect(count(p, (q) => strut(q) && q.material === 'gold')).toBeGreaterThanOrEqual(8);
     expect(count(p, (q) => q.shape === 'torus' && q.material === 'gold')).toBeGreaterThanOrEqual(1);
     expect(count(p, (q) => q.material === 'ruby' && !!q.glow)).toBeGreaterThanOrEqual(6);

@@ -109,7 +109,7 @@ export function lattice(y0: number, y1: number, r0: number, r1: number, sides: n
  * One tier of a stepped crown: a slab of the plan shape `w` of the roof's width from y0 to y1, with a
  * moulding band on top and `windows` lit windows per side (round plans: per quarter).
  */
-export function tier(ctx: CrownContext, y0: number, y1: number, w: number, material: PartMaterial, opts: { windows?: number; band?: boolean; windowMaterial?: PartMaterial } = {}): Part[] {
+export function tier(ctx: CrownContext, y0: number, y1: number, w: number, material: PartMaterial, opts: { windows?: number; band?: boolean } = {}): Part[] {
   const h = y1 - y0;
   const band = opts.band ? Math.min(0.6, h * 0.12) : 0;
   const parts: Part[] = [{ shape: 'plan', position: [0, y0 + (h - band) / 2, 0], scale: [ctx.W * w, h - band, ctx.D * w], material }];
@@ -124,7 +124,7 @@ export function tier(ctx: CrownContext, y0: number, y1: number, w: number, mater
         0,
         spacing,
         y0 + h * 0.45,
-        () => ({ shape: 'box', position: [0, 0, 0.02], scale: [spacing * 0.45, winH, 0.1], material: opts.windowMaterial ?? 'light', glow: true, fine: true }),
+        () => windowPane([spacing * 0.45, winH, 0.1], [0, 0, 0.02]),
         w,
       ),
     );
@@ -141,6 +141,14 @@ export function ribs(n: number, r0: number, r1: number, y0: number, y1: number, 
     out.push(fine ? { ...p, fine: true } : p);
   }
   return out;
+}
+
+/** Warm light from a lit window at night. */
+export const WINDOW_GLOW = '#ffd98a';
+
+/** A window: glass by day, glowing warm at night (fine work). */
+export function windowPane(scale: Vec3, position: Vec3 = [0, 0, 0], extra: Partial<Part> = {}): Part {
+  return { shape: 'box', position, scale, material: 'pane', glow: true, glowColor: WINDOW_GLOW, fine: true, ...extra };
 }
 
 /** The rough width of the roof: the smaller of its two sides. */
