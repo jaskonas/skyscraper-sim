@@ -36,6 +36,8 @@ export interface Chunk {
   centre: Vec3;
   /** World xz direction the wall faces, or null on a round plan. */
   normal: [number, number] | null;
+  /** The same in the floor's own unturned frame (the facade shader tells walls apart by it), or null. */
+  localNormal: [number, number] | null;
   /** Half its diagonal, metres. */
   radius: number;
 }
@@ -78,7 +80,8 @@ export function towerChunks(design: Design): Chunk[] {
         const cell0 = Math.max(a, k * CHUNK_BAYS);
         const cell1 = Math.min(b, (k + 1) * CHUNK_BAYS);
         if (cell1 <= cell0) continue;
-        const at = worldAnchor(mid, alongFace(design.shape, mid.width, mid.depth, faceOf(design, mid, fi), ((cell0 + cell1) / 2) * bay));
+        const midFace = faceOf(design, mid, fi);
+        const at = worldAnchor(mid, alongFace(design.shape, mid.width, mid.depth, midFace, ((cell0 + cell1) / 2) * bay));
         const height = (f1 - f0) * FLOOR_HEIGHT;
         out.push({
           key: `${f0}:${fi}:${cell0}`,
@@ -89,6 +92,7 @@ export function towerChunks(design: Design): Chunk[] {
           cell1,
           centre: [at.position[0], slices[f0].y + height / 2, at.position[2]],
           normal: design.shape === 'circle' ? null : [Math.sin(at.yaw), Math.cos(at.yaw)],
+          localNormal: design.shape === 'circle' ? null : [Math.sin(midFace.yaw), Math.cos(midFace.yaw)],
           radius: Math.hypot((cell1 - cell0) * bay, height) / 2,
         });
       }

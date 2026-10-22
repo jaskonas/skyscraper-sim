@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { unitGeometry } from './buildingGeometry';
-import { createFacadeMaterial, facadeAcross, facadeUniforms, patchFacadeShader, setFacadeDetail, setFacadeFloors, setFacadeNight, setFacadeSky, setFacadeSurfaces, type FacadeUniforms } from './FacadeMaterial';
+import { createFacadeMaterial, facadeAcross, facadeUniforms, patchFacadeShader, setFacadeChunks, setFacadeDetail, setFacadeFloors, setFacadeNight, setFacadeSky, setFacadeSurfaces, type FacadeUniforms } from './FacadeMaterial';
+import type { Chunk } from './closeWalls/chunks';
 import { libraryTextures } from './materials/libraryTextures';
 
 const options = { map: null, glowMap: null, tileWidth: 3, tileHeight: 3.4, roughness: 0.5, metalness: 0.2, color: '#808080', round: false };
@@ -55,7 +56,7 @@ describe('facade material', () => {
     // The reveal's wall colour is only read when there is a texture (a canvas-less browser has none).
     expect(shader.fragmentShader).toMatch(/#ifdef USE_MAP\s+diffuseColor\.rgb = texture2D\( map, vFacadeUv \+ shift \)/);
     expect(shader.uniforms.uDetail).toBeDefined();
-    expect(createFacadeMaterial(options).customProgramCacheKey()).toBe('facade-v5');
+    expect(createFacadeMaterial(options).customProgramCacheKey()).toBe('facade-v6');
   });
 
   it('turns the detail on and off and follows the sky without rebuilding the material', () => {
@@ -70,7 +71,7 @@ describe('facade material', () => {
     setFacadeSky(m, '#123456', [0, 1, 0]);
     expect('#' + u.uSkyColor.value.getHexString()).toBe('#123456');
     expect(u.uSunDir.value.toArray()).toEqual([0, 1, 0]);
-    expect(m.customProgramCacheKey()).toBe('facade-v5');
+    expect(m.customProgramCacheKey()).toBe('facade-v6');
   });
 
   it('samples the wall and trim materials in metres and keeps the palette colour', () => {
@@ -113,6 +114,30 @@ describe('facade material', () => {
     const m = createFacadeMaterial(options);
     setFacadeSurfaces(m, 'brick-red', 'terracotta');
     expect(m.userData.facadeUniforms.uSurfacesReady.value).toBe(0);
+  });
+
+  it('cuts holes exactly where the 3D wall chunks stand', () => {
+    const shader = {
+      vertexShader: THREE.ShaderLib.standard.vertexShader,
+      fragmentShader: THREE.ShaderLib.standard.fragmentShader,
+      uniforms: {} as Record<string, unknown>,
+    };
+    patchFacadeShader(shader, facadeUniforms(null));
+    expect(shader.fragmentShader).toContain('uChunkCells');
+    expect(shader.fragmentShader).toContain('discard');
+    const chunk = (k: number, normal: [number, number] | null): Chunk => ({
+      key: String(k), floor0: 8, floor1: 12, face: 0, cell0: -3, cell1: 3, centre: [0, 0, 0], normal, localNormal: normal, radius: 1,
+    });
+    const m = createFacadeMaterial(options);
+    const u = m.userData.facadeUniforms as FacadeUniforms;
+    setFacadeChunks(m, [chunk(0, [0, 1]), chunk(1, null)]);
+    expect(u.uChunkCells.value[0].toArray()).toEqual([8, 12, -3, 3]);
+    expect(u.uChunkFace.value[0].toArray()).toEqual([0, 1, 0, 1]);
+    expect(u.uChunkFace.value[1].toArray()).toEqual([0, 0, 1, 1]);
+    expect(u.uChunkFace.value[2].w).toBe(0);
+    setFacadeChunks(m, Array.from({ length: 9 }, (_, k) => chunk(k, [1, 0])));
+    expect(u.uChunkFace.value.filter((v) => v.w === 1)).toHaveLength(8);
+    expect(m.customProgramCacheKey()).toBe('facade-v6');
   });
 
   it('weathers the walls but not the glass', () => {

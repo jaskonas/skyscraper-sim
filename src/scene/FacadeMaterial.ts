@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import type { Chunk } from './closeWalls/chunks';
 import { FACADE_DETAIL_GLSL } from './facadeDetail';
 import { LIBRARY, type LibraryId } from './materials/library';
 import { NEUTRAL_DETAIL, NEUTRAL_NORMAL, libraryTextures } from './materials/libraryTextures';
@@ -22,6 +23,9 @@ export interface FacadeMaterialOptions extends FacadeLook {
   metalness: number;
 }
 
+/** How many 3D wall chunks the facade can step aside for at once (matches closeWalls' MAX_CHUNKS). */
+export const MAX_FACADE_CHUNKS = 8;
+
 export interface FacadeUniforms {
   uNight: { value: number };
   uTileSize: { value: THREE.Vector2 };
@@ -42,6 +46,10 @@ export interface FacadeUniforms {
   uTrimSurface: { value: THREE.Vector3 };
   /** The tower's floor count, for fading the top floors. */
   uFloors: { value: number };
+  /** Wall chunks drawn in true 3D, where the painted facade steps aside: (floor0, floor1, cell0, cell1)… */
+  uChunkCells: { value: THREE.Vector4[] };
+  /** …and (wall normal x, z in the floor's own frame; 1 on a round drum; 1 if in use). */
+  uChunkFace: { value: THREE.Vector4[] };
   /** 1 once the wall's textures have arrived: weathering waits for them, so a page without them looks as before. */
   uSurfacesReady: { value: number };
 }
@@ -65,6 +73,8 @@ export function facadeUniforms(glowMap: THREE.Texture | null): FacadeUniforms {
     uTrimSurface: { value: new THREE.Vector3(0.5, 0, 0) },
     uFloors: { value: 1 },
     uSurfacesReady: { value: 0 },
+    uChunkCells: { value: Array.from({ length: MAX_FACADE_CHUNKS }, () => new THREE.Vector4()) },
+    uChunkFace: { value: Array.from({ length: MAX_FACADE_CHUNKS }, () => new THREE.Vector4()) },
   };
 }
 
@@ -94,6 +104,7 @@ attribute float aLit;
 attribute vec3 aLitColor;
 attribute float aMech;
 uniform vec2 uTileSize;
+varying vec3 vFacadeLocalNormal;
 varying vec2 vFacadeUv;
 varying float vFloor;
 varying float vLit;
@@ -132,6 +143,7 @@ vLitColor = aLitColor;
 vMech = aMech;
 vFacadeWorld = (facadeModel * vec4(transformed, 1.0)).xyz;
 vFacadeNormal = normalize(mat3(facadeModel) * normal);
+vFacadeLocalNormal = normal;
 `;
 
 const FRAGMENT_HEAD = /* glsl */ `
@@ -149,6 +161,9 @@ uniform vec3 uWallSurface;
 uniform vec3 uTrimSurface;
 uniform float uFloors;
 uniform float uSurfacesReady;
+uniform vec4 uChunkCells[${MAX_FACADE_CHUNKS}];
+uniform vec4 uChunkFace[${MAX_FACADE_CHUNKS}];
+varying vec3 vFacadeLocalNormal;
 varying vec2 vFacadeUv;
 varying float vFloor;
 varying float vLit;
@@ -203,6 +218,16 @@ if (uDetail > 0.5 && abs(vFacadeNormal.y) < 0.5) {
   vec3 ray = vec3(dot(V, T), V.y, dot(V, N));
   float bay = floor(vFacadeUv.x);
   float floorIndex = floor(vFloor + 0.5) + floor(vFacadeUv.y);
+  // Where a wall chunk is drawn in true 3D, the painted wall steps aside (plant floors stay painted).
+  if (vMech < 0.5) {
+    vec2 wallDir = normalize(vFacadeLocalNormal.xz);
+    for (int i = 0; i < ${MAX_FACADE_CHUNKS}; i++) {
+      vec4 cells = uChunkCells[i];
+      vec4 face = uChunkFace[i];
+      if (face.w > 0.5 && floorIndex >= cells.x && floorIndex < cells.y && bay >= cells.z && bay < cells.w
+          && (face.z > 0.5 || dot(wallDir, face.xy) > 0.99)) discard;
+    }
+  }
   // Materials are laid out in metres: along the wall, and by world height so brick courses run on
   // through floor lines. Both are sampled here, outside any per-pixel branch, so their mipmaps stay right.
   vec2 matUv = vec2(vFacadeUv.x * uTileSize.x, vFacadeWorld.y);
@@ -321,7 +346,7 @@ export function createFacadeMaterial(o: FacadeMaterialOptions): THREE.MeshStanda
   const uniforms = facadeUniforms(o.glowMap);
   material.userData.facadeUniforms = uniforms;
   material.onBeforeCompile = (shader) => patchFacadeShader(shader, uniforms);
-  material.customProgramCacheKey = () => 'facade-v5';
+  material.customProgramCacheKey = () => 'facade-v6';
   setFacadeLook(material, o);
   return material;
 }
@@ -371,4 +396,20 @@ export function setFacadeSurfaces(material: THREE.Material, wall: LibraryId, tri
 export function setFacadeFloors(material: THREE.Material, floors: number): void {
   const u = material.userData.facadeUniforms as FacadeUniforms | undefined;
   if (u) u.uFloors.value = floors;
+}
+
+/** The wall chunks now drawn in true 3D: the painted facade leaves holes exactly there. */
+export function setFacadeChunks(material: THREE.Material, chunks: readonly Chunk[]): void {
+  const u = material.userData.facadeUniforms as FacadeUniforms | undefined;
+  if (!u) return;
+  for (let i = 0; i < MAX_FACADE_CHUNKS; i++) {
+    const c = chunks[i];
+    if (!c) {
+      u.uChunkFace.value[i].set(0, 0, 0, 0);
+      continue;
+    }
+    u.uChunkCells.value[i].set(c.floor0, c.floor1, c.cell0, c.cell1);
+    const n = c.localNormal;
+    u.uChunkFace.value[i].set(n ? n[0] : 0, n ? n[1] : 0, n ? 0 : 1, 1);
+  }
 }
