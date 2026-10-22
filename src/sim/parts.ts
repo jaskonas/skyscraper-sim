@@ -23,7 +23,7 @@ export type PartShape =
   | 'plan-cone';
 
 export const PART_MATERIALS = [
-  'body', 'accent', 'glass', 'stone', 'concrete', 'copper', 'gold', 'steel', 'foliage', 'ruby', 'light', 'interior', 'girder', 'wood',
+  'body', 'accent', 'glass', 'stone', 'concrete', 'copper', 'gold', 'steel', 'foliage', 'ruby', 'light', 'interior', 'girder', 'wood', 'blind',
 ] as const;
 export type PartMaterial = (typeof PART_MATERIALS)[number];
 
@@ -35,6 +35,8 @@ export interface Part {
   material: PartMaterial;
   /** Glows at night. */
   glow?: boolean;
+  /** The colour it glows in, instead of its material's (a lit window, in its floor's light). */
+  glowColor?: string;
   /** 'spin': turns about its own z axis. 'blink': aircraft-warning light at night. */
   animate?: 'spin' | 'blink';
 }

@@ -20,7 +20,7 @@ export interface PartGroup {
 export function groupParts(parts: Part[]): PartGroup[] {
   const groups = new Map<string, PartGroup>();
   for (const p of parts) {
-    const key = `${p.shape}|${p.material}|${p.glow ? 'glow' : ''}|${p.animate ?? ''}`;
+    const key = `${p.shape}|${p.material}|${p.glow ? 'glow' : ''}|${p.animate ?? ''}|${p.glowColor ?? ''}`;
     let g = groups.get(key);
     if (!g) groups.set(key, (g = { key, sample: p, parts: [] }));
     g.parts.push(p);
@@ -113,7 +113,7 @@ function Group({
         color={look.color}
         roughness={look.roughness}
         metalness={look.metalness}
-        emissive={lit ? glowColor(sample.material, palette) : '#000000'}
+        emissive={lit ? (sample.glowColor ?? glowColor(sample.material, palette)) : '#000000'}
         emissiveIntensity={lit ? 1.4 : 0}
         flatShading
       />
