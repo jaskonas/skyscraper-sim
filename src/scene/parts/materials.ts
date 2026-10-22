@@ -23,10 +23,11 @@ export function materialLook(m: PartMaterial, palette: Palette): MaterialLook {
     case 'copper':
       // Old copper turns green: this is the patina colour.
       return { color: '#5fa58f', roughness: 0.6, metalness: 0.3 };
+    // Metals are kept only half metallic: the scene has no sky map to reflect, so fully metallic parts read black.
     case 'gold':
-      return { color: '#d4af37', roughness: 0.3, metalness: 0.8 };
+      return { color: '#e0b84a', roughness: 0.35, metalness: 0.45 };
     case 'steel':
-      return { color: '#9aa3ab', roughness: 0.35, metalness: 0.7 };
+      return { color: '#b9c1c8', roughness: 0.4, metalness: 0.4 };
     case 'foliage':
       return { color: '#3f8f3a', roughness: 0.9, metalness: 0 };
     case 'ruby':

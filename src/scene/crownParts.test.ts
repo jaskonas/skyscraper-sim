@@ -50,8 +50,9 @@ describe('crownParts', () => {
     for (const crown of CROWN_IDS.filter((c) => CROWNS[c].openRoof)) {
       const { design } = designFor('chicago', { floors: 40, crown });
       const W = floorSlices(design).at(-1)!.width;
+      // A crown with no wide slab (masts) leaves the deck at the roof: -1 here.
       const deck = (level: 'simple' | 'rich') =>
-        Math.max(...crownParts(design, level).filter((p) => p.shape === 'plan' && p.scale[0] >= 0.9 * W).map((p) => partBounds(p).max[1]));
+        Math.max(-1, ...crownParts(design, level).filter((p) => p.shape === 'plan' && p.scale[0] >= 0.9 * W).map((p) => partBounds(p).max[1]));
       expect(deck('rich'), crown).toBeCloseTo(deck('simple'), 1);
     }
   });
