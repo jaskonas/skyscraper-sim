@@ -19,4 +19,11 @@ describe('part geometries', () => {
     expect(partGeometry('cone', 'square')).toBe(partGeometry('cone', 'circle'));
     expect(partGeometry('plan', 'square')).not.toBe(partGeometry('plan', 'circle'));
   });
+
+  it('the ogee swells and then draws up to a point at the very top', () => {
+    const pos = partGeometry('ogee', 'square').getAttribute('position');
+    let upper = 0;
+    for (let i = 0; i < pos.count; i++) if (pos.getY(i) > 0.2 && pos.getY(i) < 0.3) upper = Math.max(upper, Math.hypot(pos.getX(i), pos.getZ(i)));
+    expect(upper).toBeGreaterThan(0.05);
+  });
 });

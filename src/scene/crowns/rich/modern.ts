@@ -65,7 +65,7 @@ const transamerica: CrownBuilder = (ctx) => {
         const along = ((k + 0.5) / n - 0.5) * f.length * (1 - t) * 0.8;
         const inward = out * (1 - t) + 0.05;
         const at: [number, number, number] = [(f.x / out) * inward + Math.cos(f.yaw) * along, top * t, (f.z / out) * inward - Math.sin(f.yaw) * along];
-        parts.push(placeAt(windowPane([Math.min(1.6, f.length * 0.06), Math.min(0.06 * top, 2), 0.1], [0, 0, 0], { rotation: [slope, 0, 0] }), at, f.yaw));
+        parts.push(placeAt(windowPane([Math.min(1.6, f.length * 0.06), Math.min(0.06 * top, 2), 0.1], [0, 0, 0], { rotation: [-slope, 0, 0] }), at, f.yaw));
       }
     }
   }

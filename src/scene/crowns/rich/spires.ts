@@ -152,6 +152,8 @@ const empireState: CrownBuilder = (ctx) => {
   const l1 = 0.36 * H;
   const lw = 0.3 * r;
   parts.push({ shape: 'box', position: [0, (l0 + l1) / 2, 0], scale: [lw, l1 - l0, lw], material: 'accent' });
+  // The lantern's lit core, seen through its windows: glows from any distance at night.
+  parts.push({ shape: 'box', position: [0, (l0 + l1) / 2, 0], scale: [lw * 1.01, (l1 - l0) * 0.6, lw * 1.01], material: 'light', glow: true });
   // Tall windows on every side and aluminium fins between them.
   parts.push(
     ...ring(12, lw / 2 + 0.02, (l0 + l1) / 2, () => windowPane([lw * 0.12, (l1 - l0) * 0.75, 0.1]), Math.PI / 12),
@@ -210,7 +212,6 @@ const chrysler: CrownBuilder = (ctx) => {
           rotation: [0, 0, -ang],
           material: 'light',
           glow: true,
-          fine: true,
         });
       }
       parts.push(...face.map((p) => placeAt(p, [f.x, 0, f.z], f.yaw)));

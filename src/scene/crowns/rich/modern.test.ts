@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { CrownId } from '../../../sim/catalog/ids';
-import { partBounds, type Part } from '../../../sim/parts';
+import { partBounds, rotateYXZ, type Part } from '../../../sim/parts';
 import { designFor } from '../../../sim/testUtils';
 import { crownParts } from '../../crownParts';
 import { RICH_CROWNS } from '.';
@@ -30,6 +30,11 @@ describe('rich modern crowns', () => {
     expect(count(p, (q) => q.shape === 'plan-cone')).toBe(1);
     expect(count(p, (q) => !!q.glow && !!q.fine && q.material === 'pane')).toBeGreaterThanOrEqual(24);
     expect(count(p, (q) => q.shape === 'wedge' && q.material === 'accent')).toBe(2);
+    // Panes lie in the sloping faces: their tops lean in toward the axis.
+    for (const q of p.filter((q) => !!q.glow && !!q.fine)) {
+      const up = rotateYXZ([0, 1, 0], q.rotation);
+      expect(up[0] * q.position[0] + up[2] * q.position[2]).toBeLessThan(0);
+    }
     expect(count(p, (q) => q.material === 'light' && !!q.glow && !q.fine)).toBeGreaterThanOrEqual(1);
   });
 

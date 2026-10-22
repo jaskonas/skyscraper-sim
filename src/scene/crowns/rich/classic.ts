@@ -64,7 +64,7 @@ const tribune: CrownBuilder = (ctx) => {
   const { H } = ctx;
   const r = roofSize(ctx);
   const lw = 0.45 * r;
-  const parts: Part[] = [solid('octagon', 0, 0.8 * H, lw, 'stone')];
+  const parts: Part[] = [solid('octagon', 0, 0.8 * H, lw, 'stone'), solid('octagon', 0.4 * H, 0.6 * H, lw * 0.98, 'light', { glow: true })];
   parts.push(...ring(8, lw / 2, 0.5 * H, () => ({ shape: 'lancet', position: [0, 0, 0.03], scale: [lw * 0.22, 0.3 * H, 0.1], material: 'light', glow: true, fine: true }), Math.PI / 8));
   // The pierced parapet round the lantern's top.
   parts.push(...ring(16, lw / 2 + 0.1, 0.8 * H + 0.3, () => ({ shape: 'box', position: [0, 0, 0], scale: [lw * 0.08, 0.6, 0.3], material: 'stone', fine: true })));

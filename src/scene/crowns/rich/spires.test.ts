@@ -94,4 +94,9 @@ describe('rich spires and needles', () => {
     expect(tip(p).animate).toBe('blink');
     expect(partBounds(tip(p)).max[1]).toBeCloseTo(design.floors * FLOOR_HEIGHT + H, 0);
   });
+
+  it('crowns that glowed at night still glow from far away (not only in fine pieces)', () => {
+    for (const id of ['deco-arches', 'mooring-mast', 'flying-buttresses'] as const)
+      expect(count(rich(id), (q) => !!q.glow && !q.fine), id).toBeGreaterThan(0);
+  });
 });

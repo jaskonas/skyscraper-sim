@@ -33,19 +33,16 @@ function wedge(): THREE.BufferGeometry {
 }
 
 function ogee(): THREE.BufferGeometry {
-  // Swells out from the base, then draws in to a point, like an onion dome; fitted to the unit cube.
+  // Swells out from the base to its widest just under half way, then draws in along a concave curve to a
+  // point at the very top, like an onion dome. Fitted to the unit cube.
   const pts: THREE.Vector2[] = [];
-  const n = 14;
-  let max = 0;
-  const raw: [number, number][] = [];
+  const n = 16;
   for (let i = 0; i <= n; i++) {
     const t = i / n;
-    const r = Math.sin(Math.PI * Math.min(1, t * 1.6 + 0.25)) * Math.pow(1 - t, 0.6);
-    raw.push([Math.max(0, r), t]);
-    max = Math.max(max, r);
+    const r = t <= 0.4 ? 0.7 + 0.3 * Math.sin((t / 0.4) * (Math.PI / 2)) : Math.pow(1 - (t - 0.4) / 0.6, 1.5);
+    pts.push(new THREE.Vector2(0.5 * r, t - 0.5));
   }
-  for (const [r, t] of raw) pts.push(new THREE.Vector2((0.5 * r) / max, t - 0.5));
-  pts[pts.length - 1].x = 0;
+  pts.unshift(new THREE.Vector2(0, -0.5));
   return new THREE.LatheGeometry(pts, 16);
 }
 
