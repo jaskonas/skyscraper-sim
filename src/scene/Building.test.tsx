@@ -119,7 +119,7 @@ describe('<Building />', () => {
         amenities: ['helipad', 'pool', 'observation-deck', 'sky-garden'],
       });
       const r = await ReactThreeTestRenderer.create(<Building site={site} design={design} />);
-      expect(instanceTotal(r, 'crown'), crown).toBe(crownParts(design).length);
+      expect(instanceTotal(r, 'crown'), crown).toBe(crownParts(design, 'rich').length);
       expect(instanceTotal(r, 'ornaments'), crown).toBe(ornamentParts(design).length);
       await r.unmount();
     }
@@ -199,7 +199,7 @@ describe('<Building reveal />', () => {
     const full = await at(1);
     expect(half.ornaments).toBeGreaterThan(0);
     expect(half.ornaments + half.crown).toBeLessThan(full.ornaments + full.crown);
-    expect(full).toEqual({ crown: crownParts(design).length, ornaments: ornamentParts(design).length });
+    expect(full).toEqual({ crown: crownParts(design, 'rich').length, ornaments: ornamentParts(design).length });
   });
 
   it('switches the lights on only up to the lit floors', async () => {
