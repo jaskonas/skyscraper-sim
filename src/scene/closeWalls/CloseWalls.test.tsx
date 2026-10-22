@@ -83,4 +83,37 @@ describe('<Building /> close walls', () => {
     expect(moved.elements[12]).toBeCloseTo(rest.elements[12] + swayAt(sway, rest.elements[13]), 6);
     expect(swayAt(sway, rest.elements[13])).toBeGreaterThan(0.5);
   });
+
+  it('survives the design changing while walls are in 3D (fewer floors, narrower plate)', async () => {
+    const { site, design } = tower();
+    const camera = inFront(site, 20);
+    const r = await ReactThreeTestRenderer.create(
+      <>
+        <CameraAt position={[camera[0], 150, camera[2]]} />
+        <Building site={site} design={design} />
+      </>,
+    );
+    await frames(r, 12);
+    expect(instances(r)).toBeGreaterThan(0);
+    const smaller = { ...design, floors: 30, plateWidth: 24 };
+    await ReactThreeTestRenderer.act(async () =>
+      r.update(
+        <>
+          <CameraAt position={[camera[0], 110, camera[2]]} />
+          <Building site={site} design={smaller} />
+        </>,
+      ),
+    );
+    await frames(r, 12);
+    // Every 3D piece stands on the new, smaller tower.
+    for (const m of closeWallMeshes(r)) {
+      const mat = new THREE.Matrix4();
+      for (let i = 0; i < m.count; i++) {
+        m.getMatrixAt(i, mat);
+        expect(mat.elements[13]).toBeLessThan(30 * 4 + 1);
+        expect(Math.abs(mat.elements[12])).toBeLessThan(12 + 1);
+      }
+    }
+  });
+
 });

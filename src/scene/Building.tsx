@@ -5,7 +5,7 @@ import { FLOOR_HEIGHT, floorSlices } from '../sim/geometry';
 import type { Design, Site } from '../sim/types';
 import { facadeRecipe } from '../sim/facade';
 import { bodyInstances, facadeColor, instanceMatrix, slabInstances, unitGeometry, type BoxInstance } from './buildingGeometry';
-import { createFacadeMaterial, setFacadeChunks, setFacadeDetail, setFacadeFloors, setFacadeLook, setFacadeNight, setFacadeSky, setFacadeSurfaces } from './FacadeMaterial';
+import { createFacadeMaterial, facadeDepthMaterial, setFacadeChunks, setFacadeDetail, setFacadeFloors, setFacadeLook, setFacadeNight, setFacadeSky, setFacadeSurfaces } from './FacadeMaterial';
 import { lighting } from './lighting';
 import { TILE_HEIGHT_M } from './facadeTile';
 import { facadeTextures } from './facadeTexture';
@@ -131,6 +131,8 @@ function Body({
       [textures, recipe.roughness, recipe.metalness],
     ),
   );
+  // Its shadow leaves the same holes for 3D wall chunks.
+  const depthMaterial = useDisposable(useMemo(() => facadeDepthMaterial(material.userData.facadeUniforms), [material]));
   // The glass glints in the same sun the light comes from (it moves when shadows are on).
   const sunDir = sunDirection(useGame(selectShadowsOn));
   const surfaces = surfacesFor(design);
@@ -164,7 +166,17 @@ function Body({
     for (let i = 0; i < base.length; i++) attr.array[i] = litFloors === undefined || i < litFloors ? base[i] : 0;
     attr.needsUpdate = true;
   }, [geometry, design, litFloors]);
-  return <instancedMesh key={items.length} name="body" ref={ref} args={[geometry, material, items.length]} castShadow receiveShadow />;
+  return (
+    <instancedMesh
+      key={items.length}
+      name="body"
+      ref={ref}
+      args={[geometry, material, items.length]}
+      customDepthMaterial={depthMaterial}
+      castShadow
+      receiveShadow
+    />
+  );
 }
 
 function Amenities({ design, geometry, sway }: { design: Design; geometry: THREE.BufferGeometry; sway?: SwaySignal }) {

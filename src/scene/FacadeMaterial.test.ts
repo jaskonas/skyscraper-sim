@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { unitGeometry } from './buildingGeometry';
-import { createFacadeMaterial, facadeAcross, facadeUniforms, patchFacadeShader, setFacadeChunks, setFacadeDetail, setFacadeFloors, setFacadeNight, setFacadeSky, setFacadeSurfaces, type FacadeUniforms } from './FacadeMaterial';
+import { createFacadeMaterial, facadeAcross, facadeDepthMaterial, facadeUniforms, patchFacadeShader, setFacadeChunks, setFacadeDetail, setFacadeFloors, setFacadeNight, setFacadeSky, setFacadeSurfaces, type FacadeUniforms } from './FacadeMaterial';
 import type { Chunk } from './closeWalls/chunks';
 import { libraryTextures } from './materials/libraryTextures';
 
@@ -138,6 +138,22 @@ describe('facade material', () => {
     setFacadeChunks(m, Array.from({ length: 9 }, (_, k) => chunk(k, [1, 0])));
     expect(u.uChunkFace.value.filter((v) => v.w === 1)).toHaveLength(8);
     expect(m.customProgramCacheKey()).toBe('facade-v6');
+  });
+
+  it("casts shadows with the same holes, so the 3D windows behind them aren't shaded by the painted wall", () => {
+    const u = facadeUniforms(null);
+    const depth = facadeDepthMaterial(u);
+    const shader = {
+      vertexShader: THREE.ShaderLib.depth.vertexShader,
+      fragmentShader: THREE.ShaderLib.depth.fragmentShader,
+      uniforms: {} as Record<string, unknown>,
+    };
+    depth.onBeforeCompile(shader as never, undefined as never);
+    expect(shader.fragmentShader).toContain('uChunkCells');
+    expect(shader.fragmentShader).toContain('discard');
+    expect(shader.vertexShader).toContain('vFacadeUv = vec2(');
+    expect(shader.uniforms.uChunkCells).toBe(u.uChunkCells);
+    expect(depth.depthPacking).toBe(THREE.RGBADepthPacking);
   });
 
   it('weathers the walls but not the glass', () => {

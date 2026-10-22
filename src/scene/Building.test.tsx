@@ -74,6 +74,13 @@ describe('<Building />', () => {
     for (const m of meshesOf(simple)) expect((m.material as THREE.Material).userData.partSurface).toBeUndefined();
   });
 
+  it("the body's shadow has the close-up walls' holes too", async () => {
+    const { site, design } = designFor('chicago', { floors: 20 });
+    const r = await ReactThreeTestRenderer.create(<Building site={site} design={design} />);
+    const body = r.scene.findAll((n) => n.props.name === 'body')[0].instance as THREE.InstancedMesh;
+    expect(body.customDepthMaterial?.userData.facadeUniforms).toBe((body.material as THREE.Material).userData.facadeUniforms);
+  });
+
   it('draws balconies on home floors, and only up to the floors built so far during construction', async () => {
     const { site, design } = designFor('chicago', { floors: 30, useMix: { retail: 0, office: 0, hotel: 0, residential: 100 } });
     const all = balconyParts(design);

@@ -34,6 +34,9 @@ const box = (position: [number, number, number], scale: [number, number, number]
   material,
 });
 
+/** Blinds glow a little dimmer than the room behind them (the painted facade's 0.8). */
+const blindGlow = (hex: string) => '#' + new THREE.Color(hex).multiplyScalar(0.8).getHexString();
+
 /** A drum's bay is bent to the curve: wide boxes are halved, and every piece stands on the arc at its own spot. */
 function splitWide(parts: Part[], limit: number): Part[] {
   const out: Part[] = [];
@@ -62,7 +65,7 @@ export function chunkParts(design: Design, chunk: Chunk): Part[] {
   const H = TILE_HEIGHT_M;
   const round = design.shape === 'circle';
   const out: Part[] = [];
-  for (let f = chunk.floor0; f < chunk.floor1; f++) {
+  for (let f = chunk.floor0; f < Math.min(chunk.floor1, slices.length); f++) {
     if (isMechanicalFloor(f, slices.length)) continue;
     const slice = slices[f];
     const face = planFaces(design.shape, slice.width, slice.depth)[round ? 0 : chunk.face];
@@ -86,7 +89,11 @@ export function chunkParts(design: Design, chunk: Chunk): Part[] {
           const top = u.pane.position[1] + u.pane.scale[1] / 2;
           const bottom = Math.max(u.pane.position[1] - u.pane.scale[1] / 2, (1 - blinds) * H);
           if (top > bottom)
-            local.push(box([u.pane.position[0], (top + bottom) / 2, -GLASS_RECESS + 0.04], [u.pane.scale[0] - 0.02, top - bottom, 0.02], 'blind'));
+            local.push({
+              // Just behind the glass: lit with the room (a little dimmer, like the painted blinds), dim in a dark room.
+              ...box([u.pane.position[0], (top + bottom) / 2, -GLASS_RECESS - 0.05], [u.pane.scale[0] - 0.02, top - bottom, 0.02], dark ? 'interior' : 'blind'),
+              ...(lit && { glow: true, glowColor: blindGlow(NIGHT_LIGHTS[use].color) }),
+            });
         }
       }
       if (recipe.pattern.glassWall) {

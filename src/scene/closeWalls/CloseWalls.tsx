@@ -42,7 +42,8 @@ export function CloseWalls({
   const camera = useThree((s) => s.camera);
   const [lx, lz] = lotCenter(site);
   const built = useMemo(() => new Map<string, Part[]>(), [design]);
-  const [shown, setShown] = useState<Chunk[]>([]);
+  // What is shown, and for which design: after a design change the old chunks are never built against the new one.
+  const [shown, setShown] = useState<{ design: Design; chunks: Chunk[] }>({ design, chunks: [] });
   const tick = useRef(0);
   const partsOf = (c: Chunk) => {
     let p = built.get(c.key);
@@ -52,7 +53,7 @@ export function CloseWalls({
   const publish = (chunks: Chunk[]) => {
     signal.chunks = chunks;
     signal.version++;
-    setShown(chunks);
+    setShown({ design, chunks });
   };
   // A new design starts with nothing in 3D; leaving takes everything away.
   useEffect(() => {
@@ -68,11 +69,11 @@ export function CloseWalls({
     if (tick.current++ % EVERY !== 0) return;
     const at: Vec3 = [camera.position.x - lx, camera.position.y, camera.position.z - lz];
     const previous = new Set(signal.chunks.map((c) => c.key));
-    const next = nearChunks(design, at, previous, (c) => partsOf(c).length).filter((c) => c.floor1 <= floors);
+    const next = nearChunks(design, at, previous, (c) => (c.floor1 <= floors ? partsOf(c).length : Infinity)).filter((c) => c.floor1 <= floors);
     if (next.length === signal.chunks.length && next.every((c, i) => c.key === signal.chunks[i].key)) return;
     publish(next);
   });
-  const parts = useMemo(() => shown.flatMap(partsOf), [shown, built]); // eslint-disable-line react-hooks/exhaustive-deps
+  const parts = useMemo(() => (shown.design === design ? shown.chunks.flatMap(partsOf) : []), [shown, built, design]); // eslint-disable-line react-hooks/exhaustive-deps
   const look = chunkLook(design);
   return <PartsMesh name="close-walls" parts={parts} palette={look.palette} surfaces={look.surfaces} plan={design.shape} night={night} sway={sway} />;
 }

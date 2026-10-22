@@ -146,6 +146,23 @@ vFacadeNormal = normalize(mat3(facadeModel) * normal);
 vFacadeLocalNormal = normal;
 `;
 
+/** The chunk test, shared by the facade and its shadow so both leave the same holes. */
+const CHUNK_GLSL = /* glsl */ `
+uniform vec4 uChunkCells[${MAX_FACADE_CHUNKS}];
+uniform vec4 uChunkFace[${MAX_FACADE_CHUNKS}];
+varying vec3 vFacadeLocalNormal;
+bool facadeInChunk(float bay, float floorIndex) {
+  if (vMech > 0.5) return false;
+  vec2 wallDir = normalize(vFacadeLocalNormal.xz);
+  for (int i = 0; i < ${MAX_FACADE_CHUNKS}; i++) {
+    vec4 cells = uChunkCells[i];
+    vec4 face = uChunkFace[i];
+    if (face.w > 0.5 && floorIndex >= cells.x && floorIndex < cells.y && bay >= cells.z && bay < cells.w
+        && (face.z > 0.5 || dot(wallDir, face.xy) > 0.99)) return true;
+  }
+  return false;
+}`;
+
 const FRAGMENT_HEAD = /* glsl */ `
 uniform float uNight;
 uniform float uDetail;
@@ -161,9 +178,6 @@ uniform vec3 uWallSurface;
 uniform vec3 uTrimSurface;
 uniform float uFloors;
 uniform float uSurfacesReady;
-uniform vec4 uChunkCells[${MAX_FACADE_CHUNKS}];
-uniform vec4 uChunkFace[${MAX_FACADE_CHUNKS}];
-varying vec3 vFacadeLocalNormal;
 varying vec2 vFacadeUv;
 varying float vFloor;
 varying float vLit;
@@ -174,6 +188,7 @@ varying vec3 vFacadeNormal;
 ${WINDOW_HASH_GLSL}
 ${FACADE_DETAIL_GLSL}
 ${WEATHER_GLSL}
+${CHUNK_GLSL}
 const float GLASS_RECESS = 0.3;
 // What you see through the glass by day: a dark interior, much dimmer than the sky outside.
 const vec3 GLASS_INTERIOR = vec3(0.10, 0.12, 0.15);
@@ -219,15 +234,7 @@ if (uDetail > 0.5 && abs(vFacadeNormal.y) < 0.5) {
   float bay = floor(vFacadeUv.x);
   float floorIndex = floor(vFloor + 0.5) + floor(vFacadeUv.y);
   // Where a wall chunk is drawn in true 3D, the painted wall steps aside (plant floors stay painted).
-  if (vMech < 0.5) {
-    vec2 wallDir = normalize(vFacadeLocalNormal.xz);
-    for (int i = 0; i < ${MAX_FACADE_CHUNKS}; i++) {
-      vec4 cells = uChunkCells[i];
-      vec4 face = uChunkFace[i];
-      if (face.w > 0.5 && floorIndex >= cells.x && floorIndex < cells.y && bay >= cells.z && bay < cells.w
-          && (face.z > 0.5 || dot(wallDir, face.xy) > 0.99)) discard;
-    }
-  }
+  if (facadeInChunk(bay, floorIndex)) discard;
   // Materials are laid out in metres: along the wall, and by world height so brick courses run on
   // through floor lines. Both are sampled here, outside any per-pixel branch, so their mipmaps stay right.
   vec2 matUv = vec2(vFacadeUv.x * uTileSize.x, vFacadeWorld.y);
@@ -412,4 +419,37 @@ export function setFacadeChunks(material: THREE.Material, chunks: readonly Chunk
     const n = c.localNormal;
     u.uChunkFace.value[i].set(n ? n[0] : 0, n ? n[1] : 0, n ? 0 : 1, 1);
   }
+}
+
+/**
+ * The facade's shadow-casting material: plain depth, but with the same holes where wall chunks are drawn in
+ * 3D, so the painted wall's box doesn't shade the real windows set back behind it.
+ */
+export function facadeDepthMaterial(uniforms: FacadeUniforms): THREE.MeshDepthMaterial {
+  const depth = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking });
+  depth.userData.facadeUniforms = uniforms;
+  depth.onBeforeCompile = (shader) => {
+    Object.assign(shader.uniforms, uniforms);
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', `#include <common>\n${VERTEX_HEAD}`)
+      .replace('#include <begin_vertex>', VERTEX_UV);
+    shader.fragmentShader = shader.fragmentShader
+      .replace(
+        '#include <common>',
+        `#include <common>
+uniform float uDetail;
+varying vec2 vFacadeUv;
+varying float vFloor;
+varying float vMech;
+varying vec3 vFacadeNormal;
+${CHUNK_GLSL}`,
+      )
+      .replace(
+        '#include <clipping_planes_fragment>',
+        `#include <clipping_planes_fragment>
+if (uDetail > 0.5 && abs(vFacadeNormal.y) < 0.5 && facadeInChunk(floor(vFacadeUv.x), floor(vFloor + 0.5) + floor(vFacadeUv.y))) discard;`,
+      );
+  };
+  depth.customProgramCacheKey = () => 'facade-depth-v1';
+  return depth;
 }

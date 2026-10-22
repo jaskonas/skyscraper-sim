@@ -20,6 +20,8 @@ export const ENTER_M = 110;
 /** …and flat again only once it is this far, so it doesn't flicker at the edge. */
 export const LEAVE_M = 130;
 export const MAX_CHUNKS = 8;
+/** A chunk already in 3D counts as this much nearer when ranking, so a new one must be clearly closer to bump it. */
+export const KEEP_BONUS_M = 20;
 export const MAX_CHUNK_PARTS = 3000;
 
 export interface Chunk {
@@ -84,7 +86,7 @@ export function towerChunks(design: Design): Chunk[] {
         const at = worldAnchor(mid, alongFace(design.shape, mid.width, mid.depth, midFace, ((cell0 + cell1) / 2) * bay));
         const height = (f1 - f0) * FLOOR_HEIGHT;
         out.push({
-          key: `${f0}:${fi}:${cell0}`,
+          key: `${f0}-${f1}:${fi}:${cell0}-${cell1}`,
           floor0: f0,
           floor1: f1,
           face: fi,
@@ -120,7 +122,8 @@ export function nearChunks(design: Design, camera: Vec3, previous: ReadonlySet<s
   const candidates: { c: Chunk; d: number }[] = [];
   for (const c of towerChunks(design)) {
     const d = chunkDistance(c, camera);
-    if (d < (previous.has(c.key) ? LEAVE_M : ENTER_M) && facing(c, camera)) candidates.push({ c, d });
+    const kept = previous.has(c.key);
+    if (d < (kept ? LEAVE_M : ENTER_M) && facing(c, camera)) candidates.push({ c, d: kept ? d - KEEP_BONUS_M : d });
   }
   candidates.sort((x, y) => x.d - y.d);
   const out: Chunk[] = [];

@@ -28,4 +28,17 @@ describe('<PartsMesh />', () => {
     const mesh = r.scene.findAll((n) => (n.instance as THREE.InstancedMesh).isInstancedMesh === true)[0].instance as THREE.InstancedMesh;
     expect('#' + (mesh.material as THREE.MeshStandardMaterial).color.getHexString()).toBe('#b9b7af');
   });
+
+  it('keeps its meshes when a few parts come or go, instead of building them again', async () => {
+    const boxes = (n: number): Part[] => Array.from({ length: n }, (_, i) => ({ shape: 'box', position: [i, 0, 0], scale: [1, 1, 1], material: 'steel' }));
+    const r = await ReactThreeTestRenderer.create(<PartsMesh name="t" parts={boxes(20)} palette={palette} plan="square" />);
+    const mesh = () => r.scene.findAll((n) => (n.instance as THREE.InstancedMesh).isInstancedMesh === true)[0].instance as THREE.InstancedMesh;
+    const first = mesh();
+    await r.update(<PartsMesh name="t" parts={boxes(23)} palette={palette} plan="square" />);
+    expect(mesh()).toBe(first);
+    expect(mesh().count).toBe(23);
+    await r.update(<PartsMesh name="t" parts={boxes(17)} palette={palette} plan="square" />);
+    expect(mesh()).toBe(first);
+    expect(mesh().count).toBe(17);
+  });
 });

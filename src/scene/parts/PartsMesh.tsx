@@ -28,6 +28,11 @@ export function groupParts(parts: Part[]): PartGroup[] {
   return [...groups.values()];
 }
 
+/** Instances to allocate for `n` parts: the next power of two (n itself when small), so the count can grow a little. */
+export function instanceCapacity(n: number): number {
+  return n <= 8 ? n : 2 ** Math.ceil(Math.log2(n));
+}
+
 const euler = new THREE.Euler();
 const quat = new THREE.Quaternion();
 const pos = new THREE.Vector3();
@@ -70,13 +75,16 @@ function Group({
   useLayoutEffect(() => {
     if (surface && libId) setPartSurface(surface, libId);
   }, [surface, libId, version]);
+  // Room for a few more parts than now, so small changes reuse the mesh instead of building a new one.
+  const capacity = instanceCapacity(parts.length);
   useLayoutEffect(() => {
     const mesh = ref.current;
     if (!mesh) return;
     parts.forEach((p, i) => mesh.setMatrixAt(i, partMatrix(p, 0, mat)));
+    mesh.count = parts.length;
     mesh.instanceMatrix.needsUpdate = true;
     mesh.computeBoundingSphere();
-  }, [parts]);
+  }, [parts, capacity]);
   useFrame(({ clock }) => {
     const mesh = ref.current;
     const spin = sample.animate === 'spin';
@@ -96,10 +104,10 @@ function Group({
   });
   return (
     <instancedMesh
-      key={parts.length}
+      key={capacity}
       ref={ref}
       name={`parts:${group.key}`}
-      args={[partGeometry(sample.shape, plan), undefined, parts.length]}
+      args={[partGeometry(sample.shape, plan), undefined, capacity]}
       castShadow
       receiveShadow
     >

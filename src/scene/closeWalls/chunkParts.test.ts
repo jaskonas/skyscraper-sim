@@ -17,7 +17,8 @@ const chicago = (patch: Partial<Design> = {}) =>
   designFor('chicago', { style: 'chicago-school', facade: 'masonry', windowPattern: 'chicago', shape: 'square', floors: 40, plateWidth: 30, ...patch }).design;
 const front = (d: Design, floor = 20): Chunk =>
   towerChunks(d).find((c) => c.floor0 <= floor && c.floor1 > floor && (c.normal ? c.normal[1] > 0.9 : c.centre[2] > Math.abs(c.centre[0])))!;
-const panesOf = (parts: Part[]) => parts.filter((p) => (p.material === 'pane' || p.material === 'interior') && p.scale[2] < 0.06);
+const panesOf = (parts: Part[]) => parts.filter((p) => (p.material === 'pane' || p.material === 'interior') && p.scale[2] === 0.05);
+const isBlind = (p: Part) => p.scale[2] === 0.02 && (p.material === 'blind' || p.material === 'interior');
 
 describe('chunk parts', () => {
   it("builds every floor's cells as 3D bays, without the tower's own slab band", () => {
@@ -54,7 +55,7 @@ describe('chunk parts', () => {
             expect(p.material).toBe(roomDark(cell, f) ? 'interior' : 'pane');
           }
           if (on) lit++;
-          const blinds = parts.filter((p) => p.material === 'blind' && p.position[1] > y0 && p.position[1] < y0 + FLOOR_HEIGHT && Math.abs(p.position[0] - x) < 1.6);
+          const blinds = parts.filter((p) => isBlind(p) && p.position[1] > y0 && p.position[1] < y0 + FLOOR_HEIGHT && Math.abs(p.position[0] - x) < 1.6);
           expect(blinds.length > 0).toBe(roomBlinds(cell, f) > 0);
           for (const b of blinds) expect(b.position[1] + b.scale[1] / 2).toBeCloseTo(y0 + (openingFor(d.windowRatio).y + openingFor(d.windowRatio).h) * TILE_HEIGHT_M, 1);
         }
@@ -113,5 +114,29 @@ describe('chunk parts', () => {
     const d = chicago({ floors: 120 });
     const c = front(d, 60);
     expect(fastestMs(5, () => chunkParts(d, c))).toBeLessThan(8);
+  });
+
+  it('blinds glow in a lit room and go dim in a dark one, as on the painted facade', () => {
+    const d = chicago({ useMix: { retail: 0, office: 100, hotel: 0, residential: 0 } });
+    let litBlinds = 0;
+    for (const c of towerChunks(d).filter((c) => c.normal && c.normal[1] > 0.9))
+      for (const b of chunkParts(d, c).filter(isBlind)) {
+        const f = Math.floor(b.position[1] / FLOOR_HEIGHT);
+        const cell = Math.floor(b.position[0] / facadeRecipe(d).pattern.bayWidth);
+        // Behind the glass, not in front of it.
+        expect(b.position[2]).toBeLessThan(15 - 0.3);
+        if (windowLit(cell, f, NIGHT_LIGHTS.office.lit)) {
+          expect(b.glow).toBe(true);
+          litBlinds++;
+        }
+        if (roomDark(cell, f)) expect(b.material).toBe('interior');
+      }
+    expect(litBlinds).toBeGreaterThan(0);
+  });
+
+  it('skips floors the tower does not have', () => {
+    const d = chicago({ floors: 30 });
+    const old = { key: 'x', floor0: 36, floor1: 40, face: 0, cell0: -3, cell1: 3, centre: [0, 0, 0] as [number, number, number], normal: [0, 1] as [number, number], localNormal: [0, 1] as [number, number], radius: 1 };
+    expect(chunkParts(d, old)).toEqual([]);
   });
 });

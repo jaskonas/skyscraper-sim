@@ -83,4 +83,23 @@ describe('wall chunks', () => {
     towerChunks(d);
     expect(fastestMs(5, () => nearChunks(d, [0, 300, 60], none, few))).toBeLessThan(3);
   });
+
+  it('keys a chunk by its whole extent, so a changed design never reuses an old build', () => {
+    const c = towerChunks(square())[0];
+    expect(c.key).toBe(`${c.floor0}-${c.floor1}:${c.face}:${c.cell0}-${c.cell1}`);
+  });
+
+  it("holds on to the chunks it shows unless a new one is clearly nearer, so the edge doesn't sweep", () => {
+    const d = square();
+    const camera: [number, number, number] = [0, 82, 15 + 60];
+    const ranked = towerChunks(d)
+      .filter((c) => c.normal![1] > 0.9)
+      .sort((x, y) => chunkDistance(x, camera) - chunkDistance(y, camera));
+    // Showing the 7 nearest and the 9th; the 8th is only a little nearer than the 9th.
+    const ninth = ranked[8];
+    expect(chunkDistance(ninth, camera) - chunkDistance(ranked[7], camera)).toBeLessThan(20);
+    const shown = new Set([...ranked.slice(0, 7), ninth].map((c) => c.key));
+    expect(nearChunks(d, camera, shown, few).map((c) => c.key)).toContain(ninth.key);
+    expect(nearChunks(d, camera, none, few).map((c) => c.key)).not.toContain(ninth.key);
+  });
 });
