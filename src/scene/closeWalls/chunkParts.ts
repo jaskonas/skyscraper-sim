@@ -2,6 +2,7 @@ import { floorUses } from '../../sim/analysis/massing';
 import { facadeRecipe } from '../../sim/facade';
 import { floorSlices } from '../../sim/geometry';
 import type { Part } from '../../sim/parts';
+import * as THREE from 'three';
 import type { Design, Palette } from '../../sim/types';
 import { placeAtAnchor, worldAnchor } from '../detail/frame';
 import { GLASS_RECESS, wallBay } from '../detail/wallBay';
@@ -12,11 +13,16 @@ import { NIGHT_LIGHTS, windowLit } from '../nightWindows';
 import { alongFace, planFaces } from '../parts/placement';
 import type { Chunk } from './chunks';
 
+/** The painted facade's glass also reflects the sky; the 3D panes stand in for that by being a little lighter. */
+const PANE_SKY = new THREE.Color('#bcd4e6');
+const PANE_SKY_SHARE = 0.35;
+
 /** Colours and materials of the 3D walls: the painted facade's own, so the swap doesn't show. */
 export function chunkLook(design: Design): { palette: Palette; surfaces: Surfaces } {
   const colors = facadeRecipe(design).colors;
+  const glass = '#' + new THREE.Color(design.palette.glass).lerp(PANE_SKY, PANE_SKY_SHARE).getHexString();
   return {
-    palette: { ...design.palette, body: colors.wall, accent: colors.frame },
+    palette: { ...design.palette, body: colors.wall, accent: colors.frame, glass },
     surfaces: { wall: facadeWall(design), trim: surfacesFor(design).trim },
   };
 }
@@ -68,7 +74,7 @@ export function chunkParts(design: Design, chunk: Chunk): Part[] {
       const blinds = roomBlinds(cell, f);
       const glassLook = (p: Part): Part => ({
         ...p,
-        material: dark ? 'interior' : 'glass',
+        material: dark ? 'interior' : 'pane',
         ...(lit && { glow: true, glowColor: NIGHT_LIGHTS[use].color }),
       });
       const pieces = wallBay(recipe, bay, 'body', design.windowRatio);

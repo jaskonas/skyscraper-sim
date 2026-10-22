@@ -26,6 +26,6 @@ describe('<PartsMesh />', () => {
       <PartsMesh name="t" parts={[{ shape: 'box', position: [0, 0, 0], scale: [1, 1, 1], material: 'blind' }]} palette={palette} plan="square" />,
     );
     const mesh = r.scene.findAll((n) => (n.instance as THREE.InstancedMesh).isInstancedMesh === true)[0].instance as THREE.InstancedMesh;
-    expect('#' + (mesh.material as THREE.MeshStandardMaterial).color.getHexString()).toBe('#dcd9cf');
+    expect('#' + (mesh.material as THREE.MeshStandardMaterial).color.getHexString()).toBe('#b9b7af');
   });
 });

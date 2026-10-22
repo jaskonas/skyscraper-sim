@@ -17,7 +17,7 @@ const chicago = (patch: Partial<Design> = {}) =>
   designFor('chicago', { style: 'chicago-school', facade: 'masonry', windowPattern: 'chicago', shape: 'square', floors: 40, plateWidth: 30, ...patch }).design;
 const front = (d: Design, floor = 20): Chunk =>
   towerChunks(d).find((c) => c.floor0 <= floor && c.floor1 > floor && (c.normal ? c.normal[1] > 0.9 : c.centre[2] > Math.abs(c.centre[0])))!;
-const panesOf = (parts: Part[]) => parts.filter((p) => (p.material === 'glass' || p.material === 'interior') && p.scale[2] < 0.06);
+const panesOf = (parts: Part[]) => parts.filter((p) => (p.material === 'pane' || p.material === 'interior') && p.scale[2] < 0.06);
 
 describe('chunk parts', () => {
   it("builds every floor's cells as 3D bays, without the tower's own slab band", () => {
@@ -51,7 +51,7 @@ describe('chunk parts', () => {
           for (const p of here) {
             expect(!!p.glow).toBe(on);
             if (on) expect(p.glowColor).toBe(NIGHT_LIGHTS[uses[f]].color);
-            expect(p.material).toBe(roomDark(cell, f) ? 'interior' : 'glass');
+            expect(p.material).toBe(roomDark(cell, f) ? 'interior' : 'pane');
           }
           if (on) lit++;
           const blinds = parts.filter((p) => p.material === 'blind' && p.position[1] > y0 && p.position[1] < y0 + FLOOR_HEIGHT && Math.abs(p.position[0] - x) < 1.6);

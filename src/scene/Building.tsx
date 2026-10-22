@@ -1,11 +1,11 @@
 import { useFrame } from '@react-three/fiber';
-import { useEffect, useLayoutEffect, useMemo, useRef, type ReactNode, type RefObject } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
 import * as THREE from 'three';
 import { FLOOR_HEIGHT, floorSlices } from '../sim/geometry';
 import type { Design, Site } from '../sim/types';
 import { facadeRecipe } from '../sim/facade';
 import { bodyInstances, facadeColor, instanceMatrix, slabInstances, unitGeometry, type BoxInstance } from './buildingGeometry';
-import { createFacadeMaterial, setFacadeDetail, setFacadeFloors, setFacadeLook, setFacadeNight, setFacadeSky, setFacadeSurfaces } from './FacadeMaterial';
+import { createFacadeMaterial, setFacadeChunks, setFacadeDetail, setFacadeFloors, setFacadeLook, setFacadeNight, setFacadeSky, setFacadeSurfaces } from './FacadeMaterial';
 import { lighting } from './lighting';
 import { TILE_HEIGHT_M } from './facadeTile';
 import { facadeTextures } from './facadeTexture';
@@ -17,6 +17,7 @@ import { swayAt, type SwaySignal } from './forces/sway';
 import { lotCenter } from './layout';
 import { bracingParts, ornamentParts } from './ornaments';
 import { PartsMesh } from './parts/PartsMesh';
+import { CloseWalls, createChunkSignal, type ChunkSignal } from './closeWalls/CloseWalls';
 import { selectShadowsOn, useGame } from '../state/store';
 import { sunDirection } from './sunShadow';
 import { facadeWall, surfacesFor } from './materials/library';
@@ -86,6 +87,7 @@ function Body({
   sway,
   detail,
   sky,
+  chunks,
 }: {
   design: Design;
   night: boolean;
@@ -96,6 +98,8 @@ function Body({
   detail: boolean;
   /** The sky colour the glass reflects. */
   sky: string;
+  /** Wall chunks drawn in true 3D, where the facade leaves holes. */
+  chunks?: ChunkSignal;
 }) {
   const ref = useRef<THREE.InstancedMesh>(null);
   const items = useMemo(() => bodyInstances(design), [design]);
@@ -139,6 +143,12 @@ function Body({
     setFacadeSky(material, sky, sunDir);
     setFacadeSurfaces(material, facadeWall(design), surfaces.trim);
     setFacadeFloors(material, design.floors);
+  });
+  const chunksSeen = useRef(-1);
+  useFrame(() => {
+    if (!chunks || chunks.version === chunksSeen.current) return;
+    chunksSeen.current = chunks.version;
+    setFacadeChunks(material, chunks.chunks);
   });
   useLayoutEffect(() => {
     const mesh = ref.current;
@@ -244,6 +254,7 @@ export function Building({
   facadeDetail?: boolean;
 }) {
   const [lx, lz] = lotCenter(site);
+  const [chunks] = useState(createChunkSignal);
   const geometry = useDisposable(useMemo(() => unitGeometry(design.shape), [design.shape]));
   const slabs = useMemo(() => slabInstances(design), [design]);
   const crown = useMemo(() => crownParts(design), [design]);
@@ -278,7 +289,9 @@ export function Building({
         sway={sway}
         detail={facadeDetail}
         sky={lighting(site, night).sky}
+        chunks={chunks}
       />
+      {facadeDetail && !reveal && <CloseWalls site={site} design={design} signal={chunks} sway={sway} night={night} floors={floors} />}
       <Instanced name="slabs" geometry={geometry} items={slabs} color={design.palette.accent} count={floors} sway={sway} />
       <PartsMesh name="crown" parts={top.crown} {...look} />
       <PartsMesh name="ornaments" parts={top.ornaments} {...look} />

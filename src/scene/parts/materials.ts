@@ -39,9 +39,12 @@ export function materialLook(m: PartMaterial, palette: Palette): MaterialLook {
     case 'wood':
       // Rooftop water tanks and tree trunks.
       return { color: '#7a5233', roughness: 0.9, metalness: 0 };
+    case 'pane':
+      // A window pane in a close-range wall: matte enough to show its colour as the painted facade's glass does.
+      return { color: palette.glass, roughness: 0.25, metalness: 0.15 };
     case 'blind':
       // Window blinds pulled down behind the glass.
-      return { color: '#dcd9cf', roughness: 0.8, metalness: 0 };
+      return { color: '#b9b7af', roughness: 0.8, metalness: 0 };
     case 'interior':
       // The dim room behind a window, seen in the close-up.
       return { color: '#2a2f36', roughness: 0.9, metalness: 0 };
