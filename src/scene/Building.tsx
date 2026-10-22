@@ -261,7 +261,7 @@ export function Building({
       dressing: dressing.filter((p) => shown.has(p)),
     };
   }, [ornaments, crown, dressing, share]);
-  const look = { palette: design.palette, plan: design.shape, night, sway };
+  const look = { palette: design.palette, plan: design.shape, night, sway, surfaces: surfacesFor(design), detail: facadeDetail };
   const floors = Math.min(reveal?.floors ?? design.floors, design.floors - hideTopFloors);
   // During construction, balconies only on the floors finished so far.
   const shownBalconies = useMemo(

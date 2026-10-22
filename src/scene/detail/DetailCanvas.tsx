@@ -6,6 +6,8 @@ import { PartsMesh, partMatrix } from '../parts/PartsMesh';
 import { partGeometry } from '../parts/geometries';
 import { selectShadowsOn, useGame } from '../../state/store';
 import { lighting } from '../lighting';
+import { surfacesFor } from '../materials/library';
+import { useLibraryVersion } from '../materials/libraryTextures';
 import { shadowFlags } from '../sunShadow';
 import { cameraPose, dragBy, easeBack, type Drag } from './camera';
 import { detailModel, type DetailFocus, type DetailView, type DetailWindow } from './detailModel';
@@ -122,13 +124,18 @@ function DetailSun({ focus, on, intensity, color }: { focus: DetailFocus; on: bo
 export function DetailScene({ site, design, view, night, drag }: DetailProps & { drag: Drag }) {
   const model = useMemo(() => detailModel(design, view), [design, view]);
   const shadows = useGame(selectShadowsOn) && !night;
+  const detail = useGame((s) => s.facadeDetail === 'high');
+  // Material textures swap in when they arrive; this canvas only draws on demand, so ask for a frame.
+  const version = useLibraryVersion();
+  const invalidate = useThree((s) => s.invalidate);
+  useEffect(() => invalidate(), [version, invalidate]);
   const light = lighting(site, night, shadows);
   return (
     <>
       <color attach="background" args={[light.sky]} />
       <hemisphereLight args={[light.hemiSky, site.visuals.ground, light.hemi]} />
       <DetailSun focus={model.focus} on={shadows} intensity={light.sun} color={light.sunColor} />
-      <PartsMesh name="detail" parts={model.parts} palette={design.palette} plan={design.shape} night={night} />
+      <PartsMesh name="detail" parts={model.parts} palette={design.palette} plan={design.shape} night={night} surfaces={surfacesFor(design)} detail={detail} />
       <Windows windows={model.windows} night={night} glass={design.palette.glass} />
       <CameraRig focus={model.focus} drag={drag} />
     </>

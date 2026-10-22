@@ -22,7 +22,7 @@ export interface LibraryMaterial {
   source: string;
   /** Real-world size of one repeat of the texture, metres. */
   sizeM: number;
-  /** How far the detail map lightens and darkens the colour (1 = as photographed). */
+  /** How far the detail map lightens and darkens the colour (the maps all share one spread; 1 = full). */
   contrast: number;
   /** How strongly the surface bumps catch the light (1 = as photographed). */
   normalStrength: number;
@@ -31,16 +31,16 @@ export interface LibraryMaterial {
 export const LIBRARY: Record<LibraryId, LibraryMaterial> = {
   'brick-red': { source: 'red_brick_03', sizeM: 1.0, contrast: 1.0, normalStrength: 1.0 },
   'brick-buff': { source: 'yellow_brick', sizeM: 2.0, contrast: 1.0, normalStrength: 1.0 },
-  limestone: { source: 'white_sandstone_blocks_02', sizeM: 2.0, contrast: 0.6, normalStrength: 0.6 },
-  granite: { source: 'granite_tile', sizeM: 2.3, contrast: 0.6, normalStrength: 0.6 },
-  terracotta: { source: 'rectangular_facade_tiles_02', sizeM: 2.1, contrast: 0.6, normalStrength: 0.6 },
-  'concrete-board': { source: 'wood_textured_concrete', sizeM: 1.8, contrast: 0.5, normalStrength: 0.5 },
-  'concrete-precast': { source: 'precast_concrete_wall', sizeM: 1.59, contrast: 0.5, normalStrength: 0.5 },
-  'metal-panel': { source: 'metal_plate_02', sizeM: 2.0, contrast: 0.35, normalStrength: 0.4 },
-  copper: { source: 'green_metal_rust', sizeM: 1.0, contrast: 0.6, normalStrength: 0.5 },
-  wood: { source: 'weathered_planks', sizeM: 2.0, contrast: 0.8, normalStrength: 0.8 },
-  roofing: { source: 'tarred_gravel', sizeM: 2.2, contrast: 0.6, normalStrength: 0.6 },
-  paving: { source: 'concrete_pavers', sizeM: 1.92, contrast: 0.6, normalStrength: 0.8 },
+  limestone: { source: 'white_sandstone_blocks_02', sizeM: 2.0, contrast: 0.8, normalStrength: 0.6 },
+  granite: { source: 'granite_tile', sizeM: 2.3, contrast: 0.7, normalStrength: 0.6 },
+  terracotta: { source: 'rectangular_facade_tiles_02', sizeM: 2.1, contrast: 0.8, normalStrength: 0.6 },
+  'concrete-board': { source: 'wood_textured_concrete', sizeM: 1.8, contrast: 1.0, normalStrength: 0.9 },
+  'concrete-precast': { source: 'precast_concrete_wall', sizeM: 1.59, contrast: 0.8, normalStrength: 0.7 },
+  'metal-panel': { source: 'metal_plate_02', sizeM: 2.0, contrast: 0.5, normalStrength: 0.4 },
+  copper: { source: 'green_metal_rust', sizeM: 1.0, contrast: 0.8, normalStrength: 0.5 },
+  wood: { source: 'weathered_planks', sizeM: 2.0, contrast: 1.0, normalStrength: 0.8 },
+  roofing: { source: 'tarred_gravel', sizeM: 2.2, contrast: 0.8, normalStrength: 0.6 },
+  paving: { source: 'concrete_pavers', sizeM: 1.92, contrast: 0.8, normalStrength: 0.8 },
 };
 
 export const LIBRARY_IDS = Object.keys(LIBRARY) as LibraryId[];

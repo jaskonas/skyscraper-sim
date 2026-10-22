@@ -54,6 +54,26 @@ describe('<Building />', () => {
     expect(u.uTrimDetail.value).toBe(libraryTextures('terracotta').detail);
   });
 
+  it("a Chicago tower's stone ornaments are limestone, its glass is plain, and Simple leaves every part plain", async () => {
+    const { site, design } = designFor('chicago', { style: 'chicago-school', facade: 'masonry', ornaments: ['stone-ribs', 'rusticated-base'], ornament: 'high' });
+    const meshesOf = (r: Renderer) => {
+      const out: THREE.Mesh[] = [];
+      r.scene.instance.traverse((o) => {
+        if ((o as THREE.Mesh).isMesh && o.name.startsWith('parts:')) out.push(o as THREE.Mesh);
+      });
+      return out;
+    };
+    const r = await ReactThreeTestRenderer.create(<Building site={site} design={design} />);
+    const parts = meshesOf(r);
+    const stone = parts.filter((m) => m.name.split('|')[1] === 'stone');
+    expect(stone.length).toBeGreaterThan(0);
+    for (const m of stone) expect((m.material as THREE.Material).userData.partSurface.uPartDetail.value).toBe(libraryTextures('limestone').detail);
+    for (const m of parts.filter((m) => m.name.split('|')[1] === 'glass')) expect((m.material as THREE.Material).userData.partSurface).toBeUndefined();
+    await r.unmount();
+    const simple = await ReactThreeTestRenderer.create(<Building site={site} design={design} facadeDetail={false} />);
+    for (const m of meshesOf(simple)) expect((m.material as THREE.Material).userData.partSurface).toBeUndefined();
+  });
+
   it('draws balconies on home floors, and only up to the floors built so far during construction', async () => {
     const { site, design } = designFor('chicago', { floors: 30, useMix: { retail: 0, office: 0, hotel: 0, residential: 100 } });
     const all = balconyParts(design);

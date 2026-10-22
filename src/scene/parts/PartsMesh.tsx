@@ -5,7 +5,10 @@ import { partBounds, type Part } from '../../sim/parts';
 import type { Palette, PlanShape } from '../../sim/types';
 import { swayAt, type SwaySignal } from '../forces/sway';
 import { partGeometry } from './geometries';
+import { partLibrary, type Surfaces } from '../materials/library';
+import { useLibraryVersion } from '../materials/libraryTextures';
 import { glowColor, materialLook } from './materials';
+import { PART_SURFACE_KEY, partSurfaceUniforms, patchPartShader, setPartSurface } from './partSurface';
 
 export interface PartGroup {
   key: string;
@@ -38,12 +41,35 @@ export function partMatrix(p: Part, extraZ = 0, out = new THREE.Matrix4()): THRE
   return out.compose(pos.set(...p.position), quat, scl.set(...p.scale));
 }
 
-function Group({ group, palette, plan, night, sway }: { group: PartGroup; palette: Palette; plan: PlanShape; night: boolean; sway?: SwaySignal }) {
+function Group({
+  group,
+  palette,
+  plan,
+  night,
+  sway,
+  surfaces,
+  detail,
+}: {
+  group: PartGroup;
+  palette: Palette;
+  plan: PlanShape;
+  night: boolean;
+  sway?: SwaySignal;
+  surfaces?: Surfaces;
+  detail: boolean;
+}) {
   const ref = useRef<THREE.InstancedMesh>(null);
   const swaying = useRef(false);
   const { sample, parts } = group;
   const look = materialLook(sample.material, palette);
   const lit = night && !!sample.glow;
+  // The library material these parts are made of, if any (none on Detail: Simple).
+  const libId = detail ? partLibrary(sample.material, surfaces) : null;
+  const surface = useMemo(() => (libId ? partSurfaceUniforms(libId) : null), [libId]);
+  const version = useLibraryVersion();
+  useLayoutEffect(() => {
+    if (surface && libId) setPartSurface(surface, libId);
+  }, [surface, libId, version]);
   useLayoutEffect(() => {
     const mesh = ref.current;
     if (!mesh) return;
@@ -78,6 +104,12 @@ function Group({ group, palette, plan, night, sway }: { group: PartGroup; palett
       receiveShadow
     >
       <meshStandardMaterial
+        key={libId ?? 'plain'}
+        {...(surface && {
+          userData: { partSurface: surface },
+          onBeforeCompile: (shader: THREE.WebGLProgramParametersWithUniforms) => patchPartShader(shader, surface),
+          customProgramCacheKey: () => PART_SURFACE_KEY,
+        })}
         color={look.color}
         roughness={look.roughness}
         metalness={look.metalness}
@@ -125,6 +157,8 @@ export function PartsMesh({
   night = false,
   name,
   sway,
+  surfaces,
+  detail = true,
 }: {
   parts: Part[];
   palette: Palette;
@@ -133,13 +167,17 @@ export function PartsMesh({
   name: string;
   /** Parts follow the tower's bend at their own height while a force acts on it. */
   sway?: SwaySignal;
+  /** What the tower's walls and trim are made of, for parts in its body or accent colour. */
+  surfaces?: Surfaces;
+  /** Material textures on (Detail: High) or off. */
+  detail?: boolean;
 }) {
   const groups = useMemo(() => groupParts(parts), [parts]);
   const blinkers = useMemo(() => parts.filter((p) => p.animate === 'blink'), [parts]);
   return (
     <group name={name}>
       {groups.map((g) => (
-        <Group key={g.key} group={g} palette={palette} plan={plan} night={night} sway={sway} />
+        <Group key={g.key} group={g} palette={palette} plan={plan} night={night} sway={sway} surfaces={surfaces} detail={detail} />
       ))}
       {night && blinkers.length > 0 && <AircraftLights parts={blinkers} sway={sway} />}
     </group>

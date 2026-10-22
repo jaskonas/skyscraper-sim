@@ -14,6 +14,7 @@ import { PartsMesh } from '../parts/PartsMesh';
 import { structureParts, type StructurePart } from '../structure/structureParts';
 import { constructionProps } from './props';
 import { STAGE_SECONDS, stageFrame, visibleStructure } from './reveal';
+import { surfacesFor } from '../materials/library';
 
 /** Redraw the site this often while a stage plays (seconds); the counters update at the same pace. */
 const STEP = 0.05;
@@ -39,7 +40,7 @@ export function ConstructionScene({ site, design, parts, state, clock, night }: 
   // `key`, `isolators` and `damperUp` are everything in `state` that changes the result.
   const skeleton = useMemo(() => visibleStructure(parts, state), [parts, key, state.isolators, damperUp]);
   const props = constructionProps(design, state, clock);
-  const look = { palette: design.palette, plan: design.shape, night };
+  const look = { palette: design.palette, plan: design.shape, night, surfaces: surfacesFor(design), detail: facadeDetail };
   return (
     <>
       <Building

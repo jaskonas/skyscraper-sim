@@ -1,7 +1,8 @@
 """Builds public/textures/ from CC0 Poly Haven textures.
 
 Each material becomes two small JPEGs:
-  detail.jpg  greyscale luminance, scaled so its mean is 0.5 (the game multiplies the palette colour by it)
+  detail.jpg  greyscale luminance, mean 0.5 and its light/dark spread evened out between materials
+              (the game multiplies the palette colour by it)
   normal.jpg  OpenGL-convention normal map
 
 Run from the repo root, in any Python 3 with Pillow and numpy:
@@ -32,6 +33,10 @@ SOURCES = {
     "paving": ("concrete_pavers", 1.92),
 }
 SIZE = 512
+# Light/dark spread (standard deviation) every detail map is brought to, so a faint photo (smooth concrete)
+# and a busy one (brick) start equal; each material's contrast in library.ts then sets how strong it reads.
+TARGET_SPREAD = 0.12
+MAX_GAIN = 3.0
 OUT = os.path.join("public", "textures")
 
 
@@ -49,7 +54,9 @@ def main() -> None:
         nor = Image.open(io.BytesIO(fetch(files["nor_gl"]["1k"]["jpg"]["url"]))).convert("RGB")
         rgb = np.asarray(diff, dtype=np.float32) / 255.0
         lum = rgb[..., 0] * 0.2126 + rgb[..., 1] * 0.7152 + rgb[..., 2] * 0.0722
-        lum = np.clip(lum * (0.5 / max(lum.mean(), 1e-3)), 0.0, 1.0)
+        lum = lum * (0.5 / max(lum.mean(), 1e-3))
+        gain = min(MAX_GAIN, TARGET_SPREAD / max(lum.std(), 1e-3))
+        lum = np.clip(0.5 + (lum - 0.5) * gain, 0.0, 1.0)
         detail = Image.fromarray((lum * 255.0 + 0.5).astype(np.uint8), "L").resize((SIZE, SIZE), Image.LANCZOS)
         os.makedirs(os.path.join(OUT, tex_id), exist_ok=True)
         detail.save(os.path.join(OUT, tex_id, "detail.jpg"), quality=85, optimize=True)
