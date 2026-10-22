@@ -10,6 +10,7 @@ import { unitGeometry } from './buildingGeometry';
 import { dressingParts } from './dressing/dressing';
 import { crownParts } from './crownParts';
 import { createSway, swayAt } from './forces/sway';
+import { libraryTextures } from './materials/libraryTextures';
 import { ornamentParts } from './ornaments';
 
 type Renderer = Awaited<ReturnType<typeof ReactThreeTestRenderer.create>>;
@@ -42,6 +43,15 @@ describe('<Building />', () => {
     const simple = await ReactThreeTestRenderer.create(<Building site={site} design={design} facadeDetail={false} />);
     const plain = simple.scene.findAll((n) => n.props.name === 'body')[0].instance as THREE.InstancedMesh;
     expect((plain.material as THREE.MeshStandardMaterial).userData.facadeUniforms.uDetail.value).toBe(0);
+  });
+
+  it("the body's facade wears the design's wall and trim materials", async () => {
+    const { site, design } = designFor('chicago', { style: 'chicago-school', facade: 'masonry' });
+    const r = await ReactThreeTestRenderer.create(<Building site={site} design={design} />);
+    const body = r.scene.findAll((n) => n.props.name === 'body')[0].instance as THREE.InstancedMesh;
+    const u = (body.material as THREE.Material).userData.facadeUniforms;
+    expect(u.uWallDetail.value).toBe(libraryTextures('brick-red').detail);
+    expect(u.uTrimDetail.value).toBe(libraryTextures('terracotta').detail);
   });
 
   it('draws balconies on home floors, and only up to the floors built so far during construction', async () => {

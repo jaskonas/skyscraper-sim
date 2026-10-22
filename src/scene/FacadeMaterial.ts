@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { FACADE_DETAIL_GLSL } from './facadeDetail';
+import { LIBRARY, type LibraryId } from './materials/library';
+import { NEUTRAL_DETAIL, NEUTRAL_NORMAL, libraryTextures } from './materials/libraryTextures';
 import { WINDOW_HASH_GLSL } from './nightWindows';
 
 export interface FacadeLook {
@@ -29,6 +31,14 @@ export interface FacadeUniforms {
   uSkyColor: { value: THREE.Color };
   /** Direction toward the sun, world space, normalised. */
   uSunDir: { value: THREE.Vector3 };
+  /** The wall's and the trim's material textures (see materials/library). */
+  uWallDetail: { value: THREE.Texture };
+  uWallNormal: { value: THREE.Texture };
+  uTrimDetail: { value: THREE.Texture };
+  uTrimNormal: { value: THREE.Texture };
+  /** Per material: repeats per metre, contrast, bump strength. */
+  uWallSurface: { value: THREE.Vector3 };
+  uTrimSurface: { value: THREE.Vector3 };
 }
 
 /** Fresh uniforms for one facade material. */
@@ -41,6 +51,13 @@ export function facadeUniforms(glowMap: THREE.Texture | null): FacadeUniforms {
     uDetail: { value: 0 },
     uSkyColor: { value: new THREE.Color('#bcd4e6') },
     uSunDir: { value: new THREE.Vector3(300, 600, 250).normalize() },
+    uWallDetail: { value: NEUTRAL_DETAIL },
+    uWallNormal: { value: NEUTRAL_NORMAL },
+    uTrimDetail: { value: NEUTRAL_DETAIL },
+    uTrimNormal: { value: NEUTRAL_NORMAL },
+    // Contrast and bump strength 0: no material until one is chosen.
+    uWallSurface: { value: new THREE.Vector3(0.5, 0, 0) },
+    uTrimSurface: { value: new THREE.Vector3(0.5, 0, 0) },
   };
 }
 
@@ -117,6 +134,12 @@ uniform vec2 uTileSize;
 uniform vec3 uSkyColor;
 uniform vec3 uSunDir;
 uniform sampler2D uGlowMap;
+uniform sampler2D uWallDetail;
+uniform sampler2D uWallNormal;
+uniform sampler2D uTrimDetail;
+uniform sampler2D uTrimNormal;
+uniform vec3 uWallSurface;
+uniform vec3 uTrimSurface;
 varying vec2 vFacadeUv;
 varying float vFloor;
 varying float vLit;
@@ -139,6 +162,11 @@ float stripes(float x, float duty) {
 float facadeGlass = 0.0;
 float facadeGlowShade = 1.0;
 vec3 facadeRefl = vec3(0.0);
+// The wall or trim material at this point: its detail (0.5 = average), bump normal (tangent space) and
+// whether it applies (0 on glass, roofs and in Simple).
+float facadeSurfaceDetail = 0.5;
+vec3 facadeSurfaceNormal = vec3(0.0, 0.0, 1.0);
+float facadeSurfaceMix = 0.0;
 
 /** Share (0..1) of four lookups around this point of glass that land on wall: how close the frame is. */
 float facadeReveal(vec2 uv, vec2 shift) {
@@ -165,6 +193,18 @@ if (uDetail > 0.5 && abs(vFacadeNormal.y) < 0.5) {
   vec3 ray = vec3(dot(V, T), V.y, dot(V, N));
   float bay = floor(vFacadeUv.x);
   float floorIndex = floor(vFloor + 0.5) + floor(vFacadeUv.y);
+  // Materials are laid out in metres: along the wall, and by world height so brick courses run on
+  // through floor lines. Both are sampled here, outside any per-pixel branch, so their mipmaps stay right.
+  vec2 matUv = vec2(vFacadeUv.x * uTileSize.x, vFacadeWorld.y);
+  float region = texture2D( uGlowMap, vFacadeUv ).g;
+  float trimShare = step(0.25, region) * step(region, 0.75);
+  vec3 surface = mix(uWallSurface, uTrimSurface, trimShare);
+  float wallD = texture2D( uWallDetail, matUv * uWallSurface.x ).r;
+  float trimD = texture2D( uTrimDetail, matUv * uTrimSurface.x ).r;
+  vec3 wallN = texture2D( uWallNormal, matUv * uWallSurface.x ).xyz * 2.0 - 1.0;
+  vec3 trimN = texture2D( uTrimNormal, matUv * uTrimSurface.x ).xyz * 2.0 - 1.0;
+  float surfD = mix(wallD, trimD, trimShare);
+  vec3 surfN = mix(wallN, trimN, trimShare);
   if (vMech > 0.5) {
     // A plant floor: louvres in place of windows, and nothing behind them to light up.
     float slat = stripes(vFacadeUv.y * uTileSize.y * 2.5, 0.45);
@@ -198,6 +238,30 @@ if (uDetail > 0.5 && abs(vFacadeNormal.y) < 0.5) {
       facadeRefl = sky * mirror * 0.7 + vec3(glint);
     }
   }
+  if (facadeGlass < 0.5 && vMech < 0.5) {
+    // Wall, trim or the reveal of an opening: the palette colour, lightened and darkened by the material.
+    diffuseColor.rgb *= max(1.0 + (surfD - 0.5) * 2.0 * surface.y, 0.0);
+    facadeSurfaceDetail = surfD;
+    facadeSurfaceNormal = normalize(vec3(surfN.xy * surface.z, max(surfN.z, 0.2)));
+    facadeSurfaceMix = 1.0;
+  }
+}
+`;
+
+const FRAGMENT_ROUGHNESS = /* glsl */ `
+#include <roughnessmap_fragment>
+// Mortar and pits are rougher than the faces around them.
+roughnessFactor *= mix(1.0, 1.25 - 0.5 * facadeSurfaceDetail, facadeSurfaceMix);
+`;
+
+const FRAGMENT_NORMAL = /* glsl */ `
+#include <normal_fragment_maps>
+if (facadeSurfaceMix > 0.0) {
+  // The material's bumps, on the wall's own axes: along the wall, up, and out.
+  vec3 sN = normalize(vFacadeNormal);
+  vec3 sT = normalize(cross(vec3(0.0, 1.0, 0.0), sN));
+  vec3 bumped = normalize(sT * facadeSurfaceNormal.x + vec3(0.0, 1.0, 0.0) * facadeSurfaceNormal.y + sN * facadeSurfaceNormal.z);
+  normal = normalize((viewMatrix * vec4(bumped, 0.0)).xyz);
 }
 `;
 
@@ -220,6 +284,8 @@ export function patchFacadeShader(shader: { vertexShader: string; fragmentShader
   shader.fragmentShader = shader.fragmentShader
     .replace('#include <common>', `#include <common>\n${FRAGMENT_HEAD}`)
     .replace('#include <map_fragment>', FRAGMENT_MAP)
+    .replace('#include <roughnessmap_fragment>', FRAGMENT_ROUGHNESS)
+    .replace('#include <normal_fragment_maps>', FRAGMENT_NORMAL)
     .replace('#include <emissivemap_fragment>', FRAGMENT_GLOW);
 }
 
@@ -238,7 +304,7 @@ export function createFacadeMaterial(o: FacadeMaterialOptions): THREE.MeshStanda
   const uniforms = facadeUniforms(o.glowMap);
   material.userData.facadeUniforms = uniforms;
   material.onBeforeCompile = (shader) => patchFacadeShader(shader, uniforms);
-  material.customProgramCacheKey = () => 'facade-v4';
+  material.customProgramCacheKey = () => 'facade-v5';
   setFacadeLook(material, o);
   return material;
 }
@@ -267,4 +333,18 @@ export function setFacadeSky(material: THREE.Material, sky: string, sunDir: [num
   if (!u) return;
   u.uSkyColor.value.set(sky);
   u.uSunDir.value.set(...sunDir).normalize();
+}
+
+/** Which library materials the walls and the trim are made of. Call again when textures arrive. */
+export function setFacadeSurfaces(material: THREE.Material, wall: LibraryId, trim: LibraryId): void {
+  const u = material.userData.facadeUniforms as FacadeUniforms | undefined;
+  if (!u) return;
+  const w = libraryTextures(wall);
+  const t = libraryTextures(trim);
+  u.uWallDetail.value = w.detail;
+  u.uWallNormal.value = w.normal;
+  u.uTrimDetail.value = t.detail;
+  u.uTrimNormal.value = t.normal;
+  u.uWallSurface.value.set(1 / LIBRARY[wall].sizeM, LIBRARY[wall].contrast, LIBRARY[wall].normalStrength);
+  u.uTrimSurface.value.set(1 / LIBRARY[trim].sizeM, LIBRARY[trim].contrast, LIBRARY[trim].normalStrength);
 }

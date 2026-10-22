@@ -82,14 +82,27 @@ export type TileCanvas = Pick<
   'fillStyle' | 'strokeStyle' | 'lineWidth' | 'fillRect' | 'beginPath' | 'moveTo' | 'lineTo' | 'closePath' | 'fill' | 'stroke'
 >;
 
+/** Green level in the glow map for each kind of surface, so the shader knows which material to show. */
+export const REGION_GREEN = { wall: 0, trim: 128, spandrel: 255 } as const;
+
+const REGION_OF: Record<TilePaint, keyof typeof REGION_GREEN> = {
+  wall: 'wall',
+  glass: 'wall',
+  frame: 'trim',
+  accent: 'trim',
+  spandrel: 'spandrel',
+};
+
 /**
  * Paints a layout onto a canvas `px` wide and `py` tall.
- * 'color' paints the facade; 'glow' paints window glass white on black, for night lights.
+ * 'color' paints the facade; 'glow' paints window glass in red (for night lights and reflections) and
+ * marks wall, trim and spandrel in green (for their materials).
  */
 export function paintTile(ctx: TileCanvas, layout: TileLayout, colors: FacadeColors, px: number, py: number, mode: 'color' | 'glow'): void {
   const X = (x: number) => x * px;
   const Y = (y: number) => (1 - y) * py; // canvas y runs downward
-  const paint = (fill: TilePaint, glow?: boolean) => (mode === 'color' ? colors[fill] : glow ? '#ffffff' : '#000000');
+  const paint = (fill: TilePaint, glow?: boolean) =>
+    mode === 'color' ? colors[fill] : `rgb(${glow ? 255 : 0},${REGION_GREEN[REGION_OF[fill]]},0)`;
   for (const s of layout.shapes) {
     if (s.kind === 'rect') {
       ctx.fillStyle = paint(s.fill, s.glow);
@@ -101,7 +114,7 @@ export function paintTile(ctx: TileCanvas, layout: TileLayout, colors: FacadeCol
       ctx.closePath();
       ctx.fill();
     } else {
-      ctx.strokeStyle = mode === 'color' ? colors[s.stroke] : '#000000';
+      ctx.strokeStyle = mode === 'color' ? colors[s.stroke] : `rgb(0,${REGION_GREEN[REGION_OF[s.stroke]]},0)`;
       ctx.lineWidth = Math.max(1, s.width * px);
       ctx.beginPath();
       s.points.forEach(([x, y], i) => (i === 0 ? ctx.moveTo(X(x), Y(y)) : ctx.lineTo(X(x), Y(y))));

@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { unitGeometry } from './buildingGeometry';
-import { createFacadeMaterial, facadeAcross, facadeUniforms, patchFacadeShader, setFacadeDetail, setFacadeNight, setFacadeSky, type FacadeUniforms } from './FacadeMaterial';
+import { createFacadeMaterial, facadeAcross, facadeUniforms, patchFacadeShader, setFacadeDetail, setFacadeNight, setFacadeSky, setFacadeSurfaces, type FacadeUniforms } from './FacadeMaterial';
+import { libraryTextures } from './materials/libraryTextures';
 
 const options = { map: null, glowMap: null, tileWidth: 3, tileHeight: 3.4, roughness: 0.5, metalness: 0.2, color: '#808080', round: false };
 
@@ -54,7 +55,7 @@ describe('facade material', () => {
     // The reveal's wall colour is only read when there is a texture (a canvas-less browser has none).
     expect(shader.fragmentShader).toMatch(/#ifdef USE_MAP\s+diffuseColor\.rgb = texture2D\( map, vFacadeUv \+ shift \)/);
     expect(shader.uniforms.uDetail).toBeDefined();
-    expect(createFacadeMaterial(options).customProgramCacheKey()).toBe('facade-v4');
+    expect(createFacadeMaterial(options).customProgramCacheKey()).toBe('facade-v5');
   });
 
   it('turns the detail on and off and follows the sky without rebuilding the material', () => {
@@ -69,7 +70,32 @@ describe('facade material', () => {
     setFacadeSky(m, '#123456', [0, 1, 0]);
     expect('#' + u.uSkyColor.value.getHexString()).toBe('#123456');
     expect(u.uSunDir.value.toArray()).toEqual([0, 1, 0]);
-    expect(m.customProgramCacheKey()).toBe('facade-v4');
+    expect(m.customProgramCacheKey()).toBe('facade-v5');
+  });
+
+  it('samples the wall and trim materials in metres and keeps the palette colour', () => {
+    const shader = {
+      vertexShader: THREE.ShaderLib.standard.vertexShader,
+      fragmentShader: THREE.ShaderLib.standard.fragmentShader,
+      uniforms: {} as Record<string, unknown>,
+    };
+    patchFacadeShader(shader, facadeUniforms(null));
+    for (const name of ['uWallDetail', 'uWallNormal', 'uTrimDetail', 'uTrimNormal', 'uWallSurface', 'uTrimSurface']) {
+      expect(shader.fragmentShader).toContain(name);
+      expect(shader.uniforms[name]).toBeDefined();
+    }
+    // Brick courses run on through floor lines: the material is laid out in world height, not per floor.
+    expect(shader.fragmentShader).toContain('vFacadeWorld.y');
+    // The bumps replace the normal after three has worked out its own.
+    expect(shader.fragmentShader).toMatch(/#include <normal_fragment_maps>[\s\S]*facadeSurfaceNormal/);
+    expect(shader.fragmentShader).toMatch(/#include <roughnessmap_fragment>[\s\S]*roughnessFactor \*=/);
+    const m = createFacadeMaterial(options);
+    setFacadeSurfaces(m, 'brick-red', 'terracotta');
+    const u = m.userData.facadeUniforms as FacadeUniforms;
+    expect(u.uWallSurface.value.toArray()).toEqual([1, 1, 1]);
+    expect(u.uTrimSurface.value.x).toBeCloseTo(1 / 2.1, 6);
+    expect(u.uWallDetail.value).toBe(libraryTextures('brick-red').detail);
+    expect(u.uTrimNormal.value).toBe(libraryTextures('terracotta').normal);
   });
 
   it('falls back to a plain colour without a texture, and only lights up with a glow map', () => {

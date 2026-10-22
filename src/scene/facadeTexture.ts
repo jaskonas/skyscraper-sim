@@ -8,7 +8,8 @@ export interface FacadeTextures {
   glowMap: THREE.CanvasTexture;
 }
 
-const PX = 128;
+// Pixels across one bay: sharp enough for frames and stripes up close (about 1.5 cm a pixel on a 3.5 m bay).
+const PX = 256;
 const cache = new Map<string, FacadeTextures | null>();
 
 function canvasTexture(layout: TileLayout, recipe: FacadeRecipe, mode: 'color' | 'glow'): THREE.CanvasTexture | null {

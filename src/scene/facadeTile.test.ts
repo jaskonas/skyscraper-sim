@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { SPANDREL_IDS, WINDOW_PATTERN_IDS } from '../sim/catalog/ids';
 import { facadeRecipe } from '../sim/facade';
 import { designFor } from '../sim/testUtils';
-import { glassShare, paintTile, tileLayout, type TileCanvas } from './facadeTile';
+import { REGION_GREEN, glassShare, paintTile, tileLayout, type TileCanvas } from './facadeTile';
 
 function recorder() {
   const calls: string[] = [];
@@ -56,7 +56,7 @@ describe('facade tile', () => {
     expect(arched.shapes.some((s) => s.kind === 'poly' && s.fill === 'glass')).toBe(true);
   });
 
-  it('paints the facade in recipe colours and the glow map in black and white', () => {
+  it('paints the facade in recipe colours; the glow map marks glass in red and wall, trim or spandrel in green', () => {
     const { design } = designFor('chicago', { windowPattern: 'chicago', spandrel: 'stripes' });
     const recipe = facadeRecipe(design);
     const layout = tileLayout(recipe);
@@ -66,7 +66,13 @@ describe('facade tile', () => {
     expect(color.calls.some((c) => c.includes(recipe.colors.glass))).toBe(true);
     const glow = recorder();
     paintTile(glow.ctx, layout, recipe.colors, 64, 48, 'glow');
-    const fills = new Set(glow.calls.filter((c) => c.startsWith('fill')).map((c) => c.split(' ')[1]));
-    expect([...fills].sort()).toEqual(['#000000', '#ffffff']);
+    const fills = glow.calls.filter((c) => c.startsWith('fill')).map((c) => c.split(' ')[1]);
+    expect(REGION_GREEN).toEqual({ wall: 0, trim: 128, spandrel: 255 });
+    // Wall first, then the accent stripe (trim) and the spandrel stripe, then the glass panes.
+    expect(fills.slice(0, 3)).toEqual(['rgb(0,0,0)', 'rgb(0,128,0)', 'rgb(0,255,0)']);
+    expect(fills).toContain('rgb(255,0,0)');
+    expect(new Set(fills).size).toBe(4);
+    const strokes = new Set(glow.calls.filter((c) => c.startsWith('stroke')).map((c) => c.split(' ')[1]));
+    expect([...strokes]).toEqual(['rgb(0,128,0)']);
   });
 });

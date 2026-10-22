@@ -5,7 +5,7 @@ import { FLOOR_HEIGHT, floorSlices } from '../sim/geometry';
 import type { Design, Site } from '../sim/types';
 import { facadeRecipe } from '../sim/facade';
 import { bodyInstances, facadeColor, instanceMatrix, slabInstances, unitGeometry, type BoxInstance } from './buildingGeometry';
-import { createFacadeMaterial, setFacadeDetail, setFacadeLook, setFacadeNight, setFacadeSky } from './FacadeMaterial';
+import { createFacadeMaterial, setFacadeDetail, setFacadeLook, setFacadeNight, setFacadeSky, setFacadeSurfaces } from './FacadeMaterial';
 import { lighting } from './lighting';
 import { TILE_HEIGHT_M } from './facadeTile';
 import { facadeTextures } from './facadeTexture';
@@ -19,6 +19,8 @@ import { bracingParts, ornamentParts } from './ornaments';
 import { PartsMesh } from './parts/PartsMesh';
 import { selectShadowsOn, useGame } from '../state/store';
 import { sunDirection } from './sunShadow';
+import { surfacesFor } from './materials/library';
+import { useLibraryVersion } from './materials/libraryTextures';
 import { partBounds, type Part } from '../sim/parts';
 
 const swayMatrix = new THREE.Matrix4();
@@ -127,11 +129,15 @@ function Body({
   );
   // The glass glints in the same sun the light comes from (it moves when shadows are on).
   const sunDir = sunDirection(useGame(selectShadowsOn));
+  const surfaces = surfacesFor(design);
+  // Re-render when material textures arrive, so they are swapped in.
+  useLibraryVersion();
   useLayoutEffect(() => {
     setFacadeLook(material, look);
     setFacadeNight(material, night);
     setFacadeDetail(material, detail);
     setFacadeSky(material, sky, sunDir);
+    setFacadeSurfaces(material, surfaces.wall, surfaces.trim);
   });
   useLayoutEffect(() => {
     const mesh = ref.current;
