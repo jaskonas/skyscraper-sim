@@ -32,6 +32,36 @@ function wedge(): THREE.BufferGeometry {
   return new THREE.ExtrudeGeometry(s, { depth: 1, bevelEnabled: false }).translate(0, 0, -0.5);
 }
 
+function ogee(): THREE.BufferGeometry {
+  // Swells out from the base, then draws in to a point, like an onion dome; fitted to the unit cube.
+  const pts: THREE.Vector2[] = [];
+  const n = 14;
+  let max = 0;
+  const raw: [number, number][] = [];
+  for (let i = 0; i <= n; i++) {
+    const t = i / n;
+    const r = Math.sin(Math.PI * Math.min(1, t * 1.6 + 0.25)) * Math.pow(1 - t, 0.6);
+    raw.push([Math.max(0, r), t]);
+    max = Math.max(max, r);
+  }
+  for (const [r, t] of raw) pts.push(new THREE.Vector2((0.5 * r) / max, t - 0.5));
+  pts[pts.length - 1].x = 0;
+  return new THREE.LatheGeometry(pts, 16);
+}
+
+function lancet(): THREE.BufferGeometry {
+  // Straight sides to just over half way, then two arcs meeting in a point at the top.
+  const s = new THREE.Shape();
+  const spring = 0.05;
+  s.moveTo(-0.5, -0.5);
+  s.lineTo(0.5, -0.5);
+  s.lineTo(0.5, spring);
+  s.quadraticCurveTo(0.45, 0.35, 0, 0.5);
+  s.quadraticCurveTo(-0.45, 0.35, -0.5, spring);
+  s.closePath();
+  return new THREE.ExtrudeGeometry(s, { depth: 1, bevelEnabled: false, curveSegments: 6 }).translate(0, 0, -0.5);
+}
+
 function planCone(plan: PlanShape): THREE.BufferGeometry {
   if (plan === 'circle') return new THREE.ConeGeometry(0.5, 1, 24);
   if (plan === 'triangle') return new THREE.ConeGeometry(1 / Math.sqrt(3), 1, 3);
@@ -62,6 +92,15 @@ function make(shape: PartShape, plan: PlanShape): THREE.BufferGeometry {
       return unitGeometry(plan);
     case 'plan-cone':
       return planCone(plan);
+    case 'octagon':
+      // Flats facing the axes, stretched so the flats (not the points) touch the unit cube.
+      return new THREE.CylinderGeometry(0.5 / Math.cos(Math.PI / 8), 0.5 / Math.cos(Math.PI / 8), 1, 8).rotateY(Math.PI / 8);
+    case 'frustum':
+      return new THREE.CylinderGeometry(0.25, 0.5, 1, 16);
+    case 'ogee':
+      return ogee();
+    case 'lancet':
+      return lancet();
   }
 }
 

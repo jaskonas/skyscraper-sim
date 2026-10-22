@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { PartShape } from '../../sim/parts';
 import { partGeometry } from './geometries';
 
-const SHAPES: PartShape[] = ['box', 'cylinder', 'cone', 'pyramid', 'sphere', 'dome', 'torus', 'arch', 'wedge', 'plan', 'plan-cone'];
+const SHAPES: PartShape[] = ['box', 'cylinder', 'cone', 'pyramid', 'sphere', 'dome', 'torus', 'arch', 'wedge', 'plan', 'plan-cone', 'octagon', 'frustum', 'ogee', 'lancet'];
 
 describe('part geometries', () => {
   it('every shape fills the unit cube (so scale is size in metres)', () => {

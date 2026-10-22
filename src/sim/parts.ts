@@ -20,7 +20,15 @@ export type PartShape =
   /** A slab of the tower's own plan shape (square, round or triangular). */
   | 'plan'
   /** A pointed cap of the tower's own plan shape (pyramid, cone or 3-sided pyramid). */
-  | 'plan-cone';
+  | 'plan-cone'
+  /** An 8-sided prism: lanterns, turrets, pinnacle shafts. */
+  | 'octagon'
+  /** A cone with its top cut off (top half as wide as the bottom): drums, mast segments. */
+  | 'frustum'
+  /** An onion or ogee dome, swelling out and drawn up to a point. */
+  | 'ogee'
+  /** A Gothic pointed arch, flat in the x-y plane: windows, tracery, arcades. */
+  | 'lancet';
 
 export const PART_MATERIALS = [
   'body', 'accent', 'glass', 'stone', 'concrete', 'copper', 'gold', 'steel', 'foliage', 'ruby', 'light', 'interior', 'girder', 'wood', 'blind', 'pane',
@@ -35,6 +43,8 @@ export interface Part {
   material: PartMaterial;
   /** Glows at night. */
   glow?: boolean;
+  /** A small piece (a crocket, a rivet, a mullion): drawn only when the camera is close. */
+  fine?: true;
   /** The colour it glows in, instead of its material's (a lit window, in its floor's light). */
   glowColor?: string;
   /** 'spin': turns about its own z axis. 'blink': aircraft-warning light at night. */
