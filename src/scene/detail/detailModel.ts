@@ -253,7 +253,7 @@ function cornerView(design: Design): DetailModel {
   const origin = worldAnchor(floors[0], corner);
   const frame: SectionFrame = { origin: [origin.position[0], floors[0].y, origin.position[2]], yaw: origin.yaw };
   const runs = floors.flatMap((slice) => cornerRuns(design, slice, bay));
-  const b = buildRuns(design, runs, frame, 8, step.isRoof ? crownParts(design) : []);
+  const b = buildRuns(design, runs, frame, 8, step.isRoof ? crownParts(design, 'rich') : []);
   const names = activeOrnaments(design)
     .filter((o) => ['setback-corners', 'setback-faces', 'roof-edge'].includes(o.placement))
     .map((o) => ORNAMENTS[o.id].label);

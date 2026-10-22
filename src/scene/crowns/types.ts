@@ -1,5 +1,5 @@
 import type { Part } from '../../sim/parts';
-import type { PlanShape } from '../../sim/types';
+import type { Ornament, PlanShape } from '../../sim/types';
 
 /** Size of the roof a crown sits on, and how tall the crown is. */
 export interface CrownContext {
@@ -9,6 +9,8 @@ export interface CrownContext {
   D: number;
   /** Crown height, metres. */
   H: number;
+  /** Ornament amount: None drops purely decorative fine work. */
+  ornament: Ornament;
 }
 
 /** Builds a crown in its own frame: y = 0 at the roof, centred on the tower. */

@@ -269,7 +269,7 @@ export function Building({
   const [chunks] = useState(createChunkSignal);
   const geometry = useDisposable(useMemo(() => unitGeometry(design.shape), [design.shape]));
   const slabs = useMemo(() => slabInstances(design), [design]);
-  const crown = useMemo(() => crownParts(design), [design]);
+  const crown = useMemo(() => crownParts(design, facadeDetail ? 'rich' : 'simple'), [design, facadeDetail]);
   const ornaments = useMemo(() => ornamentParts(design), [design]);
   const bracing = useMemo(() => bracingParts(design), [design]);
   const balconies = useMemo(() => balconyParts(design), [design]);
