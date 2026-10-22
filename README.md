@@ -21,6 +21,8 @@ Open roofs carry real rooftop kit — cooling towers, a plant room, a window-cle
 
 Walls and parts wear real materials, true to scale: red or buff brick, limestone, granite, terracotta, board-formed or precast concrete, metal panels, copper patina and wood. The colours still come from the design's palette — the textures only add the light and dark of mortar, grain and seams — and walls weather a little: patchy tone, streaks under the windows, grime near the street. The textures are CC0 from [Poly Haven](https://polyhaven.com) (credits in `public/textures/LICENSES.md`); `scripts/textures/build_textures.py` rebuilds them.
 
+Zoom in close and the walls nearest you turn into true 3D: window frames stand proud, the glass sits back in its opening, and sills and mullion caps catch the light — on square, round, tapered and twisted towers alike. Further out the walls stay painted, so it stays smooth.
+
 ## Develop
 
     npm test          # unit and component tests
