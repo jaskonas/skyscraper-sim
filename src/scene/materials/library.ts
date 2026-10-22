@@ -1,3 +1,4 @@
+import { WINDOW_PATTERNS } from '../../sim/catalog/facades';
 import type { PartMaterial } from '../../sim/parts';
 import type { Design } from '../../sim/types';
 
@@ -70,6 +71,14 @@ export function surfacesFor(design: Design): Surfaces {
     case 'masonry':
       return MASONRY[design.style] ?? { wall: 'limestone', trim: 'limestone' };
   }
+}
+
+/**
+ * What the painted facade's wall area is made of. Usually the tower's wall material, but a glass-grid
+ * pattern's wall is glass-coloured spandrel panels — its brick or stone shows on the piers and ornaments.
+ */
+export function facadeWall(design: Design): LibraryId {
+  return WINDOW_PATTERNS[design.windowPattern].glassWall ? 'metal-panel' : surfacesFor(design).wall;
 }
 
 /** The library material a part is drawn with: its tower's wall or trim, or a fixed one. Glass, plants and lights get none. */

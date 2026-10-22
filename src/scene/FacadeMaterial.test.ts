@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { unitGeometry } from './buildingGeometry';
-import { createFacadeMaterial, facadeAcross, facadeUniforms, patchFacadeShader, setFacadeDetail, setFacadeNight, setFacadeSky, setFacadeSurfaces, type FacadeUniforms } from './FacadeMaterial';
+import { createFacadeMaterial, facadeAcross, facadeUniforms, patchFacadeShader, setFacadeDetail, setFacadeFloors, setFacadeNight, setFacadeSky, setFacadeSurfaces, type FacadeUniforms } from './FacadeMaterial';
 import { libraryTextures } from './materials/libraryTextures';
 
 const options = { map: null, glowMap: null, tileWidth: 3, tileHeight: 3.4, roughness: 0.5, metalness: 0.2, color: '#808080', round: false };
@@ -96,6 +96,22 @@ describe('facade material', () => {
     expect(u.uTrimSurface.value.x).toBeCloseTo(1 / 2.1, 6);
     expect(u.uWallDetail.value).toBe(libraryTextures('brick-red').detail);
     expect(u.uTrimNormal.value).toBe(libraryTextures('terracotta').normal);
+  });
+
+  it('weathers the walls but not the glass', () => {
+    const shader = {
+      vertexShader: THREE.ShaderLib.standard.vertexShader,
+      fragmentShader: THREE.ShaderLib.standard.fragmentShader,
+      uniforms: {} as Record<string, unknown>,
+    };
+    patchFacadeShader(shader, facadeUniforms(null));
+    expect(shader.fragmentShader).toContain('weatherNoise(');
+    expect(shader.fragmentShader).toContain('weatherShade(');
+    expect(shader.fragmentShader).toContain('uFloors');
+    expect(shader.fragmentShader).toContain('streak');
+    const m = createFacadeMaterial(options);
+    setFacadeFloors(m, 70);
+    expect(m.userData.facadeUniforms.uFloors.value).toBe(70);
   });
 
   it('falls back to a plain colour without a texture, and only lights up with a glow map', () => {

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { applyAction } from '../../sim/actions';
 import { designFor } from '../../sim/testUtils';
 import type { Design, StyleId } from '../../sim/types';
-import { LIBRARY, modulate, partLibrary, surfacesFor } from './library';
+import { LIBRARY, facadeWall, modulate, partLibrary, surfacesFor } from './library';
 
 const styled = (style: StyleId, patch: Partial<Design> = {}) => {
   const { site, design } = designFor('chicago');
@@ -27,6 +27,13 @@ describe('material library', () => {
     expect(styled('brutalist').facade).toBe('precast');
     expect(surfacesFor(styled('brutalist'))).toEqual({ wall: 'concrete-board', trim: 'concrete-board' });
     expect(surfacesFor(styled('brutalist', { facade: 'glass' }))).toEqual({ wall: 'metal-panel', trim: 'metal-panel' });
+  });
+
+  it("a glass-grid pattern's facade wall is metal spandrel panels; the brick stays on its piers", () => {
+    const deco = styled('art-deco', { windowPattern: 'flush-grid' });
+    expect(facadeWall(deco)).toBe('metal-panel');
+    expect(surfacesFor(deco).wall).toBe('brick-buff');
+    expect(facadeWall(styled('chicago-school'))).toBe('brick-red');
   });
 
   it('a masonry facade on a non-masonry style is limestone', () => {

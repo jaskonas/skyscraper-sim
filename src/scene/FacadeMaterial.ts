@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { FACADE_DETAIL_GLSL } from './facadeDetail';
 import { LIBRARY, type LibraryId } from './materials/library';
 import { NEUTRAL_DETAIL, NEUTRAL_NORMAL, libraryTextures } from './materials/libraryTextures';
+import { WEATHER_GLSL } from './materials/weathering';
 import { WINDOW_HASH_GLSL } from './nightWindows';
 
 export interface FacadeLook {
@@ -39,6 +40,8 @@ export interface FacadeUniforms {
   /** Per material: repeats per metre, contrast, bump strength. */
   uWallSurface: { value: THREE.Vector3 };
   uTrimSurface: { value: THREE.Vector3 };
+  /** The tower's floor count, for fading the top floors. */
+  uFloors: { value: number };
 }
 
 /** Fresh uniforms for one facade material. */
@@ -58,6 +61,7 @@ export function facadeUniforms(glowMap: THREE.Texture | null): FacadeUniforms {
     // Contrast and bump strength 0: no material until one is chosen.
     uWallSurface: { value: new THREE.Vector3(0.5, 0, 0) },
     uTrimSurface: { value: new THREE.Vector3(0.5, 0, 0) },
+    uFloors: { value: 1 },
   };
 }
 
@@ -140,6 +144,7 @@ uniform sampler2D uTrimDetail;
 uniform sampler2D uTrimNormal;
 uniform vec3 uWallSurface;
 uniform vec3 uTrimSurface;
+uniform float uFloors;
 varying vec2 vFacadeUv;
 varying float vFloor;
 varying float vLit;
@@ -149,6 +154,7 @@ varying vec3 vFacadeWorld;
 varying vec3 vFacadeNormal;
 ${WINDOW_HASH_GLSL}
 ${FACADE_DETAIL_GLSL}
+${WEATHER_GLSL}
 const float GLASS_RECESS = 0.3;
 // What you see through the glass by day: a dark interior, much dimmer than the sky outside.
 const vec3 GLASS_INTERIOR = vec3(0.10, 0.12, 0.15);
@@ -205,6 +211,8 @@ if (uDetail > 0.5 && abs(vFacadeNormal.y) < 0.5) {
   vec3 trimN = texture2D( uTrimNormal, matUv * uTrimSurface.x ).xyz * 2.0 - 1.0;
   float surfD = mix(wallD, trimD, trimShare);
   vec3 surfN = mix(wallN, trimN, trimShare);
+  // Glass a little way above: dirt washes down from the sill below it, in uneven streaks.
+  float glassAbove = texture2D( uGlowMap, vFacadeUv + vec2(0.0, WEATHER_STREAK_REACH / uTileSize.y) ).r;
   if (vMech > 0.5) {
     // A plant floor: louvres in place of windows, and nothing behind them to light up.
     float slat = stripes(vFacadeUv.y * uTileSize.y * 2.5, 0.45);
@@ -241,6 +249,10 @@ if (uDetail > 0.5 && abs(vFacadeNormal.y) < 0.5) {
   if (facadeGlass < 0.5 && vMech < 0.5) {
     // Wall, trim or the reveal of an opening: the palette colour, lightened and darkened by the material.
     diffuseColor.rgb *= max(1.0 + (surfD - 0.5) * 2.0 * surface.y, 0.0);
+    float tone = 0.65 * weatherNoise(matUv / WEATHER_TINT_SCALE) + 0.35 * weatherNoise(matUv / WEATHER_TINT_SCALE * 3.1);
+    float streak = step(0.5, glassAbove) * smoothstep(0.35, 0.75, weatherNoise(vec2(matUv.x * 3.0, floorIndex)));
+    float floorShare = (floorIndex + 1.0) / max(uFloors, 1.0);
+    diffuseColor.rgb *= weatherShade(vFacadeWorld.y, floorShare, streak, tone);
     facadeSurfaceDetail = surfD;
     facadeSurfaceNormal = normalize(vec3(surfN.xy * surface.z, max(surfN.z, 0.2)));
     facadeSurfaceMix = 1.0;
@@ -347,4 +359,10 @@ export function setFacadeSurfaces(material: THREE.Material, wall: LibraryId, tri
   u.uTrimNormal.value = t.normal;
   u.uWallSurface.value.set(1 / LIBRARY[wall].sizeM, LIBRARY[wall].contrast, LIBRARY[wall].normalStrength);
   u.uTrimSurface.value.set(1 / LIBRARY[trim].sizeM, LIBRARY[trim].contrast, LIBRARY[trim].normalStrength);
+}
+
+/** The tower's floor count (its top floors fade a little in the sun). */
+export function setFacadeFloors(material: THREE.Material, floors: number): void {
+  const u = material.userData.facadeUniforms as FacadeUniforms | undefined;
+  if (u) u.uFloors.value = floors;
 }
