@@ -41,7 +41,7 @@ varying vec3 vPartAxisZ;
 
 /**
  * Material coordinates in metres: the vertex in the part's own axes, scaled to its real size, plus a
- * shift from where the part stands so neighbouring parts don't repeat the same patch. The part's axes in
+ * fixed shift per part so neighbouring parts don't repeat the same patch. The part's axes in
  * view space are passed on for the bumps.
  */
 const VERTEX_POS = /* glsl */ `
@@ -51,7 +51,9 @@ vec3 partShift = vec3(0.0);
 mat3 partRot = mat3(1.0);
 #ifdef USE_INSTANCING
   partScale = vec3(length(instanceMatrix[0].xyz), length(instanceMatrix[1].xyz), length(instanceMatrix[2].xyz));
-  partShift = instanceMatrix[3].xyz * 0.37;
+  // A fixed shift per part (from its index, not its position, so a swaying part keeps its texture).
+  float partId = float(gl_InstanceID);
+  partShift = vec3(fract(sin(partId * 12.9898) * 43758.5453), fract(sin(partId * 78.233) * 43758.5453), fract(sin(partId * 39.425) * 43758.5453)) * 7.0;
   partRot = mat3(instanceMatrix);
 #endif
 vPartPos = position * partScale + partShift;

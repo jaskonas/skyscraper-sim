@@ -42,6 +42,8 @@ export interface FacadeUniforms {
   uTrimSurface: { value: THREE.Vector3 };
   /** The tower's floor count, for fading the top floors. */
   uFloors: { value: number };
+  /** 1 once the wall's textures have arrived: weathering waits for them, so a page without them looks as before. */
+  uSurfacesReady: { value: number };
 }
 
 /** Fresh uniforms for one facade material. */
@@ -62,6 +64,7 @@ export function facadeUniforms(glowMap: THREE.Texture | null): FacadeUniforms {
     uWallSurface: { value: new THREE.Vector3(0.5, 0, 0) },
     uTrimSurface: { value: new THREE.Vector3(0.5, 0, 0) },
     uFloors: { value: 1 },
+    uSurfacesReady: { value: 0 },
   };
 }
 
@@ -145,6 +148,7 @@ uniform sampler2D uTrimNormal;
 uniform vec3 uWallSurface;
 uniform vec3 uTrimSurface;
 uniform float uFloors;
+uniform float uSurfacesReady;
 varying vec2 vFacadeUv;
 varying float vFloor;
 varying float vLit;
@@ -252,7 +256,7 @@ if (uDetail > 0.5 && abs(vFacadeNormal.y) < 0.5) {
     float tone = 0.65 * weatherNoise(matUv / WEATHER_TINT_SCALE) + 0.35 * weatherNoise(matUv / WEATHER_TINT_SCALE * 3.1);
     float streak = step(0.5, glassAbove) * smoothstep(0.35, 0.75, weatherNoise(vec2(matUv.x * 3.0, floorIndex)));
     float floorShare = (floorIndex + 1.0) / max(uFloors, 1.0);
-    diffuseColor.rgb *= weatherShade(vFacadeWorld.y, floorShare, streak, tone);
+    diffuseColor.rgb *= mix(1.0, weatherShade(vFacadeWorld.y, floorShare, streak, tone), uSurfacesReady);
     facadeSurfaceDetail = surfD;
     facadeSurfaceNormal = normalize(vec3(surfN.xy * surface.z, max(surfN.z, 0.2)));
     facadeSurfaceMix = 1.0;
@@ -269,11 +273,12 @@ roughnessFactor *= mix(1.0, 1.25 - 0.5 * facadeSurfaceDetail, facadeSurfaceMix);
 const FRAGMENT_NORMAL = /* glsl */ `
 #include <normal_fragment_maps>
 if (facadeSurfaceMix > 0.0) {
-  // The material's bumps, on the wall's own axes: along the wall, up, and out.
+  // The material's bumps tilt three's own normal (flat-shaded, so a round drum keeps its facets) along the
+  // wall's axes: along the wall and up, in view space.
   vec3 sN = normalize(vFacadeNormal);
-  vec3 sT = normalize(cross(vec3(0.0, 1.0, 0.0), sN));
-  vec3 bumped = normalize(sT * facadeSurfaceNormal.x + vec3(0.0, 1.0, 0.0) * facadeSurfaceNormal.y + sN * facadeSurfaceNormal.z);
-  normal = normalize((viewMatrix * vec4(bumped, 0.0)).xyz);
+  vec3 sT = normalize((viewMatrix * vec4(normalize(cross(vec3(0.0, 1.0, 0.0), sN)), 0.0)).xyz);
+  vec3 sB = normalize((viewMatrix * vec4(0.0, 1.0, 0.0, 0.0)).xyz);
+  normal = normalize(normal + sT * facadeSurfaceNormal.x + sB * facadeSurfaceNormal.y);
 }
 `;
 
@@ -359,6 +364,7 @@ export function setFacadeSurfaces(material: THREE.Material, wall: LibraryId, tri
   u.uTrimNormal.value = t.normal;
   u.uWallSurface.value.set(1 / LIBRARY[wall].sizeM, LIBRARY[wall].contrast, LIBRARY[wall].normalStrength);
   u.uTrimSurface.value.set(1 / LIBRARY[trim].sizeM, LIBRARY[trim].contrast, LIBRARY[trim].normalStrength);
+  u.uSurfacesReady.value = w.detail === NEUTRAL_DETAIL ? 0 : 1;
 }
 
 /** The tower's floor count (its top floors fade a little in the sun). */

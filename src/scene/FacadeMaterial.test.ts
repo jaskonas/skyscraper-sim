@@ -98,6 +98,23 @@ describe('facade material', () => {
     expect(u.uTrimNormal.value).toBe(libraryTextures('terracotta').normal);
   });
 
+  it('until textures arrive, looks exactly as before: no weathering, and the faceted normal kept', () => {
+    const shader = {
+      vertexShader: THREE.ShaderLib.standard.vertexShader,
+      fragmentShader: THREE.ShaderLib.standard.fragmentShader,
+      uniforms: {} as Record<string, unknown>,
+    };
+    const u = facadeUniforms(null);
+    patchFacadeShader(shader, u);
+    // Bumps tilt three's own (flat-shaded) normal rather than replacing it.
+    expect(shader.fragmentShader).toMatch(/#include <normal_fragment_maps>[\s\S]*normal = normalize\( ?normal \+/);
+    expect(shader.fragmentShader).toContain('mix(1.0, weatherShade(');
+    expect(shader.fragmentShader).toContain('uSurfacesReady');
+    const m = createFacadeMaterial(options);
+    setFacadeSurfaces(m, 'brick-red', 'terracotta');
+    expect(m.userData.facadeUniforms.uSurfacesReady.value).toBe(0);
+  });
+
   it('weathers the walls but not the glass', () => {
     const shader = {
       vertexShader: THREE.ShaderLib.standard.vertexShader,
