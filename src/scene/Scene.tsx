@@ -19,6 +19,7 @@ import { ForcesView, GroundShake } from './forces/ForcesView';
 import { createSway } from './forces/sway';
 import { useFrameNonce } from './frameNonce';
 import { Landmark } from './Landmark';
+import { startLibraryLoad } from './materials/libraryTextures';
 import { lighting } from './lighting';
 import { Neighbors } from './Neighbors';
 import { SiteDiorama } from './SiteDiorama';
@@ -58,6 +59,8 @@ export function Scene() {
   // Forces wait while the tower is being built.
   const forceOn = force !== 'none' && !building ? force : null;
   const [sway] = useState(createSway);
+  // Material textures arrive after the first frame; until then surfaces keep their plain look.
+  useEffect(() => startLibraryLoad(), []);
   const facadeDetail = useGame((s) => s.facadeDetail === 'high');
   const shadowsOn = useGame(selectShadowsOn);
   const light = lighting(site, night, shadowsOn);
