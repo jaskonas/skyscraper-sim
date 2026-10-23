@@ -85,3 +85,29 @@ describe('fine crown detail during construction', () => {
     expect(coarse + fineCount(r)).toBe(crownParts(design, 'rich').length);
   });
 });
+
+describe('near parts', () => {
+  it("doesn't flicker at the edge: on inside 280 m, off beyond 320 m", async () => {
+    const { site, design } = designFor('chicago', { floors: 40, crown: 'gothic-pinnacles' });
+    const [lx, lz] = lotCenter(site);
+    const top = 40 * FLOOR_HEIGHT + 10;
+    const at = (d: number) => (
+      <>
+        <CameraAt position={[lx, top, lz + d]} />
+        <Building site={site} design={design} />
+      </>
+    );
+    const r = await ReactThreeTestRenderer.create(at(250));
+    await frames(r, 12);
+    expect(fineCount(r)).toBeGreaterThan(0);
+    await ReactThreeTestRenderer.act(async () => r.update(at(305)));
+    await frames(r, 12);
+    expect(fineCount(r)).toBeGreaterThan(0);
+    await ReactThreeTestRenderer.act(async () => r.update(at(330)));
+    await frames(r, 12);
+    expect(fineCount(r)).toBe(0);
+    await ReactThreeTestRenderer.act(async () => r.update(at(295)));
+    await frames(r, 12);
+    expect(fineCount(r)).toBe(0);
+  });
+});
