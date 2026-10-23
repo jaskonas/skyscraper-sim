@@ -107,6 +107,32 @@ describe('<Building />', () => {
     expect(instanceTotal(part, 'dressing')).toBeLessThan(all.length);
   });
 
+  it('Detail: Simple draws no wall kit and no fine systems parts', async () => {
+    const { site, design } = designFor('chicago', { style: 'chicago-school', facade: 'masonry', floors: 40, exposedStructure: true, crown: 'flat', useMix: { retail: 0, office: 0, hotel: 0, residential: 100 } });
+    const r = await ReactThreeTestRenderer.create(<Building site={site} design={design} facadeDetail={false} />);
+    await ReactThreeTestRenderer.act(async () => r.advanceFrames(12, 0.016));
+    for (const name of ['wall-kit', 'wall-kit-fine', 'roof-fine', 'street-fine', 'structure-fine']) {
+      const groups = r.scene.findAll((n) => n.props.name === name);
+      expect(groups.reduce((s, g) => s + g.findAll((n) => (n.instance as THREE.InstancedMesh).isInstancedMesh === true).length, 0), name).toBe(0);
+    }
+    await r.unmount();
+    const high = await ReactThreeTestRenderer.create(<Building site={site} design={design} />);
+    expect(instanceTotal(high, 'wall-kit')).toBeGreaterThan(0);
+  });
+
+  it('while building, the wall kit appears only on the floors already finished', async () => {
+    const { site, design } = designFor('chicago', { style: 'chicago-school', facade: 'masonry', floors: 40, useMix: { retail: 0, office: 0, hotel: 0, residential: 100 } });
+    const r = await ReactThreeTestRenderer.create(<Building site={site} design={design} reveal={{ floors: 12, crown: 0, litFloors: 0, lights: false }} />);
+    const meshes = instancedIn(r, 'wall-kit');
+    expect(meshes.length).toBeGreaterThan(0);
+    const m = new THREE.Matrix4();
+    for (const mesh of meshes)
+      for (let i = 0; i < mesh.count; i++) {
+        mesh.getMatrixAt(i, m);
+        expect(m.elements[13]).toBeLessThan(12 * 4);
+      }
+  });
+
   it('draws round towers smoothly (48 sides)', () => {
     const g = unitGeometry('circle') as THREE.CylinderGeometry;
     expect(g.parameters.radialSegments).toBe(48);
