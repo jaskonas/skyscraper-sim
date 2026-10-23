@@ -21,6 +21,7 @@ import { CloseWalls, createChunkSignal, type ChunkSignal } from './closeWalls/Cl
 import { CrownFine } from './crowns/CrownFine';
 import { NearParts } from './NearParts';
 import { beltTrussParts, braceDetailParts } from './systems/structure';
+import { wallKitParts } from './systems/wallKit';
 import { selectShadowsOn, useGame } from '../state/store';
 import { sunDirection } from './sunShadow';
 import { facadeWall, surfacesFor } from './materials/library';
@@ -300,6 +301,11 @@ export function Building({
   const crownFine = useMemo(() => top.crown.filter((p) => p.fine), [top.crown]);
   const crownCentre = useMemo<[number, number, number]>(() => [0, design.floors * FLOOR_HEIGHT + 10, 0], [design.floors]);
   const floors = Math.min(reveal?.floors ?? design.floors, design.floors - hideTopFloors);
+  // AC units, louvres and vents: on Detail: High, and only on the floors built so far.
+  const wallKit = useMemo(() => {
+    const all = facadeDetail ? wallKitParts(design).filter((p) => p.position[1] < floors * FLOOR_HEIGHT) : [];
+    return { coarse: all.filter((p) => !p.fine), fine: all.filter((p) => p.fine) };
+  }, [design, facadeDetail, floors]);
   // During construction, balconies only on the floors finished so far.
   const shownBalconies = useMemo(
     () => (floors >= design.floors ? balconies : balconies.filter((p) => p.position[1] < floors * FLOOR_HEIGHT)),
@@ -323,6 +329,8 @@ export function Building({
       <CrownFine parts={crownFine} centre={crownCentre} offset={[lx, lz]} {...look} />
       <PartsMesh name="ornaments" parts={top.ornaments} {...look} />
       <PartsMesh name="balconies" parts={shownBalconies} {...look} />
+      <PartsMesh name="wall-kit" parts={wallKit.coarse} {...look} />
+      <NearParts name="wall-kit-fine" parts={wallKit.fine} centre={[0, (floors * FLOOR_HEIGHT) / 2, 0]} within={300 + (floors * FLOOR_HEIGHT) / 2} offset={[lx, lz]} {...look} />
       <PartsMesh name="dressing" parts={top.dressing} {...look} />
       {/* While building, exposed bracing is part of the bare structure instead. */}
       <PartsMesh name="bracing" parts={reveal ? [] : structure.coarse} {...look} />
