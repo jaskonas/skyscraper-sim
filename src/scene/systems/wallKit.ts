@@ -16,14 +16,17 @@ export const AC_STYLES: readonly StyleId[] = ['chicago-school', 'gothic-revival'
 
 const box = (position: Vec3, scale: Vec3, fine = false): Part => ({ shape: 'box', position, scale, material: 'steel', ...(fine && { fine: true as const }) });
 
-/** An AC unit under a window, in the bay's own frame (x along the wall, y up from the floor, z out). */
+/**
+ * An AC unit sitting in the bottom of a window, sticking out of the wall, in the bay's own frame (x along
+ * the wall, y up from the floor, z out). Never below 0.05 m, so it clears the slab band of the floor below.
+ */
 function acUnit(sillY: number): Part[] {
-  const y = sillY - 0.25 - 0.225;
+  const y = Math.min(Math.max(sillY, 0.1), TILE_HEIGHT_M - 0.5) + 0.225;
   return [
     box([0, y, 0.275], [0.75, 0.45, 0.55]),
     // The grille on its face and the bracket under it.
     box([0, y, 0.56], [0.6, 0.3, 0.02], true),
-    box([0, y - 0.25, 0.2], [0.7, 0.05, 0.4], true),
+    box([0, y - 0.25, 0.3], [0.7, 0.05, 0.4], true),
   ];
 }
 
@@ -62,13 +65,17 @@ export function wallKitParts(design: Design): Part[] {
   const front = groundFaces.reduce((best, f) => (f.z > best.z ? f : best));
   const width = Math.min(10, front.length * 0.4);
   const mid = worldAnchor(ground, alongFace(design.shape, ground.width, ground.depth, front, 0));
-  parts.push(placeAtAnchor(box([0, 3.5, 0.06], [width + 0.2, 1, 0.1]), mid));
-  for (let k = 0; k < 4; k++) parts.push(placeAtAnchor(box([0, 3.15 + k * 0.22, 0.14], [width, 0.06, 0.14], true), mid));
+  // Below the slab band and the canopy, above the lobby glass.
+  parts.push(placeAtAnchor(box([0, 3.05, 0.06], [width + 0.2, 0.6, 0.1]), mid));
+  for (let k = 0; k < 4; k++) parts.push(placeAtAnchor(box([0, 2.84 + k * 0.14, 0.14], [width, 0.05, 0.14], true), mid));
   // Vent grilles along the base of every wall.
   for (const face of groundFaces) {
     const n = Math.max(1, Math.floor(face.length / 12));
     for (let k = 0; k < n; k++) {
-      const at = worldAnchor(ground, alongFace(design.shape, ground.width, ground.depth, face, ((k + 0.5) / n - 0.5) * face.length));
+      const along = ((k + 0.5) / n - 0.5) * face.length;
+      // Not behind the front door and its lobby glass.
+      if (face === front && Math.abs(along) < width / 2 + 2.5) continue;
+      const at = worldAnchor(ground, alongFace(design.shape, ground.width, ground.depth, face, along));
       parts.push(placeAtAnchor(box([0, 0.6, 0.04], [1.2, 0.6, 0.08]), at));
       for (let j = 0; j < 3; j++) parts.push(placeAtAnchor(box([0, 0.42 + j * 0.18, 0.09], [1.1, 0.04, 0.04], true), at));
     }

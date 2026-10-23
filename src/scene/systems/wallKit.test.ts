@@ -10,6 +10,7 @@ import { fastestMs } from '../../test/fastest';
 import { chunkCells } from '../closeWalls/chunks';
 import { isMechanicalFloor } from '../facadeDetail';
 import { planFaces } from '../parts/placement';
+import { entranceParts } from '../dressing/dressing';
 import { AC_SHARE, wallKitParts } from './wallKit';
 
 const homes = { retail: 0, office: 0, hotel: 0, residential: 100 };
@@ -80,7 +81,7 @@ describe('wall kit', () => {
   it('louvres over the front door and vent grilles at the base of every wall', () => {
     const d = styled('international', { shape: 'square' });
     const parts = wallKitParts(d);
-    const slats = parts.filter((p) => p.fine && p.material === 'steel' && p.position[1] > 3 && p.position[1] < 4);
+    const slats = parts.filter((p) => p.fine && p.material === 'steel' && p.position[1] > 2.7 && p.position[1] < 3.4);
     expect(slats.length).toBeGreaterThanOrEqual(4);
     const vents = parts.filter((p) => !p.fine && p.material === 'steel' && p.position[1] < 1.2);
     const s = floorSlices(d)[0];
@@ -95,5 +96,31 @@ describe('wall kit', () => {
     expect(parts.filter((p) => !p.fine).length).toBeLessThanOrEqual(3000);
     expect(parts.filter((p) => p.fine).length).toBeLessThanOrEqual(6000);
     expect(fastestMs(3, () => wallKitParts(d))).toBeLessThan(20);
+  });
+
+  it('AC units sit in the window, never sunk into the floor slab, at every window area', () => {
+    for (const windowRatio of [0.2, 0.35, 0.5, 0.7, 0.95]) {
+      const d = styled('chicago-school', { windowRatio });
+      const slices = floorSlices(d);
+      for (const p of wallKitParts(d).filter((q) => q.material === 'steel' && q.position[1] > 4)) {
+        const s = slices[floorOf(p)];
+        expect(p.position[1] - p.scale[1] / 2, `${windowRatio}`).toBeGreaterThanOrEqual(s.y + 0.05);
+        expect(p.position[1] + p.scale[1] / 2, `${windowRatio}`).toBeLessThanOrEqual(s.y + 3.4);
+      }
+    }
+  });
+
+  it('keeps vents clear of the front door, and the louvres above the lobby glass', () => {
+    for (const plateWidth of [20, 30, 40, 44]) {
+      const d = styled('international', { shape: 'square', plateWidth, plateDepth: plateWidth });
+      const s = floorSlices(d)[0];
+      const width = Math.min(10, s.width * 0.4);
+      const frontVents = wallKitParts(d).filter((p) => !p.fine && p.position[1] < 1.2 && p.position[2] > s.depth / 2 - 0.5);
+      for (const v of frontVents) expect(Math.abs(v.position[0]), `${plateWidth}`).toBeGreaterThan(width / 2 + 2);
+    }
+    const d = styled('international', { shape: 'square' });
+    const louvreBottom = Math.min(...wallKitParts(d).filter((p) => p.position[1] > 2.5 && p.position[1] < 3.5).map((p) => p.position[1] - p.scale[1] / 2));
+    const lobby = entranceParts(d).find((p) => p.material === 'pane')!;
+    expect(lobby.position[1] + lobby.scale[1] / 2).toBeLessThanOrEqual(louvreBottom);
   });
 });

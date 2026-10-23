@@ -241,7 +241,8 @@ export function entranceParts(design: Design): Part[] {
     placeAtAnchor(box([0, 3.75, 3.02], [width, 0.5, 0.1], 'steel'), at(0)),
     placeAtAnchor(cyl([0, 1.3, 1.4], [2.6, 2.6, 2.6], 'glass'), at(0)),
     placeAtAnchor(cyl([0, 2.7, 1.4], [2.7, 0.2, 2.7], 'steel'), at(0)),
-    placeAtAnchor({ shape: 'box', position: [0, 1.6, 0.04], scale: [width * 0.9, 3, 0.05], material: 'pane', glow: true, glowColor: '#ffe2a8' }, at(0)),
+    // The lobby's glass, lit from inside at night; it stops under the louvres over the door.
+    placeAtAnchor({ shape: 'box', position: [0, 1.35, 0.04], scale: [width * 0.9, 2.4, 0.05], material: 'pane', glow: true, glowColor: '#ffe2a8' }, at(0)),
     placeAtAnchor(box([0, 0.15, 0.6], [Math.min(front.length * 0.9, 30), 0.3, 1.2], 'stone'), at(0)),
   ];
   for (let k = 0; k < 4; k++) {
