@@ -25,6 +25,8 @@ Zoom in close and the walls nearest you turn into true 3D: window frames stand p
 
 Every crown is modelled on a real building: One World Trade Center's segmented mast, the Chrysler's stainless sunburst arches and eagles, Woolworth's copper roof and crocketed pinnacles, the Gherkin's diagrid, Jin Mao's flared eaves and more. The smallest pieces appear as you zoom in; Detail: Simple and the sidebar icons use plainer versions.
 
+The building's working parts show too: exposed braces carry flanges, node plates and bolts (a diagrid gets cast nodes), outrigger and bundled-tube towers wear a belt truss round each plant floor, old apartment and hotel floors sprout window air-conditioners, and the roof has fanned cooling towers, a chiller and its duct, exhaust fans, a satellite dish, lightning rods and a window-cleaning gantry with its cradle. The front door gets a lit canopy, a revolving door and a lit lobby.
+
 ## Develop
 
     npm test          # unit and component tests
