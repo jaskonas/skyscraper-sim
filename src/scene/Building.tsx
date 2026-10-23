@@ -300,6 +300,17 @@ export function Building({
   const crownCoarse = useMemo(() => top.crown.filter((p) => !p.fine), [top.crown]);
   const crownFine = useMemo(() => top.crown.filter((p) => p.fine), [top.crown]);
   const crownCentre = useMemo<[number, number, number]>(() => [0, design.floors * FLOOR_HEIGHT + 10, 0], [design.floors]);
+  // Dressing's small pieces (fan blades, rods, door leaves) only up close: those on the roof near the roof,
+  // the rest near the street.
+  const dressingSplit = useMemo(() => {
+    const half = (design.floors * FLOOR_HEIGHT) / 2;
+    const fine = facadeDetail ? top.dressing.filter((p) => p.fine) : [];
+    return {
+      coarse: top.dressing.filter((p) => !p.fine),
+      roof: fine.filter((p) => p.position[1] >= half),
+      street: fine.filter((p) => p.position[1] < half),
+    };
+  }, [top.dressing, design.floors, facadeDetail]);
   const floors = Math.min(reveal?.floors ?? design.floors, design.floors - hideTopFloors);
   // AC units, louvres and vents: on Detail: High, and only on the floors built so far.
   const wallKit = useMemo(() => {
@@ -331,7 +342,9 @@ export function Building({
       <PartsMesh name="balconies" parts={shownBalconies} {...look} />
       <PartsMesh name="wall-kit" parts={wallKit.coarse} {...look} />
       <NearParts name="wall-kit-fine" parts={wallKit.fine} centre={[0, (floors * FLOOR_HEIGHT) / 2, 0]} within={300 + (floors * FLOOR_HEIGHT) / 2} offset={[lx, lz]} {...look} />
-      <PartsMesh name="dressing" parts={top.dressing} {...look} />
+      <PartsMesh name="dressing" parts={dressingSplit.coarse} {...look} />
+      <NearParts name="roof-fine" parts={dressingSplit.roof} centre={crownCentre} offset={[lx, lz]} {...look} />
+      <NearParts name="street-fine" parts={dressingSplit.street} centre={[0, 3, 0]} offset={[lx, lz]} {...look} />
       {/* While building, exposed bracing is part of the bare structure instead. */}
       <PartsMesh name="bracing" parts={reveal ? [] : structure.coarse} {...look} />
       {!reveal && (

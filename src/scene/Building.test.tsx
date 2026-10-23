@@ -97,7 +97,7 @@ describe('<Building />', () => {
     const all = dressingParts(site, design);
     expect(all.length).toBeGreaterThan(20);
     const r = await ReactThreeTestRenderer.create(<Building site={site} design={design} />);
-    expect(instanceTotal(r, 'dressing')).toBe(all.length);
+    expect(instanceTotal(r, 'dressing')).toBe(all.filter((p) => !p.fine).length);
     await r.unmount();
     const none = await ReactThreeTestRenderer.create(<Building site={site} design={design} reveal={{ floors: 30, crown: 0, litFloors: 0, lights: false }} />);
     expect(instanceTotal(none, 'dressing')).toBe(0);

@@ -152,7 +152,59 @@ describe('setback terraces', () => {
   });
 });
 
+describe('rooftop plant in detail', () => {
+  it('cooling towers have shrouds and spinning fans; the plant room has ribs, a duct and a dish', () => {
+    const parts = roofParts(NY, build({}));
+    expect(parts.filter((p) => p.shape === 'torus' && p.material === 'concrete').length).toBe(2);
+    expect(parts.filter((p) => p.animate === 'spin').length).toBe(8);
+    expect(parts.filter((p) => p.fine && p.material === 'steel' && p.shape === 'box').length).toBeGreaterThanOrEqual(6);
+    expect(parts.some((p) => p.shape === 'dome' && p.material === 'steel')).toBe(true);
+    expect(parts.filter((p) => p.shape === 'cone' && p.material === 'steel').length).toBe(2);
+  });
+
+  it('the cleaning gantry has a mast and a cradle parked on the roof, hung on cables', () => {
+    const design = build({});
+    const parts = roofParts(NY, design);
+    const roof = roofDeck(design);
+    const cradle = parts.filter((p) => p.material === 'gold' && p.shape === 'box' && p.scale[1] < 1);
+    expect(cradle).toHaveLength(1);
+    expect(partBounds(cradle[0]).min[1]).toBeGreaterThanOrEqual(roof - 1e-6);
+    expect(parts.filter((p) => p.fine && p.material === 'steel' && p.shape === 'cylinder' && p.scale[0] < 0.1).length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('lightning rods line the parapet, but not where the deck already has an edge', () => {
+    const rods = (crown: Design['crown']) => roofParts(NY, build({ crown })).filter((p) => p.fine && p.shape === 'cylinder' && p.scale[0] === 0.06);
+    expect(rods('flat').length).toBeGreaterThanOrEqual(16);
+    expect(rods('cornice')).toHaveLength(0);
+  });
+
+  it('the water tank has staves and hoops', () => {
+    const { site, design } = designFor('new-york', { crown: 'flat', windowPattern: 'chicago', amenities: [] });
+    const parts = roofParts(site, design);
+    expect(parts.filter((p) => p.material === 'wood' && p.fine).length).toBeGreaterThanOrEqual(12);
+    expect(parts.filter((p) => p.shape === 'torus' && p.material === 'steel').length).toBe(3);
+  });
+});
+
 describe('entrance', () => {
+  it('has a lit canopy edge, a four-leaf revolving door, a lit lobby and a plinth; planters and paving go on Ornament None', () => {
+    const full = entranceParts(build({ ornament: 'high' }));
+    expect(full.filter((p) => p.material === 'light' && !!p.glow).length).toBe(1);
+    expect(full.filter((p) => p.fine && p.material === 'glass').length).toBe(4);
+    expect(full.filter((p) => p.material === 'pane' && !!p.glow).length).toBe(1);
+    expect(full.filter((p) => p.material === 'stone' && p.scale[1] < 0.5).length).toBe(1);
+    expect(full.filter((p) => p.material === 'foliage').length).toBe(2);
+    expect(full.filter((p) => p.fine && p.material === 'concrete').length).toBeGreaterThanOrEqual(4);
+    const bare = entranceParts(build({ ornament: 'none' }));
+    expect(bare.some((p) => p.material === 'foliage' || p.material === 'light')).toBe(false);
+    expect(bare.some((p) => p.fine && p.material === 'glass')).toBe(true);
+  });
+
+  it('only the canopy edge and the lobby glow', () => {
+    expect(entranceParts(build({ ornament: 'high' })).filter((p) => p.glow).map((p) => p.material).sort()).toEqual(['light', 'pane']);
+  });
+
+
   it('gives the front a canopy, revolving doors and bollards along the sidewalk', () => {
     const design = build({ ornament: 'none' });
     const { depth } = plateDims(design);
