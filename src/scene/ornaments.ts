@@ -138,13 +138,13 @@ export function ornamentParts(design: Design, include: (o: OrnamentDef) => boole
     .flatMap((o) => place(o, design, o.amount[level]));
 }
 
-const BRACE_FLOORS = 10;
+export const BRACE_FLOORS = 10;
 
 /**
  * Where the braces meet. A round tower gets eight points pushed out far enough that the straight
  * braces between them clear the curved wall (a chord's middle sits at R·cos(π/8)).
  */
-function braceCorners(shape: Design['shape'], width: number, depth: number) {
+export function braceCorners(shape: Design['shape'], width: number, depth: number) {
   if (shape !== 'circle') return planCorners(shape, width, depth);
   const k = 1 / Math.cos(Math.PI / 8);
   return Array.from({ length: 8 }, (_, i) => {

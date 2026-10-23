@@ -19,6 +19,8 @@ import { bracingParts, ornamentParts } from './ornaments';
 import { PartsMesh } from './parts/PartsMesh';
 import { CloseWalls, createChunkSignal, type ChunkSignal } from './closeWalls/CloseWalls';
 import { CrownFine } from './crowns/CrownFine';
+import { NearParts } from './NearParts';
+import { beltTrussParts, braceDetailParts } from './systems/structure';
 import { selectShadowsOn, useGame } from '../state/store';
 import { sunDirection } from './sunShadow';
 import { facadeWall, surfacesFor } from './materials/library';
@@ -272,7 +274,14 @@ export function Building({
   const slabs = useMemo(() => slabInstances(design), [design]);
   const crown = useMemo(() => crownParts(design, facadeDetail ? 'rich' : 'simple'), [design, facadeDetail]);
   const ornaments = useMemo(() => ornamentParts(design), [design]);
-  const bracing = useMemo(() => bracingParts(design), [design]);
+  // Exposed braces with their plates and nodes, and belt trusses at the plant floors; the small pieces only up close.
+  const structure = useMemo(() => {
+    const detail = facadeDetail ? braceDetailParts(design) : [];
+    return {
+      coarse: [...bracingParts(design), ...beltTrussParts(design), ...detail.filter((p) => !p.fine)],
+      fine: detail.filter((p) => p.fine),
+    };
+  }, [design, facadeDetail]);
   const balconies = useMemo(() => balconyParts(design), [design]);
   const dressing = useMemo(() => dressingParts(site, design), [site, design]);
   const share = reveal ? reveal.crown : 1;
@@ -316,7 +325,17 @@ export function Building({
       <PartsMesh name="balconies" parts={shownBalconies} {...look} />
       <PartsMesh name="dressing" parts={top.dressing} {...look} />
       {/* While building, exposed bracing is part of the bare structure instead. */}
-      <PartsMesh name="bracing" parts={reveal ? [] : bracing} {...look} />
+      <PartsMesh name="bracing" parts={reveal ? [] : structure.coarse} {...look} />
+      {!reveal && (
+        <NearParts
+          name="structure-fine"
+          parts={structure.fine}
+          centre={[0, (design.floors * FLOOR_HEIGHT) / 2, 0]}
+          within={300 + (design.floors * FLOOR_HEIGHT) / 2}
+          offset={[lx, lz]}
+          {...look}
+        />
+      )}
       {share > 0.5 && <Amenities design={design} geometry={geometry} sway={sway} />}
     </group>
   );
