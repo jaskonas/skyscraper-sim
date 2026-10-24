@@ -3,7 +3,7 @@ import { FLOOR_HEIGHT } from '../geometry';
 import type { Analysis, CheckId, CheckStatus, Design, SeismicOutcome, Site } from '../types';
 
 /** How much bigger than real the wind sway is drawn. */
-export const WIND_EXAGGERATION = 50;
+export const WIND_EXAGGERATION = 5;
 /** Metres of drawn ground motion per g of design shaking. */
 export const QUAKE_METRES_PER_G = 10;
 /** With base isolation, this share of the ground's motion reaches the tower's base. */

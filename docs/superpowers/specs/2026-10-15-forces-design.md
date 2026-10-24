@@ -58,7 +58,7 @@ The analysis already works out how a tower stands up to wind and earthquakes, bu
 - a steady **lean** = `driftRatio × bodyHeight`;
 - a back-and-forth **sway** at the tower's natural period `T` (from `analysis.seismic.periodS`), with amplitude `a / (2π / T)²`, where `a = accelMg × 9.81 / 1000` m/s². Because `accelMg` already includes the damping reduction, dampers visibly shrink this part.
 
-**Scale:** both parts are shown **50× bigger**, and a label says so.
+**Scale:** both parts are shown **5× bigger** (was 50×; reduced 2026-10-24 at the user's request), and a label says so.
 
 **Tuned mass damper:** with `damping = 'tmd'`:
 - The top 3 floors are drawn see-through.

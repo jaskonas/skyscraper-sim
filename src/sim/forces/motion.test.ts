@@ -44,7 +44,7 @@ describe('windMotion', () => {
     expect(m.periodS).toBe(s.analysis.seismic.periodS);
     const a = (s.analysis.wind.accelMg * 9.81) / 1000;
     expect(m.swayM).toBeCloseTo(a / (2 * Math.PI / m.periodS) ** 2, 9);
-    expect(m.exaggeration).toBe(50);
+    expect(m.exaggeration).toBe(5);
   });
 
   it('dampers shrink the sway but not the lean', () => {
@@ -70,20 +70,20 @@ describe('windMotion', () => {
     }
   });
 
-  it('the top eases into its lean, then sways about it, all 50 times bigger', () => {
+  it('the top eases into its lean, then sways about it, all 5 times bigger', () => {
     const m = wind('chicago');
     expect(windTop(m, 0)).toBe(0);
     const later = [5, 5.5, 6, 6.5, 7].map((t) => windTop(m, t));
     for (const v of later) {
-      expect(v).toBeGreaterThanOrEqual(50 * (m.leanM - m.swayM) - 1e-9);
-      expect(v).toBeLessThanOrEqual(50 * (m.leanM + m.swayM) + 1e-9);
+      expect(v).toBeGreaterThanOrEqual(m.exaggeration * (m.leanM - m.swayM) - 1e-9);
+      expect(v).toBeLessThanOrEqual(m.exaggeration * (m.leanM + m.swayM) + 1e-9);
     }
   });
 
   it('sways twice as wildly when the tower would fail in this wind', () => {
     const m = wind('chicago');
     const failing = { ...m, strength: 'fail' as const };
-    const swing = (x: typeof m) => Math.max(...[0, 1, 2, 3, 4, 5, 6, 7, 8].map((k) => windTop(x, 10 + (k * x.periodS) / 8))) - 50 * x.leanM;
+    const swing = (x: typeof m) => Math.max(...[0, 1, 2, 3, 4, 5, 6, 7, 8].map((k) => windTop(x, 10 + (k * x.periodS) / 8))) - x.exaggeration * x.leanM;
     expect(swing(failing)).toBeCloseTo(2 * swing(m), 6);
   });
 });

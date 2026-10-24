@@ -18,7 +18,7 @@ describe('windReadout', () => {
     expect(text).toContain(`${site.windSpeed} m/s`);
     expect(text).toMatch(/Top of tower leans \d+\.\d\d m and sways ±\d+\.\d\d m/);
     expect(text).toContain(`the limit for homes is ${analysis.wind.comfortLimitMg} mg`);
-    expect(r.note).toBe('Sway shown 50× bigger');
+    expect(r.note).toBe('Sway shown 5× bigger');
   });
 
   it('mentions dampers only when chosen, with how much they cut the felt sway', () => {

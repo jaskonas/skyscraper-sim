@@ -37,7 +37,7 @@ describe('force controls', () => {
     render(<ForceReadout />);
     const card = screen.getByRole('region', { name: 'Wind' });
     expect(within(card).getByText(/48 m\/s/)).toBeInTheDocument();
-    expect(within(card).getByText('Sway shown 50× bigger')).toBeInTheDocument();
+    expect(within(card).getByText('Sway shown 5× bigger')).toBeInTheDocument();
     expect(within(card).queryByText(/tuned mass damper/)).not.toBeInTheDocument();
     act(() => {
       useGame.getState().dispatch([{ type: 'set_parameter', id: 'damping', value: 'tmd' }]);
