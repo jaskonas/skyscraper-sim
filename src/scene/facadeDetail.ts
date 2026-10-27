@@ -1,3 +1,4 @@
+import { plantFloors } from '../sim/systems/facts';
 /**
  * Window-to-window variety for the facade: blinds, dark panes and glass tint. Every choice
  * is a fixed pseudo-random number per (bay, floor) — the same every frame, here and in the shader — salted
@@ -35,12 +36,7 @@ export function paneTint(bay: number, floor: number): number {
 }
 
 /** Plant floors with louvres instead of windows: every 30 floors on towers of 40 floors or more, never the roof. */
-export function mechanicalFloors(floors: number): number[] {
-  if (floors < 40) return [];
-  const out: number[] = [];
-  for (let i = 29; i < floors - 1; i += 30) out.push(i);
-  return out;
-}
+export const mechanicalFloors = plantFloors;
 
 export function isMechanicalFloor(index: number, floors: number): boolean {
   return floors >= 40 && index < floors - 1 && index % 30 === 29;

@@ -166,3 +166,6 @@ details.group > summary { cursor: pointer; font-weight: 600; }
   font: 600 14px/1.4 ui-monospace, monospace;
   pointer-events: none;
 }
+
+.system-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+.system-buttons button[aria-pressed='true'] { border-color: var(--accent); color: var(--accent); }

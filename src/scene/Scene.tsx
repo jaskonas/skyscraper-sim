@@ -9,6 +9,7 @@ import { DetailInset } from '../ui/DetailInset';
 import { FacadeDetailToggle } from '../ui/FacadeDetailToggle';
 import { ForceBanner, ForceButtons, ForceReadout } from '../ui/ForceControls';
 import { ShadowToggle } from '../ui/ShadowToggle';
+import { SystemButtons, SystemReadout, useShownSystem } from '../ui/SystemControls';
 import { SoilLegend } from '../ui/SoilLegend';
 import { Building } from './Building';
 import { ConstructionView } from './construction/ConstructionView';
@@ -58,6 +59,8 @@ export function Scene() {
   const force = useGame((s) => s.force);
   // Forces wait while the tower is being built.
   const forceOn = force !== 'none' && !building ? force : null;
+  const shownSystem = useShownSystem();
+  const systemOn = shownSystem !== 'none' ? shownSystem : null;
   const [sway] = useState(createSway);
   // Material textures arrive after the first frame; until then surfaces keep their plain look.
   useEffect(() => startLibraryLoad(), []);
@@ -99,12 +102,13 @@ export function Scene() {
       <DetailInset />
       <ForceBanner />
       <div className="scene-overlay">
-        {forceOn ? <ForceReadout /> : <SoilLegend site={site} design={design} />}
+        {forceOn ? <ForceReadout /> : systemOn ? <SystemReadout /> : <SoilLegend site={site} design={design} />}
         <button onClick={reframe}>Fit tower in view</button>
         <button aria-pressed={night} onClick={() => setTimeOfDay(night ? 'day' : 'night')}>
           {night ? '☀️ Day' : '🌙 Night'}
         </button>
         <ForceButtons />
+        <SystemButtons />
         <FacadeDetailToggle />
         <ShadowToggle />
       </div>
