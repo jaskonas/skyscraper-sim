@@ -179,6 +179,6 @@ Top to bottom: header (site, mode, phase) → brief card with live requirement s
 10. **Plan 10 — Close-range 3D walls.** True 3D wall bays near the camera, on every plan shape. Same spec, §5.
 11. **Plan 11 — Crowns rebuilt.** All 27 crowns as real architecture. Same spec, §6.
 12. **Plan 12 — Building systems.** Bracing nodes, AC units, louvres, roof plant, entrance. Same spec, §7.
-13. **Plan 13 — Inside the tower.** Structure, elevators, electrical, plumbing and HVAC overlays (§9).
+13. **Plan 13 — Inside the tower.** Power, water, waste, elevators and air flowing through the see-through tower, following the design. Spec: `2026-10-26-building-systems-flow-design.md`.
 14. **Plan 14 — People simulation** (§9).
 15. **Future iteration — Design chat (LLM).** §11. Text box at the bottom of the sidebar; Claude turns requests into catalog actions and explains tradeoffs.

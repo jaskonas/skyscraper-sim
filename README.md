@@ -27,6 +27,8 @@ Every crown is modelled on a real building: One World Trade Center's segmented m
 
 The building's working parts show too: exposed braces carry flanges, node plates and bolts (a diagrid gets cast nodes), outrigger and bundled-tube towers wear a belt truss round each plant floor, old apartment and hotel floors sprout window air-conditioners, and the roof has fanned cooling towers, a chiller and its duct, exhaust fans, a satellite dish, lightning rods and a window-cleaning gantry with its cradle. The front door gets a lit canopy, a revolving door and a lit lobby.
 
+Inside the tower: ⚡ Power, 💧 Water, 🚽 Waste, 🛗 Elevators and 🌬️ Air each turn the walls see-through and show that system running — power rising from the street with substations partway up, water pumped up in stages to tanks and falling to the taps, waste falling to the sewer, elevator cars running in their zones, and air pushed out from the plant floors — all following your design, with a card in your tower's own numbers. Try a power cut to start the backup generators.
+
 ## Develop
 
     npm test          # unit and component tests
