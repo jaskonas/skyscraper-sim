@@ -34,6 +34,8 @@ export function SystemsView({ site, design, analysis, system }: { site: Site; de
   const pulses = useMemo(() => pulseLayout(net.lines, PULSE_CAP), [net]);
   const lengths = useMemo(() => net.lines.map((l) => lengthOf(l.points)), [net]);
   const trips = useMemo(() => net.shafts.map((sh, i) => carTrip(sh.stops, sh.express, i)), [net]);
+  // Lines are drawn thicker on taller towers, so they still read when the whole tower is in view.
+  const thick = Math.max(1, (design.floors * FLOOR_HEIGHT) / 80);
   const lineRef = useRef<THREE.InstancedMesh>(null);
   const pulseRef = useRef<THREE.InstancedMesh>(null);
   const carRef = useRef<THREE.InstancedMesh>(null);
@@ -41,7 +43,7 @@ export function SystemsView({ site, design, analysis, system }: { site: Site; de
   const lineMat = useMemo(() => new THREE.MeshBasicMaterial({ toneMapped: false }), []);
   const pulseMat = useMemo(() => new THREE.MeshBasicMaterial({ toneMapped: false }), []);
   const carMat = useMemo(() => new THREE.MeshStandardMaterial({ roughness: 0.4, emissive: '#222222' }), []);
-  const shaftMat = useMemo(() => new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.18, depthWrite: false, toneMapped: false }), []);
+  const shaftMat = useMemo(() => new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.3, depthWrite: false, toneMapped: false }), []);
   useLayoutEffect(() => {
     const mesh = lineRef.current;
     if (!mesh) return;
@@ -51,7 +53,7 @@ export function SystemsView({ site, design, analysis, system }: { site: Site; de
       const d = b.clone().sub(a);
       const len = Math.max(d.length(), 0.01);
       q.setFromUnitVectors(up, d.normalize());
-      m.compose(a.add(b).multiplyScalar(0.5), q, s.set(sg.width, len, sg.width));
+      m.compose(a.add(b).multiplyScalar(0.5), q, s.set(sg.width * thick, len, sg.width * thick));
       mesh.setMatrixAt(i, m);
       mesh.setColorAt(i, colour.set(sg.color));
     });
@@ -59,7 +61,7 @@ export function SystemsView({ site, design, analysis, system }: { site: Site; de
     mesh.instanceMatrix.needsUpdate = true;
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
     mesh.computeBoundingSphere();
-  }, [segments]);
+  }, [segments, thick]);
   useLayoutEffect(() => {
     const mesh = pulseRef.current;
     if (!mesh) return;
@@ -72,7 +74,7 @@ export function SystemsView({ site, design, analysis, system }: { site: Site; de
     const cars = carRef.current;
     net.shafts.forEach((sh, i) => {
       const h = sh.y1 - sh.y0 + FLOOR_HEIGHT;
-      m.compose(v.set(sh.x, sh.y0 + h / 2, sh.z), q.identity(), s.set(0.9, h, 0.9));
+      m.compose(v.set(sh.x, sh.y0 + h / 2, sh.z), q.identity(), s.set(sh.width, h, sh.width));
       shafts?.setMatrixAt(i, m);
       shafts?.setColorAt(i, colour.set(sh.color));
       cars?.setColorAt(i, colour.set(sh.color));
@@ -95,7 +97,7 @@ export function SystemsView({ site, design, analysis, system }: { site: Site; de
         const L = Math.max(lengths[p.line], 0.01);
         const u = (p.offset + (t * PULSE_SPEED) / L) % 1;
         const [x, y, z] = pointAlong(net.lines[p.line].points, u);
-        const r = Math.max(0.35, net.lines[p.line].width * 2.2);
+        const r = Math.max(0.35, net.lines[p.line].width * 2.2) * thick;
         m.compose(v.set(x, y, z), q.identity(), s.set(r, r, r));
         pm.setMatrixAt(i, m);
       });
@@ -105,7 +107,7 @@ export function SystemsView({ site, design, analysis, system }: { site: Site; de
     const cm = carRef.current;
     if (cm && net.shafts.length) {
       net.shafts.forEach((sh, i) => {
-        m.compose(v.set(sh.x, carHeight(trips[i], t + i * 1.7) + 1.4, sh.z), q.identity(), s.set(0.85, 2.6, 0.85));
+        m.compose(v.set(sh.x, carHeight(trips[i], t + i * 1.7) + 1.4 * thick, sh.z), q.identity(), s.set(sh.width * 0.95, 2.6 * thick, sh.width * 0.95));
         cm.setMatrixAt(i, m);
       });
       cm.instanceMatrix.needsUpdate = true;

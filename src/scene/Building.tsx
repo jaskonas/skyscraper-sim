@@ -22,6 +22,7 @@ import { CrownFine } from './crowns/CrownFine';
 import { NearParts } from './NearParts';
 import { beltTrussParts, braceDetailParts } from './systems/structure';
 import { wallKitParts } from './systems/wallKit';
+import { useGhost } from './systems/useGhost';
 import { selectShadowsOn, useGame } from '../state/store';
 import { sunDirection } from './sunShadow';
 import { facadeWall, surfacesFor } from './materials/library';
@@ -257,6 +258,7 @@ export function Building({
   sway,
   hideTopFloors = 0,
   facadeDetail = true,
+  ghost = false,
 }: {
   site: Site;
   design: Design;
@@ -268,7 +270,11 @@ export function Building({
   hideTopFloors?: number;
   /** Recessed windows, reflections and glass variety (on unless turned off). */
   facadeDetail?: boolean;
+  /** Draw the tower faint and see-through, so a building system inside it shows. */
+  ghost?: boolean;
 }) {
+  const groupRef = useRef<THREE.Group>(null);
+  useGhost(groupRef, ghost);
   const [lx, lz] = lotCenter(site);
   const [chunks] = useState(createChunkSignal);
   const geometry = useDisposable(useMemo(() => unitGeometry(design.shape), [design.shape]));
@@ -323,7 +329,7 @@ export function Building({
     [balconies, floors, design.floors],
   );
   return (
-    <group name="building" position={[lx, 0, lz]}>
+    <group name="building" ref={groupRef} position={[lx, 0, lz]}>
       <Body
         design={design}
         night={night || !!reveal?.lights}
@@ -334,7 +340,7 @@ export function Building({
         sky={lighting(site, night).sky}
         chunks={chunks}
       />
-      {facadeDetail && !reveal && <CloseWalls site={site} design={design} signal={chunks} sway={sway} night={night} floors={floors} />}
+      {facadeDetail && !reveal && !ghost && <CloseWalls site={site} design={design} signal={chunks} sway={sway} night={night} floors={floors} />}
       <Instanced name="slabs" geometry={geometry} items={slabs} color={design.palette.accent} count={floors} sway={sway} />
       <PartsMesh name="crown" parts={crownCoarse} {...look} />
       <CrownFine parts={crownFine} centre={crownCentre} offset={[lx, lz]} {...look} />

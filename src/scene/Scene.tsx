@@ -25,6 +25,7 @@ import { lighting } from './lighting';
 import { Neighbors } from './Neighbors';
 import { SiteDiorama } from './SiteDiorama';
 import { SunLight } from './SunLight';
+import { SystemsView } from './systems/SystemsView';
 import { cameraFrame, type CameraFrame } from './layout';
 
 /** Moves the camera to `frame` when the controls first exist and whenever `nonce` changes — never on design edits. */
@@ -92,8 +93,10 @@ export function Scene() {
             sway={sway}
             hideTopFloors={forceOn === 'wind' && design.damping === 'tmd' ? 3 : 0}
             facadeDetail={facadeDetail}
+            ghost={!!systemOn}
           />
         )}
+        {systemOn && <SystemsView site={site} design={design} analysis={analysis} system={systemOn} />}
         {forceOn && <ForcesView site={site} design={design} analysis={analysis} force={forceOn} sway={sway} />}
         <OrbitControls makeDefault maxPolarAngle={Math.PI * 0.62} minDistance={40} maxDistance={2500} />
         <CameraFramer frame={frame} nonce={nonce} />

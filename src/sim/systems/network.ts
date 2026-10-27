@@ -35,6 +35,8 @@ export interface Shaft {
   color: string;
   /** Runs past floors without stopping (a high-zone car or a sky-lobby shuttle). */
   express: boolean;
+  /** Width of the shaft, metres (they share the core). */
+  width: number;
 }
 
 export interface SystemNetwork {
@@ -238,7 +240,7 @@ function elevators(c: Ctx, f: ReturnType<typeof systemFacts>): SystemNetwork {
   const shafts: Shaft[] = [];
   const add = (stops: number[], zone: number, express: boolean) => {
     const [x, z] = place(shafts.length);
-    shafts.push({ x, z, y0: 0, y1: stops[stops.length - 1], stops, color: ZONE_COLORS[zone % ZONE_COLORS.length], express });
+    shafts.push({ x, z, y0: 0, y1: stops[stops.length - 1], stops, color: ZONE_COLORS[zone % ZONE_COLORS.length], express, width: pitch * 0.8 });
   };
   if (design.zoning === 'single') for (let i = 0; i < n; i++) add(stopsFor(0, last), 0, false);
   else if (design.zoning === 'two-zone') {
