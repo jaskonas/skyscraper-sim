@@ -122,15 +122,18 @@ const cyl = (position: Vec3, scale: Vec3, material: PartMaterial, extra: Partial
 /** Pulses for a run `length` metres long: about one every 25 m, at least one. */
 const pulsesFor = (length: number, scale = 1) => Math.max(1, Math.round((length / 25) * scale));
 
-function power(c: Ctx, f: ReturnType<typeof systemFacts>): SystemNetwork {
+function power(c: Ctx, f: ReturnType<typeof systemFacts>, cut: boolean): SystemNetwork {
   const { design } = c;
   const lines: FlowLine[] = [];
   const equipment: Part[] = [];
   const at = spot(c, 0.1);
-  lines.push({ kind: 'feed', points: [c.street, [c.street[0], -1.5, 0], [at[0], BASEMENT_Y + 1, at[1]]], color: SYSTEM_COLOR.power, width: 0.35, pulses: 2 });
+  lines.push({ kind: 'feed', points: [c.street, [c.street[0], -1.5, 0], [at[0], BASEMENT_Y + 1, at[1]]], color: SYSTEM_COLOR.power, width: 0.35, pulses: cut ? 0 : 2 });
   equipment.push(box([at[0], BASEMENT_Y + 1, at[1] + 1.6], [2.4, 2, 1.6], 'steel'));
-  // Backup generators beside the transformers.
-  for (const dx of [-3, 3]) equipment.push(box([at[0] + dx, BASEMENT_Y + 0.9, at[1] - 2], [2.2, 1.8, 1.2], 'girder'));
+  // Backup generators beside the transformers: idle, or running and feeding the riser in a power cut.
+  for (const dx of [-3, 3]) {
+    equipment.push(box([at[0] + dx, BASEMENT_Y + 0.9, at[1] - 2], [2.2, 1.8, 1.2], 'girder', cut ? { glow: true } : {}));
+    if (cut) lines.push({ kind: 'source', points: [[at[0] + dx, BASEMENT_Y + 0.9, at[1] - 2], [at[0], BASEMENT_Y + 1, at[1]]], color: SYSTEM_COLOR.power, width: 0.3, pulses: 2 });
+  }
   lines.push({ kind: 'riser', points: [[at[0], BASEMENT_Y + 1, at[1]], [at[0], c.topY, at[1]]], color: SYSTEM_COLOR.power, width: 0.3, pulses: pulsesFor(c.topY) });
   for (const p of f.plantFloors) equipment.push(box([at[0], floorY(p) + 1.4, at[1]], [1.8, 2.2, 1.8], 'light', { glow: true }));
   for (let fl = 0; fl < design.floors; fl++)
@@ -300,12 +303,12 @@ function air(c: Ctx, f: ReturnType<typeof systemFacts>): SystemNetwork {
 }
 
 /** The network for one system, following this tower's design. */
-export function systemNetwork(site: Site, design: Design, analysis: Analysis, system: SystemId): SystemNetwork {
+export function systemNetwork(site: Site, design: Design, analysis: Analysis, system: SystemId, opts: { powerCut?: boolean } = {}): SystemNetwork {
   const c = context(site, design);
   const f = systemFacts(design, analysis);
   switch (system) {
     case 'power':
-      return power(c, f);
+      return power(c, f, !!opts.powerCut);
     case 'water':
       return water(c, f);
     case 'waste':

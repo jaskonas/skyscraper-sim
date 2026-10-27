@@ -27,9 +27,9 @@ const colour = new THREE.Color();
  * A building system running inside the tower: its pipes, cables or ducts as bright lines, glowing pulses
  * flowing along them, its equipment, and (for elevators) cars riding their shafts.
  */
-export function SystemsView({ site, design, analysis, system }: { site: Site; design: Design; analysis: Analysis; system: SystemId }) {
+export function SystemsView({ site, design, analysis, system, powerCut = false }: { site: Site; design: Design; analysis: Analysis; system: SystemId; powerCut?: boolean }) {
   const [lx, lz] = lotCenter(site);
-  const net = useMemo(() => systemNetwork(site, design, analysis, system), [site, design, analysis, system]);
+  const net = useMemo(() => systemNetwork(site, design, analysis, system, { powerCut }), [site, design, analysis, system, powerCut]);
   const segments = useMemo(() => segmentsOf(net.lines), [net]);
   const pulses = useMemo(() => pulseLayout(net.lines, PULSE_CAP), [net]);
   const lengths = useMemo(() => net.lines.map((l) => lengthOf(l.points)), [net]);
@@ -125,7 +125,8 @@ export function SystemsView({ site, design, analysis, system }: { site: Site; de
           <instancedMesh key={`c${net.shafts.length}`} name="system-cars" ref={carRef} args={[unitBox, carMat, net.shafts.length]} />
         </>
       )}
-      <PartsMesh name="system-equipment" parts={net.equipment} palette={design.palette} plan={design.shape} night={false} />
+      {/* Glowing equipment (substations, running generators) lights up as at night. */}
+      <PartsMesh name="system-equipment" parts={net.equipment} palette={design.palette} plan={design.shape} night />
     </group>
   );
 }

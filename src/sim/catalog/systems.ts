@@ -21,6 +21,8 @@ export const SYSTEM_TEXT = {
     turbines: 'The wind turbines on the roof feed in about 5% of the power.',
     solar: 'Solar panels on the roof add clean power.',
     backup: 'Backup generators in the basement start if the street power fails.',
+    cut: 'Power cut! The street power is out — the generators keep the lights, pumps and elevators going.',
+    cutButton: 'Try a power cut',
     why: 'Why? Power sent a long way loses strength, so tall towers step it up again partway.',
   },
   water: {

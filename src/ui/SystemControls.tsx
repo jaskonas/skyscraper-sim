@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { SYSTEM_LABEL } from '../sim/catalog/systems';
+import { SYSTEM_LABEL, SYSTEM_TEXT } from '../sim/catalog/systems';
 import { SYSTEM_IDS } from '../sim/systems/facts';
 import { systemReadout } from '../sim/systems/readout';
 import { useCurrent } from '../state/hooks';
@@ -33,7 +33,9 @@ export function SystemButtons() {
 export function SystemReadout() {
   const system = useShownSystem();
   const { site, design, analysis } = useCurrent();
-  const r = useMemo(() => (system === 'none' ? null : systemReadout(site, design, analysis, system)), [system, site, design, analysis]);
+  const powerCut = useGame((s) => s.powerCut);
+  const setPowerCut = useGame((s) => s.setPowerCut);
+  const r = useMemo(() => (system === 'none' ? null : systemReadout(site, design, analysis, system, { powerCut })), [system, site, design, analysis, powerCut]);
   if (!r) return null;
   return (
     <section className="force-readout system-readout" aria-label={r.title}>
@@ -43,6 +45,11 @@ export function SystemReadout() {
           <li key={l.text}>{l.text}</li>
         ))}
       </ul>
+      {system === 'power' && (
+        <button aria-pressed={powerCut} onClick={() => setPowerCut(!powerCut)}>
+          🔌 {SYSTEM_TEXT.power.cutButton}
+        </button>
+      )}
       <p className="muted">{r.note}</p>
     </section>
   );

@@ -34,4 +34,16 @@ describe('system buttons and card', () => {
     act(() => state().dispatch([{ type: 'set_parameter', id: 'floors', value: 92 }]));
     expect(within(card).getByText(/4 water zones/)).toBeInTheDocument();
   });
+
+  it('the power card has a power-cut button that starts the generators', () => {
+    render(<SystemReadout />);
+    act(() => state().toggleSystem('power'));
+    const cut = screen.getByRole('button', { name: /power cut/i });
+    expect(cut).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(cut);
+    expect(state().powerCut).toBe(true);
+    expect(screen.getByText(/generators keep/i)).toBeInTheDocument();
+    act(() => state().toggleSystem('water'));
+    expect(state().powerCut).toBe(false);
+  });
 });

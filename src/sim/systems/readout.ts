@@ -6,7 +6,7 @@ import type { Analysis, Design, Site } from '../types';
 import { systemFacts, type SystemId } from './facts';
 
 /** The card for a system on screen: how it flows through this tower, in its own numbers. */
-export function systemReadout(_site: Site, design: Design, analysis: Analysis, system: SystemId): Readout {
+export function systemReadout(_site: Site, design: Design, analysis: Analysis, system: SystemId, opts: { powerCut?: boolean } = {}): Readout {
   const f = systemFacts(design, analysis);
   const green = design.systemsGrade === 'green';
   const lines: string[] = [];
@@ -16,7 +16,7 @@ export function systemReadout(_site: Site, design: Design, analysis: Analysis, s
       lines.push(T.feed, f.substations ? T.substations(f.substations, f.plantFloors) : T.noSubstations);
       if (CROWNS[design.crown].generatesPower) lines.push(T.turbines);
       if (green) lines.push(T.solar);
-      lines.push(T.backup, T.why);
+      lines.push(opts.powerCut ? T.cut : T.backup, T.why);
       break;
     }
     case 'water': {

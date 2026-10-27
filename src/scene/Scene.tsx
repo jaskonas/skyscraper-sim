@@ -62,6 +62,7 @@ export function Scene() {
   const forceOn = force !== 'none' && !building ? force : null;
   const shownSystem = useShownSystem();
   const systemOn = shownSystem !== 'none' ? shownSystem : null;
+  const powerCut = useGame((s) => s.powerCut);
   const [sway] = useState(createSway);
   // Material textures arrive after the first frame; until then surfaces keep their plain look.
   useEffect(() => startLibraryLoad(), []);
@@ -96,7 +97,7 @@ export function Scene() {
             ghost={!!systemOn}
           />
         )}
-        {systemOn && <SystemsView site={site} design={design} analysis={analysis} system={systemOn} />}
+        {systemOn && <SystemsView site={site} design={design} analysis={analysis} system={systemOn} powerCut={powerCut} />}
         {forceOn && <ForcesView site={site} design={design} analysis={analysis} force={forceOn} sway={sway} />}
         <OrbitControls makeDefault maxPolarAngle={Math.PI * 0.62} minDistance={40} maxDistance={2500} />
         <CameraFramer frame={frame} nonce={nonce} />

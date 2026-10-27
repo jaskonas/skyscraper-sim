@@ -38,6 +38,8 @@ export interface GameState {
   force: ForceView;
   /** View only, like `force` (and exclusive with it): which building system is showing inside the tower. */
   system: SystemView;
+  /** View only: the street power is cut, so the backup generators run (Power view). */
+  powerCut: boolean;
   /** View only, and kept for new projects: it is about what the computer can draw smoothly, not the design. */
   facadeDetail: FacadeDetail;
   /** View only, kept for new projects like `facadeDetail`. Sun shadows also need Detail: High and daylight. */
@@ -66,6 +68,7 @@ export interface GameState {
   toggleForce: (f: Exclude<ForceView, 'none'>) => void;
   /** Show this system, or turn it off if it is already showing. Turns any force off. */
   toggleSystem: (s: SystemId) => void;
+  setPowerCut: (on: boolean) => void;
   setFacadeDetail: (d: FacadeDetail) => void;
   setShadows: (on: boolean) => void;
 }
@@ -82,6 +85,7 @@ export const useGame = create<GameState>((set, get) => ({
   timeOfDay: 'day',
   force: 'none',
   system: 'none',
+  powerCut: false,
   facadeDetail: 'high',
   shadows: true,
   buildStage: 0,
@@ -172,6 +176,7 @@ export const useGame = create<GameState>((set, get) => ({
       timeOfDay: 'day',
       force: 'none',
       system: 'none',
+      powerCut: false,
       buildStage: 0,
       stageDone: false,
     }),
@@ -180,7 +185,9 @@ export const useGame = create<GameState>((set, get) => ({
 
   toggleForce: (f) => set({ force: get().force === f ? 'none' : f, system: 'none' }),
 
-  toggleSystem: (s) => set({ system: get().system === s ? 'none' : s, force: 'none' }),
+  toggleSystem: (s) => set({ system: get().system === s ? 'none' : s, force: 'none', powerCut: false }),
+
+  setPowerCut: (powerCut) => set({ powerCut }),
 
   setFacadeDetail: (facadeDetail) => set({ facadeDetail }),
 

@@ -121,4 +121,14 @@ describe('system networks', () => {
     expect(net({ floors: 92, systemsGrade: 'efficient' }, 'air').equipment.some((p) => p.shape === 'torus')).toBe(true);
     expect(pulses(net({ floors: 92, systemsGrade: 'green' }, 'air'))).toBeLessThanOrEqual(0.65 * pulses(n));
   });
+
+  it('a power cut starts the generators: the street feed stops and they feed the riser', () => {
+    const x = setup({ floors: 60 });
+    const normal = systemNetwork(x.site, x.design, x.analysis, 'power');
+    const cut = systemNetwork(x.site, x.design, x.analysis, 'power', { powerCut: true });
+    expect(normal.equipment.filter((p) => p.material === 'girder').every((p) => !p.glow)).toBe(true);
+    expect(cut.equipment.filter((p) => p.material === 'girder').every((p) => p.glow)).toBe(true);
+    expect(cut.lines.find((l) => l.kind === 'feed')!.pulses).toBe(0);
+    expect(cut.lines.filter((l) => l.kind === 'source' && l.points[0][1] < 0).length).toBe(2);
+  });
 });
