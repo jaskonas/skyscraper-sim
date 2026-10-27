@@ -29,6 +29,8 @@ The building's working parts show too: exposed braces carry flanges, node plates
 
 Inside the tower: ⚡ Power, 💧 Water, 🚽 Waste, 🛗 Elevators and 🌬️ Air each turn the walls see-through and show that system running — power rising from the street with substations partway up, water pumped up in stages to tanks and falling to the taps, waste falling to the sewer, elevator cars running in their zones, and air pushed out from the plant floors — all following your design, with a card in your tower's own numbers. Try a power cut to start the backup generators.
 
+Hold **Shift and scroll** (or two-finger swipe) to move up and down the tower without zooming.
+
 ## Develop
 
     npm test          # unit and component tests

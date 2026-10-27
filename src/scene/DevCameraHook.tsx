@@ -8,7 +8,7 @@ export interface DevCamera {
   /** Points the camera from `position` at `target` (world metres). */
   look: (position: [number, number, number], target: [number, number, number]) => void;
   /** The renderer and scene, for inspecting them from a script. */
-  three: () => { gl: unknown; scene: unknown };
+  three: () => { gl: unknown; scene: unknown; camera: unknown };
 }
 
 /**
@@ -31,7 +31,7 @@ export function DevCameraHook() {
           controls.update();
         } else camera.lookAt(...target);
       },
-      three: () => ({ gl, scene }),
+      three: () => ({ gl, scene, camera }),
     };
     return () => {
       delete w.__devCamera;

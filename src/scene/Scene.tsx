@@ -26,6 +26,7 @@ import { Neighbors } from './Neighbors';
 import { SiteDiorama } from './SiteDiorama';
 import { SunLight } from './SunLight';
 import { SystemsView } from './systems/SystemsView';
+import { VerticalPan } from './verticalPan';
 import { cameraFrame, type CameraFrame } from './layout';
 
 /** Moves the camera to `frame` when the controls first exist and whenever `nonce` changes — never on design edits. */
@@ -100,6 +101,7 @@ export function Scene() {
         {systemOn && <SystemsView site={site} design={design} analysis={analysis} system={systemOn} powerCut={powerCut} />}
         {forceOn && <ForcesView site={site} design={design} analysis={analysis} force={forceOn} sway={sway} />}
         <OrbitControls makeDefault maxPolarAngle={Math.PI * 0.62} minDistance={40} maxDistance={2500} />
+        <VerticalPan />
         <CameraFramer frame={frame} nonce={nonce} />
         <DevCameraHook />
       </Canvas>
@@ -107,7 +109,9 @@ export function Scene() {
       <ForceBanner />
       <div className="scene-overlay">
         {forceOn ? <ForceReadout /> : systemOn ? <SystemReadout /> : <SoilLegend site={site} design={design} />}
-        <button onClick={reframe}>Fit tower in view</button>
+        <button onClick={reframe} title="Tip: hold Shift and scroll to move up and down the tower">
+          Fit tower in view
+        </button>
         <button aria-pressed={night} onClick={() => setTimeOfDay(night ? 'day' : 'night')}>
           {night ? '☀️ Day' : '🌙 Night'}
         </button>
