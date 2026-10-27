@@ -1,5 +1,5 @@
 import { useFrame } from '@react-three/fiber';
-import { useLayoutEffect, useMemo, useRef } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { FLOOR_HEIGHT } from '../../sim/geometry';
 import type { SystemId } from '../../sim/systems/facts';
@@ -35,7 +35,7 @@ export function SystemsView({ site, design, analysis, system, powerCut = false }
   const lengths = useMemo(() => net.lines.map((l) => lengthOf(l.points)), [net]);
   const trips = useMemo(() => net.shafts.map((sh, i) => carTrip(sh.stops, sh.express, i)), [net]);
   // Lines are drawn thicker on taller towers, so they still read when the whole tower is in view.
-  const thick = Math.max(1, (design.floors * FLOOR_HEIGHT) / 80);
+  const thick = Math.min(4, Math.max(1, (design.floors * FLOOR_HEIGHT) / 80));
   const lineRef = useRef<THREE.InstancedMesh>(null);
   const pulseRef = useRef<THREE.InstancedMesh>(null);
   const carRef = useRef<THREE.InstancedMesh>(null);
@@ -44,6 +44,12 @@ export function SystemsView({ site, design, analysis, system, powerCut = false }
   const pulseMat = useMemo(() => new THREE.MeshBasicMaterial({ toneMapped: false }), []);
   const carMat = useMemo(() => new THREE.MeshStandardMaterial({ roughness: 0.4, emissive: '#222222' }), []);
   const shaftMat = useMemo(() => new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.3, depthWrite: false, toneMapped: false }), []);
+  useEffect(
+    () => () => {
+      for (const mat of [lineMat, pulseMat, carMat, shaftMat]) mat.dispose();
+    },
+    [lineMat, pulseMat, carMat, shaftMat],
+  );
   useLayoutEffect(() => {
     const mesh = lineRef.current;
     if (!mesh) return;

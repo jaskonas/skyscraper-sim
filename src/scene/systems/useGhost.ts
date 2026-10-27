@@ -14,9 +14,14 @@ interface Saved {
 function eachMaterial(root: THREE.Object3D, fn: (m: THREE.Material) => void) {
   root.traverse((o) => {
     const mesh = o as THREE.Mesh;
-    if (mesh.isMesh) for (const mat of ([] as THREE.Material[]).concat(mesh.material)) fn(mat);
+    if (!mesh.isMesh) return;
+    if (Array.isArray(mesh.material)) mesh.material.forEach(fn);
+    else fn(mesh.material);
   });
 }
+
+/** How often (in frames) the tower is checked for new parts to ghost once it is see-through. */
+const CHECK_EVERY = 10;
 
 /** What each ghosted material had before. Kept here, not in `userData`, which re-renders can replace. */
 const saved = new WeakMap<THREE.Material, Saved>();
@@ -34,15 +39,26 @@ function restore(m: THREE.Material) {
 }
 
 /**
- * While `on`, every surface in the group is drawn faint and see-through (checked every frame, so parts added
- * later are caught too); turned off, each material gets back exactly what it had.
+ * While `on`, every surface in the group is drawn faint and see-through. The tower is checked again every few
+ * frames, and at once when `refresh` changes, so parts added later are caught too; turned off, each material
+ * gets back exactly what it had.
  */
-export function useGhost(group: RefObject<THREE.Object3D | null>, on: boolean) {
+export function useGhost(group: RefObject<THREE.Object3D | null>, on: boolean, refresh?: unknown) {
   const ghosted = useRef(new Set<THREE.Material>());
   const shadowless = useRef(new Set<THREE.Object3D>());
+  const tick = useRef(0);
+  // Something changed (a new design): check the whole tower again on the next frame.
+  useEffect(() => {
+    tick.current = 0;
+  }, [refresh]);
   useFrame(() => {
     const root = group.current;
-    if (!root || !on) return;
+    if (!root || !on) {
+      tick.current = 0;
+      return;
+    }
+    // The first frame does it all; after that, every few frames catches parts added since.
+    if (tick.current++ % CHECK_EVERY !== 0) return;
     // A see-through tower casts no shadow, so the systems inside aren't left in the dark.
     root.traverse((o) => {
       if (!(o as THREE.Mesh).isMesh || casting.has(o)) return;

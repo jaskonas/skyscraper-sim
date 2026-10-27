@@ -274,7 +274,7 @@ export function Building({
   ghost?: boolean;
 }) {
   const groupRef = useRef<THREE.Group>(null);
-  useGhost(groupRef, ghost);
+  useGhost(groupRef, ghost, design);
   const [lx, lz] = lotCenter(site);
   const [chunks] = useState(createChunkSignal);
   const geometry = useDisposable(useMemo(() => unitGeometry(design.shape), [design.shape]));

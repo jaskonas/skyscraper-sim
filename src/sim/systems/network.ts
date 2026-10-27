@@ -142,8 +142,13 @@ function power(c: Ctx, f: ReturnType<typeof systemFacts>, cut: boolean): SystemN
   if (CROWNS[design.crown].generatesPower)
     lines.push({ kind: 'source', points: [[0, c.roofY + crownH * 0.6, 0], [at[0], c.roofY + 0.5, at[1]], [at[0], c.topY, at[1]]], color: SYSTEM_COLOR.power, width: 0.25, pulses: 2 });
   if (design.systemsGrade === 'green') {
-    const [sx, sz] = spot(c, 0.6, 1.2);
-    equipment.push(box([sx, c.roofY + 0.6, sz], [Math.min(6, c.core * 1.2), 0.15, Math.min(4, c.core)], 'glass', { rotation: [0.4, 0, 0] }));
+    // Solar panels part-way out on the roof, inside it on every shape, turned with the top floor.
+    const top = c.slices[c.slices.length - 1];
+    const heading = Math.PI * 1.2;
+    const r = 0.5 * reach(top, design.shape, heading);
+    const [sx, , sz] = rotateYXZ([Math.sin(heading) * r, 0, Math.cos(heading) * r], [0, top.rotation, 0]);
+    const size = Math.min(6, c.core * 1.2, r * 0.8);
+    equipment.push(box([sx, c.roofY + 0.6, sz], [size, 0.15, size * 0.7], 'glass', { rotation: [0.4, top.rotation, 0] }));
     lines.push({ kind: 'source', points: [[sx, c.roofY + 0.6, sz], [at[0], c.roofY + 0.3, at[1]], [at[0], c.topY, at[1]]], color: SYSTEM_COLOR.power, width: 0.2, pulses: 2 });
   }
   return { lines, equipment, shafts: [] };
@@ -162,11 +167,13 @@ function water(c: Ctx, f: ReturnType<typeof systemFacts>): SystemNetwork {
   // The city main: in from the street and straight up the bottom floors on its own pressure.
   lines.push({ kind: 'feed', points: [c.street, [c.street[0], -1.5, 0], [city[0], BASEMENT_Y + 0.5, city[1]]], color: SYSTEM_COLOR.water, width: 0.35, pulses: 2 });
   lines.push({ kind: 'riser', points: [[city[0], BASEMENT_Y + 0.5, city[1]], [city[0], floorY(lowTop) + CEILING, city[1]]], color: SYSTEM_COLOR.water, width: 0.25, pulses: 1 });
+  // A tower the city main can serve on its own needs no pumps or tanks at all.
+  const pumped = design.floors - 1 > lowTop;
   // Pumps lift to each tank; each tank feeds the floors below it down to the next tank.
   const tanks = [...f.plantFloors.map((p) => floorY(p) + 2), c.roofY + 1.2];
   const pumps = [BASEMENT_Y + 0.5, ...f.plantFloors.map((p) => floorY(p) + 0.8)];
-  equipment.push(cyl([up[0], BASEMENT_Y + 0.5, up[1] + 1.2], [1, 1, 1], 'accent'));
-  for (let i = 0; i < tanks.length; i++) {
+  if (pumped) equipment.push(cyl([up[0], BASEMENT_Y + 0.5, up[1] + 1.2], [1, 1, 1], 'accent'));
+  for (let i = 0; pumped && i < tanks.length; i++) {
     lines.push({ kind: 'riser', points: [[up[0], pumps[i], up[1]], [up[0], tanks[i], up[1]]], color: SYSTEM_COLOR.water, width: 0.28, pulses: pulsesFor(tanks[i] - pumps[i], scale) });
     equipment.push(cyl([down[0], tanks[i], down[1]], [Math.max(1.6, c.core * 0.35), 2, Math.max(1.6, c.core * 0.35)], 'steel'));
     if (i < f.plantFloors.length) equipment.push(cyl([up[0], pumps[i + 1], up[1] + 1.2], [1, 1, 1], 'accent'));
@@ -179,9 +186,16 @@ function water(c: Ctx, f: ReturnType<typeof systemFacts>): SystemNetwork {
     lines.push({ kind: 'branch', floor: fl, points: branchTo(c, fl, from, -Math.PI / 2, floorY(fl) + CEILING - 0.3), color: SYSTEM_COLOR.water, width: 0.12, pulses: fl % every === 0 ? 1 : 0 });
   }
   if (design.amenities.includes('pool')) {
-    const r = Math.min(c.core * 1.2, Math.min(c.slices.at(-1)!.width, c.slices.at(-1)!.depth) * 0.3);
+    // A loop round the pool, kept inside the roof on every shape and turned with the top floor.
+    const top = c.slices[c.slices.length - 1];
     const y = c.roofY + 0.4;
-    lines.push({ kind: 'loop', points: [[r, y, r], [-r, y, r], [-r, y, -r], [r, y, -r], [r, y, r]], color: SYSTEM_COLOR.water, width: 0.2, pulses: 4 });
+    const corner = (k: number): Vec3 => {
+      const a = Math.PI / 4 + (k * Math.PI) / 2;
+      const r = Math.min(c.core * 1.2, 0.6 * reach(top, design.shape, a));
+      const [x, , z] = rotateYXZ([Math.sin(a) * r, 0, Math.cos(a) * r], [0, top.rotation, 0]);
+      return [x, y, z];
+    };
+    lines.push({ kind: 'loop', points: [corner(0), corner(1), corner(2), corner(3), corner(0)], color: SYSTEM_COLOR.water, width: 0.2, pulses: 4 });
   }
   if (design.amenities.includes('sky-garden')) {
     const g = Math.min(design.floors - 1, Math.floor(design.floors * 0.5));

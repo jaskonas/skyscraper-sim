@@ -48,7 +48,8 @@ describe('system cards', () => {
   it('water: zones and tank floors', () => {
     const t = text({ floors: 92 }, 'water');
     expect(t).toContain('4 water zones');
-    for (const f of ['29', '59', '89']) expect(t).toContain(f);
+    // Floors are numbered the way people count them: index 29 is the 30th floor.
+    expect(t).toContain('floors 30, 60 and 90');
   });
 
   it('power: turbines and solar only when chosen', () => {
@@ -63,8 +64,7 @@ describe('system cards', () => {
     const t = systemReadout(s.site, s.design, s.analysis, 'elevators').lines.map((l) => l.text).join(' ');
     expect(t).toContain('24 cars');
     expect(t).toContain('3 zones');
-    expect(t).toContain('40');
-    expect(t).toContain('80');
+    expect(t).toContain('floors 41 and 81');
     expect(t).toContain(`${Math.round(s.analysis.elevators.avgWaitS)} s`);
     expect(t).toContain(`${Math.round(s.analysis.elevators.targetS)} s`);
   });
@@ -94,5 +94,12 @@ describe('system cards', () => {
     expect(t).toMatch(/not enough cars/i);
     const many = setup({ floors: 150, elevators: 24, zoning: 'sky-lobby' });
     expect(systemReadout(many.site, many.design, many.analysis, 'elevators').lines.map((l) => l.text).join(' ')).not.toMatch(/not enough cars/i);
+  });
+
+  it('only mentions waste-pipe bends when the tower has them, and no pump on towers city pressure can serve', () => {
+    expect(text({ floors: 30 }, 'waste')).not.toMatch(/bends/i);
+    expect(text({ floors: 31 }, 'waste')).toMatch(/bends/i);
+    expect(text({ floors: 6 }, 'water')).toMatch(/city main/i);
+    expect(text({ floors: 6 }, 'water')).not.toMatch(/pump/i);
   });
 });

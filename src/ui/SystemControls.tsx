@@ -22,7 +22,8 @@ export function SystemButtons() {
     <div className="system-buttons" role="group" aria-label="Inside the tower">
       {SYSTEM_IDS.map((id) => (
         <button key={id} aria-pressed={system === id} onClick={() => toggleSystem(id)}>
-          {SYSTEM_LABEL[id].icon} {SYSTEM_LABEL[id].label}
+          <span aria-hidden="true">{SYSTEM_LABEL[id].icon} </span>
+          {SYSTEM_LABEL[id].label}
         </button>
       ))}
     </div>
@@ -47,7 +48,8 @@ export function SystemReadout() {
       </ul>
       {system === 'power' && (
         <button aria-pressed={powerCut} onClick={() => setPowerCut(!powerCut)}>
-          🔌 {SYSTEM_TEXT.power.cutButton}
+          <span aria-hidden="true">🔌 </span>
+          {powerCut ? SYSTEM_TEXT.power.endCutButton : SYSTEM_TEXT.power.cutButton}
         </button>
       )}
       <p className="muted">{r.note}</p>

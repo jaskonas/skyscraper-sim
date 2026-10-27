@@ -9,7 +9,11 @@ export const SYSTEM_LABEL: Record<SystemId, { icon: string; label: string; title
   air: { icon: '🌬️', label: 'Air', title: 'Air' },
 };
 
-const floorList = (fs: number[]) => (fs.length === 1 ? `floor ${fs[0]}` : `floors ${fs.slice(0, -1).join(', ')} and ${fs.at(-1)}`);
+/** Floor indexes (0 = the ground floor) written the way people count floors: index 29 is floor 30. */
+const floorList = (fs: number[]) => {
+  const n = fs.map((f) => f + 1);
+  return n.length === 1 ? `floor ${n[0]}` : `floors ${n.slice(0, -1).join(', ')} and ${n.at(-1)}`;
+};
 
 /** Card wording: short, for a young reader, with the tower's own numbers filled in. */
 export const SYSTEM_TEXT = {
@@ -23,6 +27,7 @@ export const SYSTEM_TEXT = {
     backup: 'Backup generators in the basement start if the street power fails.',
     cut: 'Power cut! The street power is out — the generators keep the lights, pumps and elevators going.',
     cutButton: 'Try a power cut',
+    endCutButton: 'End the power cut',
     why: 'Why? Power sent a long way loses strength, so tall towers step it up again partway.',
   },
   water: {
@@ -31,6 +36,8 @@ export const SYSTEM_TEXT = {
         ? `Your tower has ${zones} water zones: pumps in the basement and on ${floorList(tanks)} lift water to tanks, then it falls to the taps below each one.`
         : `Your tower has 1 water zone: a pump in the basement lifts water to a tank on the roof, then it falls to the taps.`,
     city: 'The bottom floors run on the city main’s own pressure.',
+    allCity: 'Your tower is short enough that the city main’s own pressure reaches every floor.',
+    whyShort: 'Why? City pressure lifts water about 6 floors — just enough for a tower your size. Taller towers have to lift it in stages.',
     pool: 'The rooftop pool has its own pumped loop — and all that water is heavy!',
     garden: 'The sky garden gets its own watering pipe.',
     rain: 'A rainwater tank on the roof supplies the toilets.',
@@ -49,7 +56,7 @@ export const SYSTEM_TEXT = {
     single: 'Every car stops at every floor.',
     twoZone: (split: number) => `Low cars serve floors up to ${split}; high cars express past them to the floors above.`,
     sky: (shuttles: number, lobbies: number[]) => `${shuttles} express shuttles carry people to sky lobbies on ${floorList(lobbies)}, where local cars take over.`,
-    short: (from: number) => `Not enough cars: the zones from floor ${from} up have no local cars of their own — add elevators.`,
+    short: (from: number) => `Not enough cars: the zones from floor ${from + 1} up have no local cars of their own — add elevators.`,
     wait: (wait: number, target: number) => `Average wait ${wait} s (target ${target} s).`,
     why: 'Why? In a tall tower, cars stopping at every floor would take forever — zones let each car serve fewer floors.',
   },

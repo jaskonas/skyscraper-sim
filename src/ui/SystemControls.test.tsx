@@ -43,7 +43,13 @@ describe('system buttons and card', () => {
     fireEvent.click(cut);
     expect(state().powerCut).toBe(true);
     expect(screen.getByText(/generators keep/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /end the power cut/i })).toHaveAttribute('aria-pressed', 'true');
     act(() => state().toggleSystem('water'));
     expect(state().powerCut).toBe(false);
+  });
+
+  it("screen readers hear the buttons' names, not their emoji", () => {
+    render(<SystemButtons />);
+    for (const name of ['Power', 'Water', 'Waste', 'Elevators', 'Air']) expect(screen.getByRole('button', { name })).toBeInTheDocument();
   });
 });

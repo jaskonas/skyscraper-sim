@@ -131,4 +131,24 @@ describe('system networks', () => {
     expect(cut.lines.find((l) => l.kind === 'feed')!.pulses).toBe(0);
     expect(cut.lines.filter((l) => l.kind === 'source' && l.points[0][1] < 0).length).toBe(2);
   });
+
+  it('keeps the pool loop and the solar panel on the roof, on triangle and twisted towers too', () => {
+    for (const patch of [{ shape: 'triangle' as const }, { shape: 'triangle' as const, twist: 45 }, { shape: 'square' as const, twist: 90 }]) {
+      const x = setup({ floors: 50, amenities: ['pool'], systemsGrade: 'green', ...patch });
+      const top = floorSlices(x.design).at(-1)!;
+      const inside = (p: Vec3) => {
+        const [lx, , lz] = rotateYXZ(p, [0, -top.rotation, 0]);
+        return insidePlan(x.design.shape, top.width, top.depth, lx, lz, 0.3);
+      };
+      for (const p of systemNetwork(x.site, x.design, x.analysis, 'water').lines.find((l) => l.kind === 'loop')!.points) expect(inside(p)).toBe(true);
+      const panel = systemNetwork(x.site, x.design, x.analysis, 'power').equipment.find((q) => q.material === 'glass')!;
+      expect(inside(panel.position)).toBe(true);
+    }
+  });
+
+  it('no pump or roof tank on a tower the city main can serve on its own', () => {
+    const n = net({ floors: 6 }, 'water');
+    expect(n.lines.filter((l) => l.kind === 'riser').length).toBe(1);
+    expect(n.equipment).toHaveLength(0);
+  });
 });
