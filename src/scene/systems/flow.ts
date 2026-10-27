@@ -67,7 +67,9 @@ const PAUSE_S = 1;
 
 /** A car's trip: up through its pauses and back, at a speed that makes the ride take a few seconds. */
 export function carTrip(stops: number[], express: boolean, seed: number): CarTrip {
-  const pauses = express || stops.length <= 6 ? stops : [0, 1, 2, 3, 4, 5].map((k) => stops[Math.min(stops.length - 1, Math.round(((k + (seed % 3) * 0.3) * (stops.length - 1)) / 5))]);
+  // A handful of pauses per trip, always including where the car starts (the lobby for an express car).
+  void express;
+  const pauses = stops.length <= 6 ? stops : [stops[0], ...[1, 2, 3, 4, 5].map((k) => stops[Math.min(stops.length - 1, Math.round(((k + (seed % 3) * 0.3) * (stops.length - 1)) / 5))])];
   const unique = [...new Set(pauses)].sort((a, b) => a - b);
   const span = Math.max(1, unique[unique.length - 1] - unique[0]);
   const speed = span / 4;

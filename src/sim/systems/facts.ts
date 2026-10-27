@@ -44,7 +44,14 @@ export function systemFacts(design: Design, _analysis: Analysis): SystemFacts {
   const zones = ZONE_COUNT[design.zoning];
   const boundaries = Array.from({ length: zones - 1 }, (_, k) => Math.round(((k + 1) * design.floors) / zones));
   const skyLobbies = design.zoning === 'sky-lobby' ? boundaries : [];
-  const shuttles = skyLobbies.length ? Math.max(skyLobbies.length, Math.round(design.elevators * COEFFICIENTS.elevators.skyLobbyShuttleShare)) : 0;
+  // Shuttles: about 15% of the cars, one per sky lobby — but never so many that a zone loses its local car.
+  // With very few cars there is just one shuttle and some upper zones go without (the card says so).
+  const n = design.elevators;
+  const shuttles = !skyLobbies.length
+    ? 0
+    : n >= zones + skyLobbies.length
+      ? Math.min(n - zones, Math.max(skyLobbies.length, Math.round(n * COEFFICIENTS.elevators.skyLobbyShuttleShare)))
+      : 1;
   return {
     plantFloors: plant,
     waterZones: plant.length + 1,

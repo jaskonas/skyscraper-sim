@@ -43,7 +43,12 @@ export function systemReadout(_site: Site, design: Design, analysis: Analysis, s
       lines.push(T.cars(f.cars, f.zones));
       if (design.zoning === 'single') lines.push(T.single);
       else if (design.zoning === 'two-zone') lines.push(T.twoZone(Math.round(design.floors / 2)));
-      else lines.push(T.sky(f.shuttles, f.skyLobbies));
+      else {
+        lines.push(T.sky(f.shuttles, f.skyLobbies));
+        // Locals go to the zones bottom first; any zone past the last one served goes without.
+        const served = Math.min(f.zones, f.cars - f.shuttles);
+        if (served < f.zones) lines.push(T.short(f.skyLobbies[served - 1] ?? 0));
+      }
       lines.push(T.wait(Math.round(analysis.elevators.avgWaitS), Math.round(analysis.elevators.targetS)), T.why);
       break;
     }

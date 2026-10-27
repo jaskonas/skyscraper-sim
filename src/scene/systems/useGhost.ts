@@ -20,6 +20,8 @@ function eachMaterial(root: THREE.Object3D, fn: (m: THREE.Material) => void) {
 
 /** What each ghosted material had before. Kept here, not in `userData`, which re-renders can replace. */
 const saved = new WeakMap<THREE.Material, Saved>();
+/** Meshes whose shadow was switched off while see-through, and whether they cast before. */
+const casting = new WeakMap<THREE.Object3D, boolean>();
 
 function restore(m: THREE.Material) {
   const was = saved.get(m);
@@ -37,9 +39,17 @@ function restore(m: THREE.Material) {
  */
 export function useGhost(group: RefObject<THREE.Object3D | null>, on: boolean) {
   const ghosted = useRef(new Set<THREE.Material>());
+  const shadowless = useRef(new Set<THREE.Object3D>());
   useFrame(() => {
     const root = group.current;
     if (!root || !on) return;
+    // A see-through tower casts no shadow, so the systems inside aren't left in the dark.
+    root.traverse((o) => {
+      if (!(o as THREE.Mesh).isMesh || casting.has(o)) return;
+      casting.set(o, o.castShadow);
+      o.castShadow = false;
+      shadowless.current.add(o);
+    });
     eachMaterial(root, (m) => {
       if (saved.has(m)) return;
       saved.set(m, { opacity: m.opacity, transparent: m.transparent, depthWrite: m.depthWrite });
@@ -50,16 +60,19 @@ export function useGhost(group: RefObject<THREE.Object3D | null>, on: boolean) {
       ghosted.current.add(m);
     });
   });
-  useEffect(() => {
-    if (on) return;
+  const restoreAll = () => {
     for (const m of ghosted.current) restore(m);
     ghosted.current.clear();
+    for (const o of shadowless.current) {
+      o.castShadow = casting.get(o) ?? o.castShadow;
+      casting.delete(o);
+    }
+    shadowless.current.clear();
+  };
+  useEffect(() => {
+    if (!on) restoreAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [on]);
-  useEffect(
-    () => () => {
-      for (const m of ghosted.current) restore(m);
-      ghosted.current.clear();
-    },
-    [],
-  );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => restoreAll, []);
 }

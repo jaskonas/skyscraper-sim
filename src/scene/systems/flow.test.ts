@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { FlowLine } from '../../sim/systems/network';
-import { pointAlong, pulseLayout, segmentsOf } from './flow';
+import { carTrip, pointAlong, pulseLayout, segmentsOf } from './flow';
 
 const line = (pulses: number, points: [number, number, number][] = [[0, 0, 0], [10, 0, 0], [10, 10, 0]]): FlowLine => ({ kind: 'riser', points, color: '#fff', width: 0.2, pulses });
 
@@ -25,5 +25,13 @@ describe('flow', () => {
 
   it('splits lines into segments for drawing', () => {
     expect(segmentsOf([line(1), line(0, [[0, 0, 0], [1, 0, 0]])])).toHaveLength(3);
+  });
+
+  it('an express car with many stops still pauses only a few times, starting at the lobby', () => {
+    const floors = (a: number, b: number) => Array.from({ length: b - a + 1 }, (_, k) => (a + k) * 4);
+    const low = carTrip(floors(0, 74), false, 0);
+    const high = carTrip([0, ...floors(75, 149)], true, 0);
+    expect(high.times.at(-1)!).toBeLessThan(2 * low.times.at(-1)!);
+    expect(high.heights[0]).toBe(0);
   });
 });

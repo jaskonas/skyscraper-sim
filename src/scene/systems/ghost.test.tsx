@@ -14,6 +14,13 @@ const materials = (r: Renderer) => {
   return out;
 };
 // Values, not identities: some meshes rebuild their materials on re-render, with the same settings.
+const casters = (r: Renderer) => {
+  let n = 0;
+  r.scene.instance.traverse((o) => {
+    if ((o as THREE.Mesh).isMesh && o.castShadow) n++;
+  });
+  return n;
+};
 const snapshot = (r: Renderer) => materials(r).map((m) => [m.type, m.opacity, m.transparent, m.depthWrite].join('|')).sort();
 const frames = (r: Renderer, n: number) => ReactThreeTestRenderer.act(async () => r.advanceFrames(n, 0.016));
 
@@ -23,8 +30,12 @@ describe('ghosting the tower', () => {
     const r = await ReactThreeTestRenderer.create(<Building site={site} design={design} />);
     await frames(r, 2);
     const before = snapshot(r);
+    const castBefore = casters(r);
     await ReactThreeTestRenderer.act(async () => r.update(<Building site={site} design={design} ghost />));
     await frames(r, 2);
+    r.scene.instance.traverse((o) => {
+      if ((o as THREE.Mesh).isMesh) expect(o.castShadow).toBe(false);
+    });
     for (const m of materials(r)) {
       expect(m.transparent).toBe(true);
       expect(m.opacity).toBeLessThanOrEqual(0.06);
@@ -33,6 +44,7 @@ describe('ghosting the tower', () => {
     await ReactThreeTestRenderer.act(async () => r.update(<Building site={site} design={design} />));
     await frames(r, 2);
     expect(snapshot(r)).toEqual(before);
+    expect(casters(r)).toBe(castBefore);
   });
 
   it('keeps new parts ghosted when the design changes while ghosted', async () => {

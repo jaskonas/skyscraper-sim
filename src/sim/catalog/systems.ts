@@ -49,6 +49,7 @@ export const SYSTEM_TEXT = {
     single: 'Every car stops at every floor.',
     twoZone: (split: number) => `Low cars serve floors up to ${split}; high cars express past them to the floors above.`,
     sky: (shuttles: number, lobbies: number[]) => `${shuttles} express shuttles carry people to sky lobbies on ${floorList(lobbies)}, where local cars take over.`,
+    short: (from: number) => `Not enough cars: the zones from floor ${from} up have no local cars of their own — add elevators.`,
     wait: (wait: number, target: number) => `Average wait ${wait} s (target ${target} s).`,
     why: 'Why? In a tall tower, cars stopping at every floor would take forever — zones let each car serve fewer floors.',
   },

@@ -85,4 +85,14 @@ describe('system cards', () => {
       expect(r.note.length).toBeGreaterThan(3);
     }
   });
+
+  it('sky lobbies with very few cars: every car is placed, and the card says which zones go without', () => {
+    const s = setup({ floors: 150, elevators: 2, zoning: 'sky-lobby' });
+    const f = systemFacts(s.design, s.analysis);
+    expect(f.shuttles).toBe(1);
+    const t = systemReadout(s.site, s.design, s.analysis, 'elevators').lines.map((l) => l.text).join(' ');
+    expect(t).toMatch(/not enough cars/i);
+    const many = setup({ floors: 150, elevators: 24, zoning: 'sky-lobby' });
+    expect(systemReadout(many.site, many.design, many.analysis, 'elevators').lines.map((l) => l.text).join(' ')).not.toMatch(/not enough cars/i);
+  });
 });
