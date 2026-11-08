@@ -71,7 +71,7 @@ A `Design` is a plain serializable object. Standard-level controls:
 
 **Form** — floors; floor plate size (bounded by lot); plan shape (square, rectangle, circle, triangle); setbacks (none, few, wedding-cake); taper (0–max); twist (0–max degrees over height); crown (flat, spire, stepped, pointed, sloped).
 
-**Use** — floor bands, each assigned office, residential, hotel or retail.
+**Use** — floor bands, each assigned office, residential, hotel or retail. Since Plan 14 an ordered stack of up to six zones in any order, each rated for fit and earning rent (`2026-10-29-zones-design.md`).
 
 **Structure** — system (rigid frame, core + outriggers, framed tube, bundled tube, diagrid, buttressed core); material (steel, concrete, composite); exposed exterior structure (on/off); damping (none, tuned mass damper, viscous dampers); base isolation (on/off).
 
@@ -180,5 +180,6 @@ Top to bottom: header (site, mode, phase) → brief card with live requirement s
 11. **Plan 11 — Crowns rebuilt.** All 27 crowns as real architecture. Same spec, §6.
 12. **Plan 12 — Building systems.** Bracing nodes, AC units, louvres, roof plant, entrance. Same spec, §7.
 13. **Plan 13 — Inside the tower.** Power, water, waste, elevators and air flowing through the see-through tower, following the design. Spec: `2026-10-26-building-systems-flow-design.md`.
-14. **Plan 14 — People simulation** (§9).
-15. **Future iteration — Design chat (LLM).** §11. Text box at the bottom of the sidebar; Claude turns requests into catalog actions and explains tradeoffs.
+14. **Plan 14 — Zones.** Paint the stack: zones in any order, fit ratings, rent and payback, and a 🏷️ Zones view. Spec: `2026-10-29-zones-design.md`.
+15. **Plan 15 — People simulation** (§9).
+16. **Future iteration — Design chat (LLM).** §11. Text box at the bottom of the sidebar; Claude turns requests into catalog actions and explains tradeoffs.
