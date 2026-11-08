@@ -1,3 +1,4 @@
+import { stackFromMix } from '../sim/stack';
 import { describe, expect, it } from 'vitest';
 import { designFor } from '../sim/testUtils';
 import { NIGHT_LIGHTS, nightWindowAttributes, windowLit } from './nightWindows';
@@ -67,7 +68,7 @@ describe('mechanical floors', () => {
   });
 
   it('never lights a mechanical floor at night', () => {
-    const { design } = designFor('chicago', { floors: 70, useMix: { retail: 0, office: 100, hotel: 0, residential: 0 } });
+    const { design } = designFor('chicago', { floors: 70, stack: stackFromMix({ retail: 0, office: 100, hotel: 0, residential: 0 }) });
     const a = nightWindowAttributes(design);
     expect(a.mech[29]).toBe(1);
     expect(a.lit[29]).toBe(0);

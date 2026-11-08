@@ -1,3 +1,4 @@
+import { stackFromMix } from '../sim/stack';
 import { describe, expect, it } from 'vitest';
 import { fastestMs } from '../test/fastest';
 import { FLOOR_HEIGHT, floorSlices, plateDims } from '../sim/geometry';
@@ -16,12 +17,12 @@ const build = (patch: Partial<Design>) => {
 
 describe('balconyParts', () => {
   it('puts balconies only on homes', () => {
-    expect(build({ useMix: offices }).parts).toHaveLength(0);
-    expect(build({ useMix: homes }).parts.length).toBeGreaterThan(0);
+    expect(build({ stack: stackFromMix(offices) }).parts).toHaveLength(0);
+    expect(build({ stack: stackFromMix(homes) }).parts.length).toBeGreaterThan(0);
   });
 
   it('gives every home floor a slab and a glass railing on every other bay, but not plant floors', () => {
-    const { design, parts } = build({ useMix: homes, floors: 70 });
+    const { design, parts } = build({ stack: stackFromMix(homes), floors: 70 });
     const slabs = parts.filter((p) => p.material === 'concrete');
     const rails = parts.filter((p) => p.material === 'glass');
     expect(rails.length).toBe(slabs.length);
@@ -35,16 +36,16 @@ describe('balconyParts', () => {
   it("centres every balcony on a window of the facade's own bay grid, so it fronts one window, not two", () => {
     const near = (v: number, w: number) => Math.abs((((v % w) + w) % w) - w / 2) < 1e-6;
     // Square: on the front wall (+z) the facade measures across from the wall's middle, along +x.
-    const square = build({ useMix: homes, shape: 'square', plateWidth: 40 });
+    const square = build({ stack: stackFromMix(homes), shape: 'square', plateWidth: 40 });
     const w = facadeTileWidth(square.design);
     const front = square.parts.filter((p) => p.material === 'concrete' && p.position[2] > 20);
     expect(front.length).toBeGreaterThan(0);
     for (const p of front) expect(near(p.position[0], w), `x ${p.position[0]}`).toBe(true);
     // An odd number of bays fits on a 39 m wall too: still centred on windows.
-    const odd = build({ useMix: homes, shape: 'square', plateWidth: 39 });
+    const odd = build({ stack: stackFromMix(homes), shape: 'square', plateWidth: 39 });
     for (const p of odd.parts.filter((q) => q.material === 'concrete' && q.position[2] > 19)) expect(near(p.position[0], facadeTileWidth(odd.design))).toBe(true);
     // Round: the facade measures arc length from the +z seam.
-    const round = build({ useMix: homes, shape: 'circle', floors: 12 });
+    const round = build({ stack: stackFromMix(homes), shape: 'circle', floors: 12 });
     const rw = facadeTileWidth(round.design);
     const r = floorSlices(round.design)[5].width / 2;
     for (const p of round.parts.filter((q) => q.material === 'concrete' && Math.floor(q.position[1] / FLOOR_HEIGHT) === 5)) {
@@ -55,7 +56,7 @@ describe('balconyParts', () => {
 
   it.each(['square', 'rectangle', 'circle', 'triangle'] as PlanShape[])('%s: stands out from the wall, finite and within reach', (shape) => {
     for (const extreme of [{ floors: 5 }, { floors: 150, taper: 0.6, twist: 120, setbacks: 'wedding-cake' as const, plateWidth: 15 }]) {
-      const { design, parts } = build({ useMix: homes, shape, ...extreme });
+      const { design, parts } = build({ stack: stackFromMix(homes), shape, ...extreme });
       const { width, depth } = plateDims(design);
       expect(parts.length).toBeGreaterThan(0);
       for (const p of parts) {
@@ -69,7 +70,7 @@ describe('balconyParts', () => {
   });
 
   it('follows a round plan: every balcony sits just outside its floor', () => {
-    const { design, parts } = build({ useMix: homes, shape: 'circle', floors: 20 });
+    const { design, parts } = build({ stack: stackFromMix(homes), shape: 'circle', floors: 20 });
     const r = floorSlices(design)[5].width / 2;
     for (const p of parts.filter((q) => q.material === 'concrete' && Math.floor(q.position[1] / FLOOR_HEIGHT) === 5)) {
       const d = Math.hypot(p.position[0], p.position[2]);
@@ -79,7 +80,7 @@ describe('balconyParts', () => {
   });
 
   it('builds the worst case quickly, under 10,000 parts', () => {
-    const { design } = designFor('shanghai', { floors: 150, plateWidth: 80, shape: 'circle', useMix: homes, setbacks: 'none' });
+    const { design } = designFor('shanghai', { floors: 150, plateWidth: 80, shape: 'circle', stack: stackFromMix(homes), setbacks: 'none' });
     balconyParts(design);
     let n = 0;
     expect(fastestMs(5, (i) => (n = balconyParts({ ...design, floors: 150 - i }).length))).toBeLessThan(30);

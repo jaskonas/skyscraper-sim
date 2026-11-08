@@ -1,3 +1,4 @@
+import { stackFromMix } from '../../sim/stack';
 import { describe, expect, it } from 'vitest';
 import { fastestMs } from '../../test/fastest';
 import { floorUses } from '../../sim/analysis/massing';
@@ -88,7 +89,7 @@ describe('detailModel', () => {
   });
 
   it('lights the same windows at night as the main tower', () => {
-    const { design } = designFor('chicago', { floors: 40, useMix: { retail: 10, office: 40, hotel: 0, residential: 50 } });
+    const { design } = designFor('chicago', { floors: 40, stack: stackFromMix({ retail: 10, office: 40, hotel: 0, residential: 50 }) });
     const uses = floorUses(design);
     for (const { id } of DETAIL_VIEWS)
       for (const w of detailModel(design, id).windows)
@@ -96,7 +97,7 @@ describe('detailModel', () => {
   });
 
   it('captions name the floor, its use, the window pattern and the spandrel', () => {
-    const { design } = designFor('chicago', { floors: 40, setbacks: 'none', windowPattern: 'chicago', spandrel: 'chevron', useMix: { retail: 0, office: 100, hotel: 0, residential: 0 } });
+    const { design } = designFor('chicago', { floors: 40, setbacks: 'none', windowPattern: 'chicago', spandrel: 'chevron', stack: stackFromMix({ retail: 0, office: 100, hotel: 0, residential: 0 }) });
     expect(detailModel(design, 'facade').caption).toMatch(/^Floor \d+ · Offices · Chicago windows · Deco chevrons$/);
   });
 

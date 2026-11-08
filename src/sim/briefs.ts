@@ -1,3 +1,4 @@
+import { stackFromMix } from './stack';
 import type { AmenityId, CheckId, CheckStatus, Design, Setbacks, SiteId, StyleId, UseType } from './types';
 
 export type Requirement =
@@ -51,7 +52,7 @@ export const BRIEFS: Brief[] = [
     ],
     reference: {
       floors: 72, plateWidth: 30, shape: 'circle', system: 'core-outrigger', material: 'composite', damping: 'tmd',
-      useMix: { retail: 5, office: 0, hotel: 0, residential: 95 }, elevators: 10, zoning: 'single', facade: 'glass', windowRatio: 0.7,
+      stack: stackFromMix({ retail: 5, office: 0, hotel: 0, residential: 95 }), elevators: 10, zoning: 'single', facade: 'glass', windowRatio: 0.7,
     },
   },
   {
@@ -77,7 +78,7 @@ export const BRIEFS: Brief[] = [
     reference: {
       style: 'art-deco', shape: 'square', setbacks: 'wedding-cake', crown: 'spire', facade: 'masonry', windowRatio: 0.4, ornament: 'high',
       floors: 55, plateWidth: 30, material: 'concrete', system: 'core-outrigger', elevators: 12, zoning: 'two-zone',
-      useMix: { retail: 10, office: 90, hotel: 0, residential: 0 },
+      stack: stackFromMix({ retail: 10, office: 90, hotel: 0, residential: 0 }),
     },
   },
   {
@@ -100,7 +101,7 @@ export const BRIEFS: Brief[] = [
     ],
     reference: {
       floors: 48, plateWidth: 45, shape: 'square', material: 'steel', system: 'core-outrigger', baseIsolation: true,
-      foundation: 'piles', elevators: 18, zoning: 'two-zone', useMix: { retail: 10, office: 90, hotel: 0, residential: 0 },
+      foundation: 'piles', elevators: 18, zoning: 'two-zone', stack: stackFromMix({ retail: 10, office: 90, hotel: 0, residential: 0 }),
     },
   },
   {
@@ -124,7 +125,7 @@ export const BRIEFS: Brief[] = [
     reference: {
       style: 'neo-futurist', shape: 'circle', taper: 0.3, twist: 120, crown: 'pointed', facade: 'glass', windowRatio: 0.85,
       floors: 45, plateWidth: 50, material: 'steel', system: 'diagrid', foundation: 'piles', elevators: 12, zoning: 'two-zone',
-      useMix: { retail: 10, office: 0, hotel: 90, residential: 0 },
+      stack: stackFromMix({ retail: 10, office: 0, hotel: 90, residential: 0 }),
     },
   },
   {
@@ -147,7 +148,7 @@ export const BRIEFS: Brief[] = [
     ],
     reference: {
       floors: 82, plateWidth: 50, shape: 'square', material: 'steel', system: 'bundled-tube', damping: 'tmd', foundation: 'caissons',
-      elevators: 40, zoning: 'sky-lobby', useMix: { retail: 5, office: 95, hotel: 0, residential: 0 },
+      elevators: 40, zoning: 'sky-lobby', stack: stackFromMix({ retail: 5, office: 95, hotel: 0, residential: 0 }),
     },
   },
   {
@@ -172,7 +173,7 @@ export const BRIEFS: Brief[] = [
     reference: {
       floors: 42, plateWidth: 40, shape: 'square', material: 'concrete', system: 'core-outrigger', foundation: 'caissons',
       facade: 'precast', windowRatio: 0.4, systemsGrade: 'green', elevators: 10, zoning: 'single',
-      useMix: { retail: 5, office: 45, hotel: 0, residential: 50 },
+      stack: stackFromMix({ retail: 5, office: 45, hotel: 0, residential: 50 }),
     },
   },
   {
@@ -197,7 +198,7 @@ export const BRIEFS: Brief[] = [
     reference: {
       style: 'neo-futurist', shape: 'circle', taper: 0.3, twist: 120, crown: 'pointed', facade: 'glass', windowRatio: 0.85,
       floors: 110, plateWidth: 70, material: 'composite', system: 'buttressed-core', damping: 'tmd', foundation: 'piles',
-      elevators: 56, zoning: 'sky-lobby', useMix: { retail: 5, office: 60, hotel: 25, residential: 10 },
+      elevators: 56, zoning: 'sky-lobby', stack: stackFromMix({ retail: 5, office: 60, hotel: 25, residential: 10 }),
     },
   },
   {
@@ -220,7 +221,7 @@ export const BRIEFS: Brief[] = [
     ],
     reference: {
       floors: 50, plateWidth: 40, shape: 'square', material: 'steel', system: 'core-outrigger', foundation: 'piles',
-      elevators: 16, zoning: 'two-zone', useMix: { retail: 5, office: 95, hotel: 0, residential: 0 },
+      elevators: 16, zoning: 'two-zone', stack: stackFromMix({ retail: 5, office: 95, hotel: 0, residential: 0 }),
     },
   },
 ];

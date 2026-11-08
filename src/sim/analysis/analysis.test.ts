@@ -1,3 +1,4 @@
+import { stackFromMix } from '../stack';
 import { describe, expect, it } from 'vitest';
 import { designFor } from '../testUtils';
 import { SITE_IDS } from '../sites';
@@ -42,8 +43,8 @@ describe('wind', () => {
   });
 
   it('homes have a stricter comfort limit than offices', () => {
-    const office = run('new-york', { useMix: { retail: 0, office: 100, hotel: 0, residential: 0 } });
-    const homes = run('new-york', { useMix: { retail: 0, office: 0, hotel: 0, residential: 100 } });
+    const office = run('new-york', { stack: stackFromMix({ retail: 0, office: 100, hotel: 0, residential: 0 }) });
+    const homes = run('new-york', { stack: stackFromMix({ retail: 0, office: 0, hotel: 0, residential: 100 }) });
     expect(homes.wind.comfortLimitMg).toBeLessThan(office.wind.comfortLimitMg);
   });
 });
@@ -173,5 +174,12 @@ describe('elevator messages', () => {
     const msg = a.checks.find((c) => c.id === 'elevators')!.message;
     expect(msg).toMatch(/overwhelmed/);
     expect(msg).not.toMatch(/No working elevators/);
+  });
+
+  it('wind comfort follows the top zone', () => {
+    const r = run('new-york', { stack: [{ use: 'residential', share: 50 }, { use: 'office', share: 50 }] });
+    expect(r.wind.comfortLimitMg).toBe(25);
+    const flipped = run('new-york', { stack: [{ use: 'office', share: 50 }, { use: 'residential', share: 50 }] });
+    expect(flipped.wind.comfortLimitMg).toBe(15);
   });
 });

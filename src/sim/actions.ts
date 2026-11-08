@@ -3,7 +3,8 @@ import { ORNAMENTS } from './catalog/facades';
 import { PARAMS_BY_ID, paramMax, type ParamId } from './catalog/parameters';
 import { STYLE_PRESETS } from './catalog/styles';
 import { applyStylePreset, normalizeDesign } from './design';
-import type { AmenityId, Design, OrnamentId, Site, StyleId, UseType } from './types';
+import { MAX_BANDS, normalizeStack } from './stack';
+import type { AmenityId, Design, OrnamentId, Site, StyleId, UseBand } from './types';
 import { USE_ORDER } from './types';
 
 export type GamePhase = 'design' | 'building' | 'complete';
@@ -15,7 +16,7 @@ export type DesignAction =
   | { type: 'remove_amenity'; id: AmenityId }
   | { type: 'add_ornament'; id: OrnamentId }
   | { type: 'remove_ornament'; id: OrnamentId }
-  | { type: 'set_use_mix'; mix: Partial<Record<UseType, number>> };
+  | { type: 'set_stack'; stack: UseBand[] };
 
 export type ValidationResult = { ok: true } | { ok: false; reason: string };
 
@@ -54,15 +55,16 @@ export function validateAction(action: DesignAction, design: Design, site: Site,
     case 'add_ornament':
     case 'remove_ornament':
       return Object.hasOwn(ORNAMENTS, action.id) ? { ok: true } : { ok: false, reason: `There is no "${action.id}" ornament.` };
-    case 'set_use_mix': {
-      const entries = Object.entries(action.mix);
-      if (entries.length === 0) return { ok: false, reason: 'The use mix is empty.' };
-      for (const [use, v] of entries) {
-        if (!USE_ORDER.includes(use as UseType)) return { ok: false, reason: `"${use}" is not a building use.` };
-        if (typeof v !== 'number' || v < 0 || v > 100) return { ok: false, reason: 'Use percentages must be 0–100.' };
+    case 'set_stack': {
+      const stack = action.stack;
+      if (!Array.isArray(stack) || stack.length === 0) return { ok: false, reason: 'At least one zone is needed.' };
+      if (stack.length > MAX_BANDS) return { ok: false, reason: `Up to ${MAX_BANDS} zones.` };
+      for (const b of stack) {
+        if (!USE_ORDER.includes(b?.use)) return { ok: false, reason: `"${b?.use}" is not a building use.` };
+        if (typeof b.share !== 'number' || !Number.isFinite(b.share) || b.share < 0 || b.share > 100)
+          return { ok: false, reason: 'Zone shares must be 0–100.' };
       }
-      const merged = { ...design.useMix, ...action.mix };
-      if (USE_ORDER.every((u) => merged[u] <= 0)) return { ok: false, reason: 'At least one use must be above 0%.' };
+      if (stack.every((b) => b.share <= 0)) return { ok: false, reason: 'At least one zone is needed.' };
       return { ok: true };
     }
   }
@@ -88,8 +90,8 @@ export function applyAction(design: Design, action: DesignAction, site: Site): D
       return design.ornaments.includes(action.id) ? design : { ...design, ornaments: [...design.ornaments, action.id] };
     case 'remove_ornament':
       return { ...design, ornaments: design.ornaments.filter((o) => o !== action.id) };
-    case 'set_use_mix':
-      return { ...design, useMix: { ...design.useMix, ...action.mix } };
+    case 'set_stack':
+      return { ...design, stack: normalizeStack(action.stack) };
   }
 }
 

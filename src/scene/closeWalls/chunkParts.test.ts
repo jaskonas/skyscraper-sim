@@ -1,3 +1,4 @@
+import { stackFromMix } from '../../sim/stack';
 import { describe, expect, it } from 'vitest';
 import { floorUses } from '../../sim/analysis/massing';
 import { facadeRecipe } from '../../sim/facade';
@@ -34,7 +35,7 @@ describe('chunk parts', () => {
   });
 
   it('lights, darkens and blinds the same windows as the shader', () => {
-    const d = chicago({ useMix: { retail: 0, office: 50, hotel: 0, residential: 50 } });
+    const d = chicago({ stack: stackFromMix({ retail: 0, office: 50, hotel: 0, residential: 50 }) });
     const uses = floorUses(d);
     const slices = floorSlices(d);
     let lit = 0;
@@ -117,7 +118,7 @@ describe('chunk parts', () => {
   });
 
   it('blinds glow in a lit room and go dim in a dark one, as on the painted facade', () => {
-    const d = chicago({ useMix: { retail: 0, office: 100, hotel: 0, residential: 0 } });
+    const d = chicago({ stack: stackFromMix({ retail: 0, office: 100, hotel: 0, residential: 0 }) });
     let litBlinds = 0;
     for (const c of towerChunks(d).filter((c) => c.normal && c.normal[1] > 0.9))
       for (const b of chunkParts(d, c).filter(isBlind)) {

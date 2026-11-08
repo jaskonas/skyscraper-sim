@@ -1,3 +1,4 @@
+import { stackFromMix } from '../sim/stack';
 import ReactThreeTestRenderer from '@react-three/test-renderer';
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
@@ -35,7 +36,7 @@ describe('shadow flags', () => {
   it('every opaque mesh of a tower casts and receives; see-through ones only receive', async () => {
     const { site, design } = designFor('chicago', {
       floors: 40,
-      useMix: { retail: 0, office: 50, hotel: 0, residential: 50 },
+      stack: stackFromMix({ retail: 0, office: 50, hotel: 0, residential: 50 }),
       amenities: ['helipad', 'pool', 'observation-deck', 'sky-garden'],
       ornaments: ['stone-ribs'],
       ornament: 'high',

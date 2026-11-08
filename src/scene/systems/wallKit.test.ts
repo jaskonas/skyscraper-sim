@@ -1,3 +1,4 @@
+import { stackFromMix } from '../../sim/stack';
 import { describe, expect, it } from 'vitest';
 import { applyAction } from '../../sim/actions';
 import { floorUses } from '../../sim/analysis/massing';
@@ -16,7 +17,7 @@ import { AC_SHARE, wallKitParts } from './wallKit';
 const homes = { retail: 0, office: 0, hotel: 0, residential: 100 };
 const styled = (style: StyleId, patch: Partial<Design> = {}) => {
   const { site, design } = designFor('chicago');
-  return { ...applyAction(design, { type: 'apply_style_preset', style }, site), floors: 40, useMix: homes, ...patch };
+  return { ...applyAction(design, { type: 'apply_style_preset', style }, site), floors: 40, stack: stackFromMix(homes), ...patch };
 };
 const acUnits = (parts: Part[]) => parts.filter((p) => p.material === 'steel' && !p.fine && p.scale[0] === 0.75);
 const floorOf = (p: Part) => Math.floor(p.position[1] / FLOOR_HEIGHT);
@@ -39,7 +40,7 @@ describe('wall kit', () => {
     const share = acUnits(wallKitParts(d)).length / windows;
     expect(share).toBeGreaterThan(AC_SHARE - 0.04);
     expect(share).toBeLessThan(AC_SHARE + 0.04);
-    expect(acUnits(wallKitParts(styled('chicago-school', { useMix: { retail: 0, office: 100, hotel: 0, residential: 0 } })))).toHaveLength(0);
+    expect(acUnits(wallKitParts(styled('chicago-school', { stack: stackFromMix({ retail: 0, office: 100, hotel: 0, residential: 0 }) })))).toHaveLength(0);
     expect(acUnits(wallKitParts(styled('international')))).toHaveLength(0);
   });
 

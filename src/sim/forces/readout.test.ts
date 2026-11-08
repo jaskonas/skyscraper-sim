@@ -1,3 +1,4 @@
+import { stackFromMix } from '../stack';
 import { describe, expect, it } from 'vitest';
 import { analyze } from '../analysis';
 import { designFor } from '../testUtils';
@@ -13,7 +14,7 @@ const read = (kind: 'wind' | 'quake', siteId: SiteId, patch: Partial<Design> = {
 
 describe('windReadout', () => {
   it("quotes the site's storm, the lean and sway, and the felt sway against the limit for the top floor's use", () => {
-    const { site, analysis, r, text } = read('wind', 'chicago', { useMix: { retail: 0, office: 0, hotel: 0, residential: 100 } });
+    const { site, analysis, r, text } = read('wind', 'chicago', { stack: stackFromMix({ retail: 0, office: 0, hotel: 0, residential: 100 }) });
     expect(r.title).toBe('Wind');
     expect(text).toContain(`${site.windSpeed} m/s`);
     expect(text).toMatch(/Top of tower leans \d+\.\d\d m and sways ±\d+\.\d\d m/);

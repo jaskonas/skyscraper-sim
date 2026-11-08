@@ -24,4 +24,13 @@ describe('design', () => {
     const d = defaultDesign(SITES.chicago);
     expect(normalizeDesign(d, SITES.chicago)).toBe(d);
   });
+  it('normalizeDesign repairs a missing or empty stack', () => {
+    const site = SITES['new-york'];
+    const d = defaultDesign(site);
+    const fallback = [{ use: 'retail', share: 10 }, { use: 'office', share: 90 }];
+    expect(normalizeDesign({ ...d, stack: [] }, site).stack).toEqual(fallback);
+    const { stack: _gone, ...noStack } = d;
+    expect(normalizeDesign(noStack as typeof d, site).stack).toEqual(fallback);
+    expect(normalizeDesign({ ...d, stack: [{ use: 'office', share: 30 }, { use: 'office', share: 30 }] }, site).stack).toEqual([{ use: 'office', share: 100 }]);
+  });
 });

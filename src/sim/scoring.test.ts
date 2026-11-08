@@ -1,3 +1,4 @@
+import { stackFromMix } from './stack';
 import { describe, expect, it } from 'vitest';
 import { analyze } from './analysis';
 import { BRIEFS, briefsForSite } from './briefs';
@@ -35,7 +36,7 @@ describe('requirements', () => {
   });
 
   it('use share uses normalized percentages', () => {
-    const { site, design } = designFor('chicago', { useMix: { retail: 0, office: 1, hotel: 0, residential: 3 } });
+    const { site, design } = designFor('chicago', { stack: stackFromMix({ retail: 0, office: 1, hotel: 0, residential: 3 }) });
     const r = evaluateRequirement({ kind: 'minUseShare', use: 'residential', value: 0.75 }, design, analyze(site, design));
     expect(r.met).toBe(true);
   });

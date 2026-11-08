@@ -1,3 +1,4 @@
+import { useShares } from '../../sim/analysis/massing';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { selectDesign, useGame } from '../../state/store';
@@ -51,7 +52,7 @@ describe('Sidebar', () => {
     render(<Sidebar />);
     fireEvent.change(screen.getByRole('slider', { name: 'Shops share' }), { target: { value: '0' } });
     fireEvent.change(screen.getByRole('slider', { name: 'Offices share' }), { target: { value: '0' } });
-    expect(design().useMix.office).toBe(90);
+    expect(useShares(design()).office).toBeCloseTo(1);
   });
 
   it('building shows the construction card, then the assessment, and hides the controls', () => {

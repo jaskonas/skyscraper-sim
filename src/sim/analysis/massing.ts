@@ -11,7 +11,7 @@ import {
   sliceArea,
 } from '../geometry';
 import type { Design, UseType } from '../types';
-import { USE_ORDER } from '../types';
+import { bandFloors, normalizeStack } from '../stack';
 
 export interface Massing {
   bodyHeight: number;
@@ -36,37 +36,16 @@ export interface Massing {
   topUse: UseType;
 }
 
-/** Normalized use shares (sum to 1) in stacking order. */
+/** Normalized use shares (sum to 1), totalled over the zones. */
 export function useShares(design: Design): Record<UseType, number> {
-  const total = USE_ORDER.reduce((s, u) => s + Math.max(0, design.useMix[u]), 0);
   const out = { retail: 0, office: 0, hotel: 0, residential: 0 } as Record<UseType, number>;
-  if (total <= 0) {
-    out.office = 1;
-    return out;
-  }
-  for (const u of USE_ORDER) out[u] = Math.max(0, design.useMix[u]) / total;
+  for (const b of normalizeStack(design.stack)) out[b.use] += b.share / 100;
   return out;
 }
 
 /** Use of each floor, bottom to top. */
 export function floorUses(design: Design): UseType[] {
-  const shares = useShares(design);
-  const uses: UseType[] = [];
-  let cumulative = 0;
-  for (let i = 0; i < design.floors; i++) {
-    const t = (i + 0.5) / design.floors;
-    let use: UseType = 'office';
-    cumulative = 0;
-    for (const u of USE_ORDER) {
-      cumulative += shares[u];
-      if (t <= cumulative + 1e-9) {
-        use = u;
-        break;
-      }
-    }
-    uses.push(use);
-  }
-  return uses;
+  return bandFloors(design.stack, design.floors).flatMap((b) => Array.from({ length: b.to - b.from + 1 }, () => b.use));
 }
 
 export function computeMassing(design: Design): Massing {

@@ -18,7 +18,6 @@ export type FoundationType = 'mat' | 'raft' | 'piles' | 'caissons';
 export type FacadeType = 'glass' | 'masonry' | 'precast' | 'metal';
 export type ElevatorZoning = 'single' | 'two-zone' | 'sky-lobby';
 export type SystemsGrade = 'standard' | 'efficient' | 'green';
-/** Stacking order is fixed bottom-to-top in this order. */
 export type UseType = 'retail' | 'office' | 'hotel' | 'residential';
 export type AmenityId = 'helipad' | 'pool' | 'observation-deck' | 'sky-garden';
 export type StyleId =
@@ -32,6 +31,7 @@ export type StyleId =
   | 'neo-futurist';
 export type Ornament = 'none' | 'low' | 'high';
 
+/** The order uses are listed in (and the old fixed stacking order). */
 export const USE_ORDER: UseType[] = ['retail', 'office', 'hotel', 'residential'];
 
 /** One zone of the tower: a use and its share of the floors (percent; normalized when read). */
@@ -61,8 +61,8 @@ export interface Design {
   /** Degrees of rotation from bottom to top, 0..120. */
   twist: number;
   crown: CrownId;
-  /** Percentages per use; normalized when used. */
-  useMix: Record<UseType, number>;
+  /** Zones bottom to top; shares are percentages, normalized when read (see sim/stack.ts). */
+  stack: UseBand[];
   system: StructuralSystem;
   material: Material;
   exposedStructure: boolean;

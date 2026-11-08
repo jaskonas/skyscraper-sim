@@ -1,7 +1,7 @@
 import type { Design } from '../sim/types';
 import type { Project } from '../state/store';
 
-export const EXPORT_VERSION = 1;
+export const EXPORT_VERSION = 2;
 
 export function designExportPayload(project: Project, design: Design): string {
   return JSON.stringify({ version: EXPORT_VERSION, project, design }, null, 2);

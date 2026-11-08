@@ -1,7 +1,13 @@
 import { CROWNS } from './catalog/crowns';
 import { ORNAMENTS, SPANDRELS, WINDOW_PATTERNS } from './catalog/facades';
 import { STYLE_PRESETS, type StyleSettings } from './catalog/styles';
-import type { Design, Site, StyleId } from './types';
+import { normalizeStack } from './stack';
+import type { Design, Site, StyleId, UseBand } from './types';
+
+export const DEFAULT_STACK: UseBand[] = [
+  { use: 'retail', share: 10 },
+  { use: 'office', share: 90 },
+];
 
 export function maxPlateWidth(site: Site, design: Pick<Design, 'shape'>): number {
   return design.shape === 'rectangle' ? site.lot.width : Math.min(site.lot.width, site.lot.depth);
@@ -28,6 +34,8 @@ export function normalizeDesign(design: Design, site: Site): Design {
   if (!Object.hasOwn(SPANDRELS, design.spandrel)) patch.spandrel = preset.spandrel;
   const ornaments = [...new Set((design.ornaments ?? []).filter((o) => Object.hasOwn(ORNAMENTS, o)))];
   if (ornaments.length !== design.ornaments?.length) patch.ornaments = ornaments;
+  const stack = design.stack?.length ? normalizeStack(design.stack) : DEFAULT_STACK;
+  if (JSON.stringify(stack) !== JSON.stringify(design.stack)) patch.stack = stack;
   return Object.keys(patch).length === 0 ? design : { ...design, ...patch };
 }
 
@@ -54,7 +62,7 @@ export function defaultDesign(site: Site): Design {
     taper: 0,
     twist: 0,
     crown: 'flat',
-    useMix: { retail: 10, office: 90, hotel: 0, residential: 0 },
+    stack: DEFAULT_STACK,
     system: 'core-outrigger',
     material: 'concrete',
     exposedStructure: false,

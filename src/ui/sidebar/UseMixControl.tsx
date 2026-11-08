@@ -1,5 +1,9 @@
 import { useShares } from '../../sim/analysis/massing';
+import { stackFromMix } from '../../sim/stack';
 import { USE_ORDER, type UseType } from '../../sim/types';
+
+const percent = (shares: Record<UseType, number>) =>
+  Object.fromEntries(USE_ORDER.map((u) => [u, Math.round(shares[u] * 100)])) as Record<UseType, number>;
 import { useCurrent } from '../../state/hooks';
 import { useGame } from '../../state/store';
 
@@ -22,8 +26,8 @@ export function UseMixControl() {
             min={0}
             max={100}
             step={5}
-            value={design.useMix[u]}
-            onChange={(e) => dispatch([{ type: 'set_use_mix', mix: { [u]: Number(e.target.value) } }], { coalesceKey: `use-${u}` })}
+            value={Math.round(shares[u] * 100)}
+            onChange={(e) => dispatch([{ type: 'set_stack', stack: stackFromMix({ ...percent(shares), [u]: Number(e.target.value) }) }], { coalesceKey: `use-${u}` })}
             onPointerUp={endCoalesce}
             onKeyUp={endCoalesce}
             onBlur={endCoalesce}

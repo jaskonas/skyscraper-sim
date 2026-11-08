@@ -1,3 +1,4 @@
+import { floorUses } from './analysis/massing';
 import { describe, expect, it } from 'vitest';
 import { applyActions, validateAction, type DesignAction } from './actions';
 import { designFor } from './testUtils';
@@ -51,14 +52,21 @@ describe('actions', () => {
     expect(d.amenities).toEqual([]);
   });
 
-  it('refuses a use mix with every use at zero', () => {
-    const v = validateAction({ type: 'set_use_mix', mix: { retail: 0, office: 0, hotel: 0, residential: 0 } }, design, site, 'design');
-    expect(v.ok).toBe(false);
+  it('set_stack validates', () => {
+    const reason = (stack: unknown) => {
+      const v = validateAction({ type: 'set_stack', stack } as DesignAction, design, site, 'design');
+      return v.ok ? 'ok' : v.reason;
+    };
+    expect(reason([])).toBe('At least one zone is needed.');
+    expect(reason(Array.from({ length: 7 }, (_, k) => ({ use: k % 2 ? 'office' : 'hotel', share: 10 })))).toBe('Up to 6 zones.');
+    expect(reason([{ use: 'garage', share: 50 }])).toBe('"garage" is not a building use.');
+    expect(reason([{ use: 'office', share: -5 }, { use: 'hotel', share: 50 }])).toBe('Zone shares must be 0–100.');
+    expect(reason([{ use: 'hotel', share: 40 }, { use: 'office', share: 60 }])).toBe('ok');
   });
 
-  it('accepts a partial use mix', () => {
-    const r = applyActions(design, [{ type: 'set_use_mix', mix: { hotel: 40 } }], site, 'design');
-    expect(r.design.useMix.hotel).toBe(40);
-    expect(r.design.useMix.office).toBe(design.useMix.office);
+  it('set_stack reorders the floors', () => {
+    const r = applyActions(design, [{ type: 'set_stack', stack: [{ use: 'hotel', share: 40 }, { use: 'office', share: 60 }] }], site, 'design');
+    expect(floorUses(r.design)[0]).toBe('hotel');
+    expect(floorUses(r.design).at(-1)).toBe('office');
   });
 });

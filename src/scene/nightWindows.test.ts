@@ -1,3 +1,4 @@
+import { stackFromMix } from '../sim/stack';
 import { describe, expect, it } from 'vitest';
 import { designFor } from '../sim/testUtils';
 import { NIGHT_LIGHTS, nightWindowAttributes, windowHash, windowLit } from './nightWindows';
@@ -22,7 +23,7 @@ describe('night windows', () => {
   });
 
   it("gives each floor its use's lit share and colour", () => {
-    const { design } = designFor('chicago', { floors: 10, useMix: { retail: 10, office: 50, hotel: 0, residential: 40 } });
+    const { design } = designFor('chicago', { floors: 10, stack: stackFromMix({ retail: 10, office: 50, hotel: 0, residential: 40 }) });
     const a = nightWindowAttributes(design);
     expect(Array.from(a.floor)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
     expect(a.lit[0]).toBeCloseTo(NIGHT_LIGHTS.retail.lit);

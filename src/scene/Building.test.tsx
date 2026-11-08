@@ -1,3 +1,4 @@
+import { stackFromMix } from '../sim/stack';
 import ReactThreeTestRenderer from '@react-three/test-renderer';
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
@@ -82,7 +83,7 @@ describe('<Building />', () => {
   });
 
   it('draws balconies on home floors, and only up to the floors built so far during construction', async () => {
-    const { site, design } = designFor('chicago', { floors: 30, useMix: { retail: 0, office: 0, hotel: 0, residential: 100 } });
+    const { site, design } = designFor('chicago', { floors: 30, stack: stackFromMix({ retail: 0, office: 0, hotel: 0, residential: 100 }) });
     const all = balconyParts(design);
     const r = await ReactThreeTestRenderer.create(<Building site={site} design={design} />);
     expect(instanceTotal(r, 'balconies')).toBe(all.length);
@@ -108,7 +109,7 @@ describe('<Building />', () => {
   });
 
   it('Detail: Simple draws no wall kit and no fine systems parts', async () => {
-    const { site, design } = designFor('chicago', { style: 'chicago-school', facade: 'masonry', floors: 40, exposedStructure: true, crown: 'flat', useMix: { retail: 0, office: 0, hotel: 0, residential: 100 } });
+    const { site, design } = designFor('chicago', { style: 'chicago-school', facade: 'masonry', floors: 40, exposedStructure: true, crown: 'flat', stack: stackFromMix({ retail: 0, office: 0, hotel: 0, residential: 100 }) });
     const r = await ReactThreeTestRenderer.create(<Building site={site} design={design} facadeDetail={false} />);
     await ReactThreeTestRenderer.act(async () => r.advanceFrames(12, 0.016));
     for (const name of ['wall-kit', 'wall-kit-fine', 'roof-fine', 'street-fine', 'structure-fine']) {
@@ -121,7 +122,7 @@ describe('<Building />', () => {
   });
 
   it('while building, the wall kit appears only on the floors already finished', async () => {
-    const { site, design } = designFor('chicago', { style: 'chicago-school', facade: 'masonry', floors: 40, useMix: { retail: 0, office: 0, hotel: 0, residential: 100 } });
+    const { site, design } = designFor('chicago', { style: 'chicago-school', facade: 'masonry', floors: 40, stack: stackFromMix({ retail: 0, office: 0, hotel: 0, residential: 100 }) });
     const r = await ReactThreeTestRenderer.create(<Building site={site} design={design} reveal={{ floors: 12, crown: 0, litFloors: 0, lights: false }} />);
     const meshes = instancedIn(r, 'wall-kit');
     expect(meshes.length).toBeGreaterThan(0);
@@ -230,7 +231,7 @@ describe('<Building reveal />', () => {
   });
 
   it('switches the lights on only up to the lit floors', async () => {
-    const { site, design } = designFor('chicago', { floors: 20, useMix: { retail: 0, office: 100, hotel: 0, residential: 0 } });
+    const { site, design } = designFor('chicago', { floors: 20, stack: stackFromMix({ retail: 0, office: 100, hotel: 0, residential: 0 }) });
     const r = await ReactThreeTestRenderer.create(<Building site={site} design={design} reveal={{ floors: 20, crown: 1, litFloors: 8, lights: true }} />);
     const body = r.scene.findAll((n) => n.props.name === 'body')[0].instance as THREE.InstancedMesh;
     const lit = body.geometry.getAttribute('aLit').array as Float32Array;
