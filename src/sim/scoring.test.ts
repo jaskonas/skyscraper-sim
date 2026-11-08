@@ -64,4 +64,13 @@ describe('sandbox grades', () => {
     const { site, design } = designFor('new-york', { foundation: 'mat' });
     expect(sandboxGrades(site, analyze(site, design)).safety).toBe('A');
   });
+
+  it('value grade thresholds', () => {
+    const { site, design } = designFor('chicago');
+    const a = analyze(site, design);
+    const grade = (paybackYears: number) => sandboxGrades(site, { ...a, value: { ...a.value, paybackYears } }).value;
+    expect(grade(15)).toBe('A');
+    expect(grade(20.1)).toBe('C');
+    expect(grade(40)).toBe('F');
+  });
 });

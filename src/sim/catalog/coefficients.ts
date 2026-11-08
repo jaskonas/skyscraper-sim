@@ -12,6 +12,7 @@ import type {
   PlanShape,
   StructuralSystem,
   SystemsGrade,
+  SiteId,
   UseType,
 } from '../types';
 
@@ -170,6 +171,23 @@ export const COEFFICIENTS = {
     /** Hotel and homes starting below this floor index hear the street. */
     quietFromFloor: 5,
     hotelMinFloors: 5,
+    /** Yearly rent per m² of floor, USD, before height, fit and city. */
+    rent: { office: 220, residential: 200, hotel: 240, retail: 260 } satisfies Record<UseType, number>,
+    /** Extra rent per floor up, and its cap: views pay for homes and hotels much more than for offices. */
+    heightPremium: {
+      office: { perFloor: 0.003, max: 0.3 },
+      residential: { perFloor: 0.01, max: 0.8 },
+      hotel: { perFloor: 0.01, max: 0.8 },
+      retail: { perFloor: 0, max: 0 },
+    } satisfies Record<UseType, { perFloor: number; max: number }>,
+    fitMultiplier: { good: 1, ok: 0.8, bad: 0.55 },
+    /** How much each city pays for each use, roughly in line with its building costs. */
+    market: {
+      'new-york': { office: 1.2, residential: 1.3, hotel: 1.1, retail: 1.2 },
+      tokyo: { office: 1.15, residential: 0.95, hotel: 1.0, retail: 1.1 },
+      chicago: { office: 1, residential: 1, hotel: 1, retail: 1 },
+      shanghai: { office: 0.7, residential: 0.7, hotel: 0.8, retail: 0.7 },
+    } satisfies Record<SiteId, Record<UseType, number>>,
   },
 
   cost: {

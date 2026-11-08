@@ -7,6 +7,7 @@ import { analyzeFoundation } from './foundation';
 import { computeMassing } from './massing';
 import { analyzeSchedule } from './schedule';
 import { analyzeSeismic } from './seismic';
+import { analyzeValue } from './value';
 import { analyzeWind } from './wind';
 
 function statusFor(value: number, pass: number, marginal: number): CheckStatus {
@@ -26,6 +27,7 @@ export function analyze(site: Site, design: Design): Analysis {
   const energy = analyzeEnergy(site, design, m);
   const cost = analyzeCost(site, design, m);
   const schedule = analyzeSchedule(design);
+  const value = analyzeValue(site, design, cost.total);
   const W = COEFFICIENTS.wind;
   const E = COEFFICIENTS.energy;
 
@@ -127,5 +129,6 @@ export function analyze(site: Site, design: Design): Analysis {
     cost,
     schedule,
     checks,
+    value,
   };
 }

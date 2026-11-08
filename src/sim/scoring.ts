@@ -23,7 +23,7 @@ export interface BriefResult {
 }
 
 export type Grade = 'A' | 'B' | 'C' | 'D' | 'F';
-export type GradeCategory = 'safety' | 'cost' | 'comfort' | 'efficiency' | 'sustainability';
+export type GradeCategory = 'safety' | 'cost' | 'comfort' | 'efficiency' | 'sustainability' | 'value';
 
 const STATUS_RANK: Record<CheckStatus, number> = { pass: 2, marginal: 1, fail: 0 };
 const SETBACK_RANK = { none: 0, few: 1, 'wedding-cake': 2 } as const;
@@ -159,5 +159,6 @@ export function sandboxGrades(site: Site, a: Analysis): Record<GradeCategory, Gr
     comfort: gradeFromRatio(a.wind.accelMg / a.wind.comfortLimitMg, [0.5, 0.75, 1, 1.3]),
     efficiency: gradeFromRatio(a.elevators.avgWaitS / a.elevators.targetS, [0.5, 0.75, 1, 1.5]),
     sustainability: gradeFromRatio(a.energy.euiKWhPerM2, [150, 190, 240, 300]),
+    value: gradeFromRatio(a.value.paybackYears, [15, 20, 26, 34]),
   };
 }

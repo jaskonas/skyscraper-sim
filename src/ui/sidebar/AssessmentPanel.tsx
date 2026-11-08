@@ -11,6 +11,7 @@ const GRADE_LABEL: Record<GradeCategory, string> = {
   comfort: 'Comfort',
   efficiency: 'Efficiency',
   sustainability: 'Sustainability',
+  value: 'Value',
 };
 
 export function AssessmentPanel() {

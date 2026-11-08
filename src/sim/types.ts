@@ -1,3 +1,5 @@
+import type { BandSpan } from './stack';
+import type { BandFit } from './zones/fit';
 import type { CrownId, OrnamentId, SpandrelId, WindowPatternId } from './catalog/ids';
 
 export type { CrownId, OrnamentId, SpandrelId, WindowPatternId } from './catalog/ids';
@@ -214,4 +216,11 @@ export interface Analysis {
   cost: CostBreakdown;
   schedule: { phases: SchedulePhase[]; totalDays: number };
   checks: Check[];
+  value: {
+    /** Each zone bottom to top, with its fit and what it earns a year (USD). */
+    bands: (BandSpan & BandFit & { incomePerYear: number })[];
+    incomePerYear: number;
+    /** Build cost over yearly income; Infinity when the tower earns nothing. */
+    paybackYears: number;
+  };
 }
