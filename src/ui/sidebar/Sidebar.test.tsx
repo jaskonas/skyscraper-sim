@@ -1,4 +1,3 @@
-import { useShares } from '../../sim/analysis/massing';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { selectDesign, useGame } from '../../state/store';
@@ -46,13 +45,6 @@ describe('Sidebar', () => {
     fireEvent.change(screen.getByRole('slider', { name: 'Floors' }), { target: { value: '50' } });
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
     expect(design().floors).toBe(40);
-  });
-
-  it('dragging the last use slider to zero is refused', () => {
-    render(<Sidebar />);
-    fireEvent.change(screen.getByRole('slider', { name: 'Shops share' }), { target: { value: '0' } });
-    fireEvent.change(screen.getByRole('slider', { name: 'Offices share' }), { target: { value: '0' } });
-    expect(useShares(design()).office).toBeCloseTo(1);
   });
 
   it('building shows the construction card, then the assessment, and hides the controls', () => {

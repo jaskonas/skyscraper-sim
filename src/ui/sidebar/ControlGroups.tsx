@@ -4,7 +4,7 @@ import { useGame } from '../../state/store';
 import { AmenitiesControl } from './AmenitiesControl';
 import { OrnamentsControl } from './OrnamentsControl';
 import { ParamControl } from './ParamControl';
-import { UseMixControl } from './UseMixControl';
+import { StackEditor } from './StackEditor';
 
 export function ControlGroups() {
   const { design } = useCurrent();
@@ -24,8 +24,8 @@ export function ControlGroups() {
         </details>
       ))}
       <details className="card group">
-        <summary>Uses</summary>
-        <UseMixControl />
+        <summary>Zones</summary>
+        <StackEditor />
       </details>
       <details className="card group">
         <summary>Amenities</summary>

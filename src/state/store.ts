@@ -40,6 +40,8 @@ export interface GameState {
   system: SystemView;
   /** View only: the street power is cut, so the backup generators run (Power view). */
   powerCut: boolean;
+  /** View only: the zone picked in the sidebar's zone editor (an index into the design's stack), or none. */
+  selectedBand: number | null;
   /** View only, and kept for new projects: it is about what the computer can draw smoothly, not the design. */
   facadeDetail: FacadeDetail;
   /** View only, kept for new projects like `facadeDetail`. Sun shadows also need Detail: High and daylight. */
@@ -69,6 +71,7 @@ export interface GameState {
   /** Show this system, or turn it off if it is already showing. Turns any force off. */
   toggleSystem: (s: SystemId) => void;
   setPowerCut: (on: boolean) => void;
+  selectBand: (index: number | null) => void;
   setFacadeDetail: (d: FacadeDetail) => void;
   setShadows: (on: boolean) => void;
 }
@@ -86,6 +89,7 @@ export const useGame = create<GameState>((set, get) => ({
   force: 'none',
   system: 'none',
   powerCut: false,
+  selectedBand: null,
   facadeDetail: 'high',
   shadows: true,
   buildStage: 0,
@@ -95,6 +99,7 @@ export const useGame = create<GameState>((set, get) => ({
   startProject: (siteId, mode, briefId = null) =>
     set({
       project: { siteId, mode, briefId: mode === 'challenge' ? briefId : null },
+      selectedBand: null,
       phase: 'design',
       history: [defaultDesign(getSite(siteId))],
       historyIndex: 0,
@@ -177,6 +182,7 @@ export const useGame = create<GameState>((set, get) => ({
       force: 'none',
       system: 'none',
       powerCut: false,
+      selectedBand: null,
       buildStage: 0,
       stageDone: false,
     }),
@@ -188,6 +194,8 @@ export const useGame = create<GameState>((set, get) => ({
   toggleSystem: (s) => set({ system: get().system === s ? 'none' : s, force: 'none', powerCut: false }),
 
   setPowerCut: (powerCut) => set({ powerCut }),
+
+  selectBand: (selectedBand) => set({ selectedBand }),
 
   setFacadeDetail: (facadeDetail) => set({ facadeDetail }),
 
