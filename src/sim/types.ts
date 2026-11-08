@@ -34,6 +34,12 @@ export type Ornament = 'none' | 'low' | 'high';
 
 export const USE_ORDER: UseType[] = ['retail', 'office', 'hotel', 'residential'];
 
+/** One zone of the tower: a use and its share of the floors (percent; normalized when read). */
+export interface UseBand {
+  use: UseType;
+  share: number;
+}
+
 export interface Palette {
   body: string;
   accent: string;
