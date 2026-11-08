@@ -2,6 +2,7 @@ import { COEFFICIENTS } from './catalog/coefficients';
 import { CROWNS } from './catalog/crowns';
 import { AMENITIES } from './catalog/amenities';
 import { STYLE_PRESETS } from './catalog/styles';
+import { FIT_EMOJI, USE_LABEL as ZONE_LABEL } from './catalog/zones';
 import { formatMoney as money } from './format';
 import type { Brief, Requirement } from './briefs';
 import { useShares } from './analysis/massing';
@@ -121,6 +122,24 @@ export function evaluateRequirement(r: Requirement, design: Design, a: Analysis)
       };
     case 'amenity':
       return { requirement: r, label: `Includes: ${AMENITIES[r.id].label}`, met: design.amenities.includes(r.id), detail: '' };
+    case 'maxPaybackYears': {
+      const years = a.value.paybackYears;
+      return {
+        requirement: r,
+        label: `Pays for itself in ${r.value} years or less`,
+        met: years <= r.value,
+        detail: Number.isFinite(years) ? `${years} years` : 'never',
+      };
+    }
+    case 'noBadFit': {
+      const bad = a.value.bands.find((b) => b.fit === 'bad');
+      return {
+        requirement: r,
+        label: `No ${FIT_EMOJI.bad} zones`,
+        met: !bad,
+        detail: bad ? `${FIT_EMOJI.bad} ${ZONE_LABEL[bad.use].label}, floors ${bad.from + 1}–${bad.to + 1}` : '',
+      };
+    }
     case 'landmark':
       return {
         requirement: r,

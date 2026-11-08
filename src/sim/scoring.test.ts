@@ -1,15 +1,16 @@
 import { stackFromMix } from './stack';
 import { describe, expect, it } from 'vitest';
 import { analyze } from './analysis';
-import { BRIEFS, briefsForSite } from './briefs';
+import { BRIEFS, briefsForSite, getBrief } from './briefs';
 import { defaultDesign, normalizeDesign } from './design';
 import { evaluateBrief, evaluateRequirement, gradeFromRatio, isLandmark, sandboxGrades } from './scoring';
 import { SITES, SITE_IDS } from './sites';
 import { designFor } from './testUtils';
 
 describe('briefs', () => {
-  it('every site has two briefs', () => {
-    for (const id of SITE_IDS) expect(briefsForSite(id)).toHaveLength(2);
+  it('every site has two briefs, and Chicago a third about stacking zones', () => {
+    for (const id of SITE_IDS) expect(briefsForSite(id)).toHaveLength(id === 'chicago' ? 3 : 2);
+    expect(getBrief('chicago-stack')?.title).toBe('Stack It Right');
   });
 
   it.each(BRIEFS.map((b) => [b.id, b] as const))('%s is solvable by its reference design', (_id, brief) => {
@@ -28,6 +29,21 @@ describe('briefs', () => {
 });
 
 describe('requirements', () => {
+  it('maxPaybackYears', () => {
+    const { site, design } = designFor('chicago');
+    const a = analyze(site, design);
+    const r = (paybackYears: number) => evaluateRequirement({ kind: 'maxPaybackYears', value: 25 }, design, { ...a, value: { ...a.value, paybackYears } });
+    expect(r(22.4)).toMatchObject({ label: 'Pays for itself in 25 years or less', met: true, detail: '22.4 years' });
+    expect(r(Infinity)).toMatchObject({ met: false, detail: 'never' });
+  });
+
+  it('noBadFit', () => {
+    const ok = designFor('chicago');
+    expect(evaluateRequirement({ kind: 'noBadFit' }, ok.design, analyze(ok.site, ok.design))).toMatchObject({ label: 'No 👎 zones', met: true });
+    const bad = designFor('chicago', { floors: 40, stack: [{ use: 'office', share: 25 }, { use: 'hotel', share: 75 }] });
+    expect(evaluateRequirement({ kind: 'noBadFit' }, bad.design, analyze(bad.site, bad.design))).toMatchObject({ met: false, detail: '👎 Hotel, floors 11–40' });
+  });
+
   it('structural requirement fails when the foundation fails', () => {
     const { site, design } = designFor('shanghai', { floors: 60, foundation: 'mat' });
     const r = evaluateRequirement({ kind: 'structural' }, design, analyze(site, design));

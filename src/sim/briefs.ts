@@ -15,7 +15,9 @@ export type Requirement =
   | { kind: 'style'; style: StyleId }
   | { kind: 'minSetbacks'; value: Exclude<Setbacks, 'none'> }
   | { kind: 'amenity'; id: AmenityId }
-  | { kind: 'landmark' };
+  | { kind: 'landmark' }
+  | { kind: 'maxPaybackYears'; value: number }
+  | { kind: 'noBadFit' };
 
 export interface Brief {
   id: string;
@@ -174,6 +176,31 @@ export const BRIEFS: Brief[] = [
       floors: 42, plateWidth: 40, shape: 'square', material: 'concrete', system: 'core-outrigger', foundation: 'caissons',
       facade: 'precast', windowRatio: 0.4, systemsGrade: 'green', elevators: 10, zoning: 'single',
       stack: stackFromMix({ retail: 5, office: 45, hotel: 0, residential: 50 }),
+    },
+  },
+  {
+    id: 'chicago-stack',
+    siteId: 'chicago',
+    title: 'Stack It Right',
+    client: 'Lakeshore Partners',
+    blurb: "A 90-floor tower with shops, offices and apartments, like Chicago's Hancock Center. Put each in the floors it likes best.",
+    lesson: "Offices like deep floors low down; homes like slim floors and views up high. That's why the Hancock Center tapers.",
+    required: [
+      { kind: 'structural' },
+      { kind: 'minFloors', value: 90 },
+      { kind: 'minUseShare', use: 'office', value: 0.3 },
+      { kind: 'minUseShare', use: 'residential', value: 0.3 },
+      { kind: 'minUseShare', use: 'retail', value: 0.05 },
+      { kind: 'noBadFit' },
+    ],
+    bonus: [
+      { kind: 'maxPaybackYears', value: 25 },
+      { kind: 'amenity', id: 'observation-deck' },
+    ],
+    reference: {
+      floors: 95, plateWidth: 50, shape: 'square', taper: 0.4, material: 'steel', system: 'bundled-tube', exposedStructure: true,
+      damping: 'tmd', foundation: 'caissons', elevators: 30, zoning: 'sky-lobby',
+      stack: [{ use: 'retail', share: 6 }, { use: 'office', share: 44 }, { use: 'residential', share: 50 }],
     },
   },
   {
