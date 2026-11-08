@@ -42,10 +42,10 @@ describe('StackEditor', () => {
     render(<StackEditor />);
     const before = design().stack;
     const line = screen.getByRole('slider', { name: 'Line between Shops and Offices' });
-    fireEvent.pointerDown(line, { pointerId: 1, clientY: 360 });
-    fireEvent.pointerMove(line, { pointerId: 1, clientY: 300 });
-    fireEvent.pointerMove(line, { pointerId: 1, clientY: 250 });
-    fireEvent.pointerMove(line, { pointerId: 1, clientY: 200 });
+    fireEvent.pointerDown(line, { pointerId: 1, clientY: 360, buttons: 1 });
+    fireEvent.pointerMove(line, { pointerId: 1, clientY: 300, buttons: 1 });
+    fireEvent.pointerMove(line, { pointerId: 1, clientY: 250, buttons: 1 });
+    fireEvent.pointerMove(line, { pointerId: 1, clientY: 200, buttons: 1 });
     fireEvent.pointerUp(line, { pointerId: 1, clientY: 200 });
     expect(spans()).toEqual([['retail', 1, 20], ['office', 21, 40]]);
     useGame.getState().undo();
@@ -110,6 +110,49 @@ describe('StackEditor', () => {
   it('a new project clears the selection', () => {
     useGame.getState().selectBand(1);
     useGame.getState().newProject();
+    expect(useGame.getState().selectedBand).toBeNull();
+  });
+
+  it('a drag ends when the pointer capture is lost, and a hover never moves the line', () => {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ top: 0, bottom: 400, height: 400, left: 0, right: 40, width: 40, x: 0, y: 0, toJSON: () => ({}) } as DOMRect);
+    render(<StackEditor />);
+    const before = design().stack;
+    const line = screen.getByRole('slider', { name: 'Line between Shops and Offices' });
+    fireEvent.pointerDown(line, { pointerId: 1, clientY: 360, buttons: 1 });
+    fireEvent.pointerMove(line, { pointerId: 1, clientY: 360, buttons: 0 });
+    expect(design().stack).toEqual(before);
+    fireEvent.lostPointerCapture(line, { pointerId: 1 });
+    fireEvent.pointerMove(line, { pointerId: 1, clientY: 200, buttons: 1 });
+    expect(design().stack).toEqual(before);
+  });
+
+  it('changing a zone so it merges keeps it selected', () => {
+    setStack([{ use: 'retail', share: 10 }, { use: 'office', share: 60 }, { use: 'residential', share: 30 }]);
+    render(<StackEditor />);
+    fireEvent.click(screen.getByRole('button', { name: /^Homes/ }));
+    fireEvent.click(within(screen.getByRole('region', { name: 'Homes zone' })).getByRole('button', { name: 'Offices' }));
+    expect(useGame.getState().selectedBand).toBe(1);
+    expect(screen.getByRole('region', { name: 'Offices zone' })).toBeInTheDocument();
+  });
+
+  it('moving a zone past a same-use pair keeps it selected', () => {
+    setStack([{ use: 'office', share: 25 }, { use: 'retail', share: 25 }, { use: 'office', share: 25 }, { use: 'hotel', share: 25 }]);
+    render(<StackEditor />);
+    fireEvent.click(screen.getByRole('button', { name: /^Shops/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Move up' }));
+    expect(design().stack.map((b) => b.use)).toEqual(['office', 'retail', 'hotel']);
+    expect(useGame.getState().selectedBand).toBe(1);
+    expect(screen.getByRole('region', { name: 'Shops zone' })).toBeInTheDocument();
+  });
+
+  it('undo and redo clear the selection', () => {
+    render(<StackEditor />);
+    fireEvent.click(screen.getByRole('button', { name: '+ Add zone' }));
+    expect(useGame.getState().selectedBand).not.toBeNull();
+    act(() => useGame.getState().undo());
+    expect(useGame.getState().selectedBand).toBeNull();
+    act(() => useGame.getState().selectBand(0));
+    act(() => useGame.getState().redo());
     expect(useGame.getState().selectedBand).toBeNull();
   });
 });

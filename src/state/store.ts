@@ -134,13 +134,13 @@ export const useGame = create<GameState>((set, get) => ({
   undo: () => {
     const { phase, historyIndex } = get();
     if (phase !== 'design' || historyIndex <= 0) return;
-    set({ historyIndex: historyIndex - 1, lastCoalesceKey: null });
+    set({ historyIndex: historyIndex - 1, lastCoalesceKey: null, selectedBand: null });
   },
 
   redo: () => {
     const { phase, historyIndex, history } = get();
     if (phase !== 'design' || historyIndex >= history.length - 1) return;
-    set({ historyIndex: historyIndex + 1, lastCoalesceKey: null });
+    set({ historyIndex: historyIndex + 1, lastCoalesceKey: null, selectedBand: null });
   },
 
   build: () => {

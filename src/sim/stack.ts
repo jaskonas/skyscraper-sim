@@ -67,25 +67,46 @@ export function bandFloors(stack: UseBand[], floors: number): BandSpan[] {
   return spans;
 }
 
-/** A stack whose bands have exactly these floor counts. */
-function fromCounts(uses: UseType[], counts: number[], floors: number): UseBand[] {
-  return normalizeStack(uses.map((use, k) => ({ use, share: (counts[k] / floors) * 100 })));
-}
-
 /**
  * Move the line between visible band `boundary` and the one above it so the upper band starts on floor `toFloor`.
- * Both bands keep at least one floor.
+ * Both bands keep at least one floor. Only those two bands change, so zones too small to show on a short tower survive.
  */
 export function moveBoundary(stack: UseBand[], floors: number, boundary: number, toFloor: number): UseBand[] {
-  const spans = bandFloors(stack, floors);
+  const bands = normalizeStack(stack);
+  const spans = bandFloors(bands, floors);
   const lower = spans[boundary];
   const upper = spans[boundary + 1];
-  if (!lower || !upper) return normalizeStack(stack);
+  if (!lower || !upper) return bands;
   const start = Math.min(upper.to, Math.max(lower.from + 1, Math.round(toFloor)));
-  const counts = spans.map((s) => s.to - s.from + 1);
-  counts[boundary] = start - lower.from;
-  counts[boundary + 1] = upper.to - start + 1;
-  return fromCounts(spans.map((s) => s.use), counts, floors);
+  // Shares before the lower band and after the upper band stay; the line lands exactly on `start`.
+  const before = bands.slice(0, lower.index).reduce((sum, b) => sum + b.share, 0);
+  const through = bands.slice(0, upper.index + 1).reduce((sum, b) => sum + b.share, 0);
+  const line = (start / floors) * 100;
+  const tiny = 1e-3;
+  const next = bands.map((b) => ({ ...b }));
+  next[lower.index].share = Math.max(tiny, line - before);
+  next[upper.index].share = Math.max(tiny, through - line);
+  // Hidden bands between the two shrink to a sliver: still there for a taller tower, never in the way of the line.
+  for (let k = lower.index + 1; k < upper.index; k++) next[k].share = tiny;
+  return normalizeStack(next);
+}
+
+/** The middle of band `index`, as a percent of the way up the tower. */
+export function bandMiddle(stack: UseBand[], index: number): number {
+  const bands = normalizeStack(stack);
+  const below = bands.slice(0, index).reduce((sum, b) => sum + b.share, 0);
+  return below + (bands[index]?.share ?? 0) / 2;
+}
+
+/** The band covering the point `percent` of the way up the tower. */
+export function bandAt(stack: UseBand[], percent: number): number {
+  const bands = normalizeStack(stack);
+  let top = 0;
+  for (let k = 0; k < bands.length; k++) {
+    top += bands[k].share;
+    if (percent < top) return k;
+  }
+  return bands.length - 1;
 }
 
 /** Swap band `index` with its neighbour below (-1) or above (+1). */

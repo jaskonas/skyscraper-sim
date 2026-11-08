@@ -53,10 +53,12 @@ export function ZonesView({ site, design, selected }: { site: Site; design: Desi
     const mesh = meshRef.current;
     if (!mesh) return;
     let i = 0;
+    // Only dim the others when the picked zone is one of those drawn (it can be hidden on a short tower).
+    const picked = blocks.some((b) => b.index === selected) ? selected : null;
     for (const b of blocks) {
       colour.set(b.color);
-      if (b.index === selected) colour.lerp(new THREE.Color('#ffffff'), 0.35);
-      else if (selected !== null) colour.multiplyScalar(0.55);
+      if (b.index === picked) colour.lerp(new THREE.Color('#ffffff'), 0.35);
+      else if (picked !== null) colour.multiplyScalar(0.55);
       for (const sl of b.slices) {
         p.set(0, sl.y + FLOOR_HEIGHT / 2, 0);
         q.setFromAxisAngle(up, sl.rotation);

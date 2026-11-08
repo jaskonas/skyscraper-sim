@@ -49,6 +49,11 @@ export function Gauges() {
         status={statusOf(analysis.cost.total, budget)}
         fraction={analysis.cost.total / (budget * 1.2)}
       />
+      <p className="stats payback">
+        {Number.isFinite(analysis.value.paybackYears)
+          ? `Earns ${formatMoney(analysis.value.incomePerYear)} a year · Pays for itself in ${analysis.value.paybackYears} years`
+          : 'Never pays for itself'}
+      </p>
       <Gauge label="Wind strength" valueText={`1/${Math.round(1 / w.driftRatio)}`} status={check('windStrength').status} fraction={w.driftRatio / (COEFFICIENTS.wind.driftMarginal * 1.2)} />
       <Gauge label="Sway comfort" valueText={`${w.accelMg.toFixed(1)} / ${w.comfortLimitMg} mg`} status={check('windComfort').status} fraction={w.accelMg / (w.comfortLimitMg * 1.5)} />
       <Gauge label="Earthquake" valueText={analysis.seismic.outcome} status={check('seismic').status} fraction={analysis.seismic.ratio / 1.2} />

@@ -43,4 +43,11 @@ describe('<ZonesView />', () => {
     await r.unmount();
     expect(disposed).toBe(2);
   });
+
+  it('a selection that is not drawn dims nothing', async () => {
+    const { mesh } = await blocksOf(7);
+    const c = new THREE.Color();
+    mesh.getColorAt(39, c);
+    expect(c.getHexString()).toBe(new THREE.Color(USE_LABEL.office.color).getHexString());
+  });
 });

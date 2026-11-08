@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bandFloors, moveBand, moveBoundary, normalizeStack, removeBand, setBandUse, splitBand, stackFromMix } from './stack';
+import { bandAt, bandFloors, bandMiddle, moveBand, moveBoundary, normalizeStack, removeBand, setBandUse, splitBand, stackFromMix } from './stack';
 import { USE_ORDER, type UseBand, type UseType } from './types';
 
 /** The fixed-order rule floorUses used before zones (copied from massing.ts). */
@@ -102,5 +102,22 @@ describe('stack', () => {
     expect(removeBand(s, 1)).toEqual([{ use: 'retail', share: 100 }]);
     expect(removeBand([{ use: 'office', share: 100 }], 0)).toEqual([{ use: 'office', share: 100 }]);
     expect(removeBand([{ use: 'retail', share: 10 }, { use: 'office', share: 90 }], 0)).toEqual([{ use: 'office', share: 100 }]);
+  });
+
+  it('moveBoundary keeps zones that have no floors', () => {
+    const six = (['retail', 'office', 'hotel', 'residential', 'office', 'retail'] as UseType[]).map((use) => ({ use, share: 100 / 6 }));
+    const visible = bandFloors(six, 4);
+    expect(visible.length).toBeLessThan(6);
+    const moved = moveBoundary(six, 4, 0, 2);
+    expect(moved).toHaveLength(6);
+    expect(bandFloors(moved, 40)).toHaveLength(6);
+  });
+
+  it('bandAt finds the zone covering a point, bandMiddle gives a zone\'s middle', () => {
+    const s: UseBand[] = [{ use: 'retail', share: 10 }, { use: 'office', share: 60 }, { use: 'hotel', share: 30 }];
+    expect(bandMiddle(s, 1)).toBeCloseTo(40);
+    expect(bandAt(s, 5)).toBe(0);
+    expect(bandAt(s, 40)).toBe(1);
+    expect(bandAt(s, 99)).toBe(2);
   });
 });
