@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { useGame } from '../state/store';
-import { SystemButtons, SystemReadout } from './SystemControls';
+import { SystemButtons, SystemReadout, ZonesButton, ZonesReadout } from './SystemControls';
 
 const state = () => useGame.getState();
 
@@ -51,5 +51,42 @@ describe('system buttons and card', () => {
   it("screen readers hear the buttons' names, not their emoji", () => {
     render(<SystemButtons />);
     for (const name of ['Power', 'Water', 'Waste', 'Elevators', 'Air']) expect(screen.getByRole('button', { name })).toBeInTheDocument();
+  });
+});
+
+describe('zones button and card', () => {
+  beforeEach(() => {
+    state().newProject();
+    state().startProject('chicago', 'sandbox');
+  });
+
+  it('the Zones button toggles the view', () => {
+    render(<ZonesButton />);
+    const zones = screen.getByRole('button', { name: 'Zones' });
+    expect(zones).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(zones);
+    expect(zones).toHaveAttribute('aria-pressed', 'true');
+    expect(state().zonesView).toBe(true);
+  });
+
+  it('hidden while building, and the card with it', () => {
+    state().toggleZones();
+    state().build();
+    const { container } = render(
+      <>
+        <ZonesButton />
+        <ZonesReadout />
+      </>,
+    );
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('the card lists the zones top first with their fit', () => {
+    act(() => state().dispatch([{ type: 'set_stack', stack: [{ use: 'office', share: 100 }] }]));
+    act(() => state().toggleZones());
+    render(<ZonesReadout />);
+    const card = screen.getByRole('region', { name: 'Zones' });
+    expect(within(card).getByText('🏢 Offices · floors 1–40 · 👍')).toBeInTheDocument();
+    expect(card.textContent).toMatch(/Pays for itself in [\d.]+ years/);
   });
 });

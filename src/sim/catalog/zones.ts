@@ -41,3 +41,13 @@ export const FIT_TEXT = {
 export function fillText(template: string, values: Record<string, string | number>): string {
   return template.replace(/\{(\w+)\}/g, (_, k: string) => String(values[k] ?? ''));
 }
+
+/** The 🏷️ Zones view: its button and card. */
+export const ZONES_VIEW_TEXT = {
+  icon: '🏷️',
+  button: 'Zones',
+  title: 'Zones',
+  payback: 'Pays for itself in {years} years.',
+  never: 'It never pays for itself.',
+  note: 'Change the zones in the sidebar under Zones.',
+};

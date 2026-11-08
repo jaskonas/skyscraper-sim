@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { SYSTEM_LABEL, SYSTEM_TEXT } from '../sim/catalog/systems';
+import { FIT_EMOJI, USE_LABEL, ZONES_VIEW_TEXT, fillText } from '../sim/catalog/zones';
 import { SYSTEM_IDS } from '../sim/systems/facts';
 import { systemReadout } from '../sim/systems/readout';
 import { useCurrent } from '../state/hooks';
@@ -53,6 +54,49 @@ export function SystemReadout() {
         </button>
       )}
       <p className="muted">{r.note}</p>
+    </section>
+  );
+}
+
+/** Whether the 🏷️ Zones view is on right now (it waits while the tower is being built). */
+export function useShownZones() {
+  const zonesView = useGame((s) => s.zonesView);
+  const building = useGame((s) => s.phase === 'building');
+  return zonesView && !building;
+}
+
+/** 🏷️ Zones: the see-through tower with each zone drawn in its colour. Hidden while building. */
+export function ZonesButton() {
+  const zonesView = useGame((s) => s.zonesView);
+  const building = useGame((s) => s.phase === 'building');
+  const toggleZones = useGame((s) => s.toggleZones);
+  if (building) return null;
+  return (
+    <button className="zones-button" aria-pressed={zonesView} onClick={toggleZones}>
+      <span aria-hidden="true">{ZONES_VIEW_TEXT.icon} </span>
+      {ZONES_VIEW_TEXT.button}
+    </button>
+  );
+}
+
+/** The card for the Zones view: each zone top first with its fit, and the payback. */
+export function ZonesReadout() {
+  const shown = useShownZones();
+  const { analysis } = useCurrent();
+  if (!shown) return null;
+  const years = analysis.value.paybackYears;
+  return (
+    <section className="force-readout zones-readout" aria-label={ZONES_VIEW_TEXT.title}>
+      <p className="label">{ZONES_VIEW_TEXT.title}</p>
+      <ul>
+        {[...analysis.value.bands].reverse().map((b) => (
+          <li key={b.index} title={b.reason}>
+            {`${USE_LABEL[b.use].icon} ${USE_LABEL[b.use].label} · floors ${b.from + 1}–${b.to + 1} · ${FIT_EMOJI[b.fit]}`}
+          </li>
+        ))}
+      </ul>
+      <p>{Number.isFinite(years) ? fillText(ZONES_VIEW_TEXT.payback, { years }) : ZONES_VIEW_TEXT.never}</p>
+      <p className="muted">{ZONES_VIEW_TEXT.note}</p>
     </section>
   );
 }

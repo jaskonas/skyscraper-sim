@@ -9,7 +9,7 @@ import { DetailInset } from '../ui/DetailInset';
 import { FacadeDetailToggle } from '../ui/FacadeDetailToggle';
 import { ForceBanner, ForceButtons, ForceReadout } from '../ui/ForceControls';
 import { ShadowToggle } from '../ui/ShadowToggle';
-import { SystemButtons, SystemReadout, useShownSystem } from '../ui/SystemControls';
+import { SystemButtons, SystemReadout, useShownSystem, useShownZones, ZonesButton, ZonesReadout } from '../ui/SystemControls';
 import { SoilLegend } from '../ui/SoilLegend';
 import { Building } from './Building';
 import { ConstructionView } from './construction/ConstructionView';
@@ -26,6 +26,7 @@ import { Neighbors } from './Neighbors';
 import { SiteDiorama } from './SiteDiorama';
 import { SunLight } from './SunLight';
 import { SystemsView } from './systems/SystemsView';
+import { ZonesView } from './zones/ZonesView';
 import { VerticalPan } from './verticalPan';
 import { cameraFrame, type CameraFrame } from './layout';
 
@@ -64,6 +65,8 @@ export function Scene() {
   const shownSystem = useShownSystem();
   const systemOn = shownSystem !== 'none' ? shownSystem : null;
   const powerCut = useGame((s) => s.powerCut);
+  const zonesOn = useShownZones();
+  const selectedBand = useGame((s) => s.selectedBand);
   const [sway] = useState(createSway);
   // Material textures arrive after the first frame; until then surfaces keep their plain look.
   useEffect(() => startLibraryLoad(), []);
@@ -95,10 +98,11 @@ export function Scene() {
             sway={sway}
             hideTopFloors={forceOn === 'wind' && design.damping === 'tmd' ? 3 : 0}
             facadeDetail={facadeDetail}
-            ghost={!!systemOn}
+            ghost={!!systemOn || zonesOn}
           />
         )}
         {systemOn && <SystemsView site={site} design={design} analysis={analysis} system={systemOn} powerCut={powerCut} />}
+        {zonesOn && <ZonesView site={site} design={design} selected={selectedBand} />}
         {forceOn && <ForcesView site={site} design={design} analysis={analysis} force={forceOn} sway={sway} />}
         <OrbitControls makeDefault maxPolarAngle={Math.PI * 0.62} minDistance={40} maxDistance={2500} />
         <VerticalPan />
@@ -108,7 +112,7 @@ export function Scene() {
       <DetailInset />
       <ForceBanner />
       <div className="scene-overlay">
-        {forceOn ? <ForceReadout /> : systemOn ? <SystemReadout /> : <SoilLegend site={site} design={design} />}
+        {forceOn ? <ForceReadout /> : systemOn ? <SystemReadout /> : zonesOn ? <ZonesReadout /> : <SoilLegend site={site} design={design} />}
         <button onClick={reframe} title="Tip: hold Shift and scroll to move up and down the tower">
           Fit tower in view
         </button>
@@ -117,6 +121,7 @@ export function Scene() {
         </button>
         <ForceButtons />
         <SystemButtons />
+        <ZonesButton />
         <FacadeDetailToggle />
         <ShadowToggle />
       </div>

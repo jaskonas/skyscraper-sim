@@ -40,6 +40,8 @@ export interface GameState {
   system: SystemView;
   /** View only: the street power is cut, so the backup generators run (Power view). */
   powerCut: boolean;
+  /** View only, exclusive with `force` and `system`: the tower is see-through with its zones drawn as coloured bands. */
+  zonesView: boolean;
   /** View only: the zone picked in the sidebar's zone editor (an index into the design's stack), or none. */
   selectedBand: number | null;
   /** View only, and kept for new projects: it is about what the computer can draw smoothly, not the design. */
@@ -72,6 +74,8 @@ export interface GameState {
   toggleSystem: (s: SystemId) => void;
   setPowerCut: (on: boolean) => void;
   selectBand: (index: number | null) => void;
+  /** Show the zones on the see-through tower, or turn them off. Turns any force or system off. */
+  toggleZones: () => void;
   setFacadeDetail: (d: FacadeDetail) => void;
   setShadows: (on: boolean) => void;
 }
@@ -89,6 +93,7 @@ export const useGame = create<GameState>((set, get) => ({
   force: 'none',
   system: 'none',
   powerCut: false,
+  zonesView: false,
   selectedBand: null,
   facadeDetail: 'high',
   shadows: true,
@@ -182,6 +187,7 @@ export const useGame = create<GameState>((set, get) => ({
       force: 'none',
       system: 'none',
       powerCut: false,
+      zonesView: false,
       selectedBand: null,
       buildStage: 0,
       stageDone: false,
@@ -189,9 +195,11 @@ export const useGame = create<GameState>((set, get) => ({
 
   setTimeOfDay: (timeOfDay) => set({ timeOfDay }),
 
-  toggleForce: (f) => set({ force: get().force === f ? 'none' : f, system: 'none' }),
+  toggleForce: (f) => set({ force: get().force === f ? 'none' : f, system: 'none', zonesView: false }),
 
-  toggleSystem: (s) => set({ system: get().system === s ? 'none' : s, force: 'none', powerCut: false }),
+  toggleSystem: (s) => set({ system: get().system === s ? 'none' : s, force: 'none', powerCut: false, zonesView: false }),
+
+  toggleZones: () => set({ zonesView: !get().zonesView, force: 'none', system: 'none', powerCut: false }),
 
   setPowerCut: (powerCut) => set({ powerCut }),
 
