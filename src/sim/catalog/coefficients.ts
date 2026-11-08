@@ -157,6 +157,21 @@ export const COEFFICIENTS = {
     euiMarginal: 300,
   },
 
+  zones: {
+    /** Core-to-window depth is this share of the floor's narrower side (the core is 0.3 of it). */
+    depthShare: 0.35,
+    /** Metres from core to windows: 👍 inside `good`, 😐 inside `ok`, 👎 outside. */
+    depth: {
+      office: { good: [9, 18], ok: [7, 22] },
+      hotel: { good: [5, 10], ok: [5, 13] },
+      residential: { good: [6, 12], ok: [6, 15] },
+      retail: { good: [6, Infinity], ok: [6, Infinity] },
+    } satisfies Record<UseType, { good: [number, number]; ok: [number, number] }>,
+    /** Hotel and homes starting below this floor index hear the street. */
+    quietFromFloor: 5,
+    hotelMinFloors: 5,
+  },
+
   cost: {
     /** Structure cost per m² of floor, USD. Steel costs more than concrete. */
     structurePerM2: { steel: 1100, composite: 950, concrete: 800 } satisfies Record<Material, number>,
