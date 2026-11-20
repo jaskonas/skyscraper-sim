@@ -53,7 +53,7 @@ function CameraFramer({ frame, nonce }: { frame: CameraFrame; nonce: number }) {
 export { lighting };
 
 export function Scene() {
-  const { site, design, analysis } = useCurrent();
+  const { site, design, analysis, project } = useCurrent();
   const timeOfDay = useGame((s) => s.timeOfDay);
   const setTimeOfDay = useGame((s) => s.setTimeOfDay);
   const night = timeOfDay === 'night';
@@ -100,6 +100,7 @@ export function Scene() {
             hideTopFloors={forceOn === 'wind' && design.damping === 'tmd' ? 3 : 0}
             facadeDetail={facadeDetail}
             ghost={!!systemOn || zonesOn}
+            towerName={project.towerName}
           />
         )}
         {systemOn && <SystemsView site={site} design={design} analysis={analysis} system={systemOn} powerCut={powerCut} />}

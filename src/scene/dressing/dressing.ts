@@ -3,7 +3,7 @@ import { FLOOR_HEIGHT, floorSlices, type FloorSlice } from '../../sim/geometry';
 import { partBounds, rotateYXZ, strutPart, type Part, type PartMaterial, type Vec3 } from '../../sim/parts';
 import type { Design, Site } from '../../sim/types';
 import { crownParts } from '../crownParts';
-import { placeAtAnchor, worldAnchor } from '../detail/frame';
+import { placeAtAnchor, worldAnchor, type WorldAnchor } from '../detail/frame';
 import { alongFace, perimeterPoints, planFaces, setbackLevels } from '../parts/placement';
 import { insidePlan, ringPoints } from '../structure/planMath';
 
@@ -230,11 +230,21 @@ export function terraceParts(design: Design): Part[] {
  * leaves), the lit lobby behind it, a stone plinth, steel bollards along the sidewalk, and (unless Ornament
  * amount is None) planters either side of the door and paving joints.
  */
-export function entranceParts(design: Design): Part[] {
+/** Where the front door is: the middle of the ground floor's street-facing wall, and how wide the entrance is. */
+export function entranceAnchor(design: Design): { anchor: WorldAnchor; width: number } {
+  return entranceFrame(design).entrance;
+}
+
+function entranceFrame(design: Design) {
   const ground = floorSlices(design)[0];
   const front = planFaces(design.shape, ground.width, ground.depth).reduce((best, f) => (f.z > best.z ? f : best));
   const at = (s: number) => worldAnchor(ground, alongFace(design.shape, ground.width, ground.depth, front, s));
-  const width = Math.min(10, front.length * 0.4);
+  return { front, at, entrance: { anchor: at(0), width: Math.min(10, front.length * 0.4) } };
+}
+
+export function entranceParts(design: Design): Part[] {
+  const { front, at, entrance } = entranceFrame(design);
+  const width = entrance.width;
   const decorative = design.ornament !== 'none';
   const parts: Part[] = [
     placeAtAnchor(box([0, 3.75, 1.5], [width, 0.3, 3], 'steel'), at(0)),

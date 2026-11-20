@@ -12,6 +12,7 @@ import { facadeTextures } from './facadeTexture';
 import { nightWindowAttributes } from './nightWindows';
 import { balconyParts } from './balconies';
 import { crownParts } from './crownParts';
+import { NameSign } from './NameSign';
 import { dressingParts, helipadRadius, roofDeck } from './dressing/dressing';
 import { swayAt, type SwaySignal } from './forces/sway';
 import { lotCenter } from './layout';
@@ -259,6 +260,7 @@ export function Building({
   hideTopFloors = 0,
   facadeDetail = true,
   ghost = false,
+  towerName = null,
 }: {
   site: Site;
   design: Design;
@@ -272,6 +274,8 @@ export function Building({
   facadeDetail?: boolean;
   /** Draw the tower faint and see-through, so a building system inside it shows. */
   ghost?: boolean;
+  /** The finished tower's name, shown on a sign over the front door (not on the see-through tower). */
+  towerName?: string | null;
 }) {
   const groupRef = useRef<THREE.Group>(null);
   useGhost(groupRef, ghost, design);
@@ -349,6 +353,7 @@ export function Building({
       <PartsMesh name="wall-kit" parts={wallKit.coarse} {...look} />
       <NearParts name="wall-kit-fine" parts={wallKit.fine} centre={[0, (floors * FLOOR_HEIGHT) / 2, 0]} within={300 + (floors * FLOOR_HEIGHT) / 2} offset={[lx, lz]} {...look} />
       <PartsMesh name="dressing" parts={dressingSplit.coarse} {...look} />
+      {towerName && !ghost && <NameSign design={design} name={towerName} night={night} />}
       <NearParts name="roof-fine" parts={dressingSplit.roof} centre={crownCentre} offset={[lx, lz]} {...look} />
       <NearParts name="street-fine" parts={dressingSplit.street} centre={[0, 3, 0]} offset={[lx, lz]} {...look} />
       {/* While building, exposed bracing is part of the bare structure instead. */}
