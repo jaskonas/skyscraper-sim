@@ -8,7 +8,7 @@ import { useGame } from '../../state/store';
 
 /** The sidebar while the tower is being built: one stage at a time, explained, with Next, Replay and Skip. */
 export function ConstructionCard() {
-  const { site, design, analysis } = useCurrent();
+  const { site, design, analysis, project } = useCurrent();
   const stage = useGame((s) => s.buildStage);
   const done = useGame((s) => s.stageDone);
   const { nextStage, replayStage, skipBuild } = useGame.getState();
@@ -20,6 +20,7 @@ export function ConstructionCard() {
   const last = stage === STAGE_COUNT - 1;
   return (
     <section className="card construction" aria-label="Construction">
+      {project.towerName && <p className="building-name">Building {project.towerName}</p>}
       <h2>
         Stage {stage + 1} of {STAGE_COUNT} · {caption.title}
       </h2>

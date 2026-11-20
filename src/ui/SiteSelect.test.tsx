@@ -28,12 +28,12 @@ describe('SiteSelect', () => {
   it('starts a sandbox project', () => {
     render(<SiteSelect />);
     fireEvent.click(screen.getByRole('button', { name: 'Sandbox in Chicago' }));
-    expect(useGame.getState().project).toEqual({ siteId: 'chicago', mode: 'sandbox', briefId: null });
+    expect(useGame.getState().project).toEqual({ siteId: 'chicago', mode: 'sandbox', briefId: null, towerName: null });
   });
 
   it('starts a challenge project with its brief', () => {
     render(<SiteSelect />);
     fireEvent.click(screen.getByRole('button', { name: /Open for Business/ }));
-    expect(useGame.getState().project).toEqual({ siteId: 'tokyo', mode: 'challenge', briefId: 'tokyo-quake' });
+    expect(useGame.getState().project).toEqual({ siteId: 'tokyo', mode: 'challenge', briefId: 'tokyo-quake', towerName: null });
   });
 });

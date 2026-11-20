@@ -4,6 +4,11 @@ import { selectDesign, useGame } from '../../state/store';
 import { Sidebar } from './Sidebar';
 
 const design = () => selectDesign(useGame.getState())!;
+const buildNamed = () => {
+  fireEvent.click(screen.getByRole('button', { name: 'Build it!' }));
+  fireEvent.change(screen.getByRole('textbox', { name: 'Tower name' }), { target: { value: 'Test Tower' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Start building 🏗️' }));
+};
 
 describe('Sidebar', () => {
   beforeEach(() => {
@@ -49,7 +54,7 @@ describe('Sidebar', () => {
 
   it('building shows the construction card, then the assessment, and hides the controls', () => {
     render(<Sidebar />);
-    fireEvent.click(screen.getByRole('button', { name: 'Build it!' }));
+    buildNamed();
     expect(screen.getByRole('region', { name: 'Construction' })).toBeInTheDocument();
     expect(screen.queryByRole('slider', { name: 'Floors' })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Skip to finished' }));
@@ -61,7 +66,7 @@ describe('Sidebar', () => {
   it('a sandbox assessment shows letter grades', () => {
     useGame.getState().startProject('new-york', 'sandbox');
     render(<Sidebar />);
-    fireEvent.click(screen.getByRole('button', { name: 'Build it!' }));
+    buildNamed();
     fireEvent.click(screen.getByRole('button', { name: 'Skip to finished' }));
     expect(screen.getByText('Safety')).toBeInTheDocument();
     expect(screen.getByText('Sustainability')).toBeInTheDocument();

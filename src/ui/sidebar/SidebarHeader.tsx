@@ -14,8 +14,9 @@ export function SidebarHeader() {
   return (
     <header className="sidebar-header">
       <div>
-        <h1>{site.city}</h1>
+        <h1>{project.towerName ?? site.city}</h1>
         <p className="muted">
+          {project.towerName && `${site.city} · `}
           {site.name} · {project.mode === 'challenge' ? 'Challenge' : 'Sandbox'} · {PHASE_LABEL[phase]}
         </p>
       </div>

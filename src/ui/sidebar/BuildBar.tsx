@@ -1,19 +1,21 @@
+import { useState } from 'react';
 import { useCurrent } from '../../state/hooks';
-import { useGame } from '../../state/store';
+import { NameTowerDialog } from './NameTowerDialog';
 
 export function BuildBar() {
   const { analysis } = useCurrent();
-  const build = useGame((s) => s.build);
+  const [naming, setNaming] = useState(false);
   const structuralFail = analysis.checks.some(
     (c) => (c.id === 'windStrength' || c.id === 'seismic' || c.id === 'foundation') && c.status === 'fail',
   );
   return (
     <footer className="build-bar">
       {structuralFail && <p className="warning">⚠ This design would fail its structural engineering assessment.</p>}
-      <button className="build-button" onClick={() => build()}>
+      <button className="build-button" onClick={() => setNaming(true)}>
         Build it!
       </button>
       <p className="muted">Building locks the design.</p>
+      {naming && <NameTowerDialog onClose={() => setNaming(false)} />}
     </footer>
   );
 }
