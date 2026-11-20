@@ -31,6 +31,8 @@ Inside the tower: ⚡ Power, 💧 Water, 🚽 Waste, 🛗 Elevators and 🌬️ 
 
 Zones: paint your tower into zones of 🛍️ shops, 🏢 offices, 🛎️ hotel and 🏠 homes, in any order and as many as six. Drag the lines between zones, tap one to change it, and see a 👍 😐 or 👎 with the reason: hotels and homes want slim floors near the windows and a view, offices like deep floors, shops want the street. Each zone earns rent by its use, height, fit and city, and the tower shows how many years it takes to pay for itself (the Value grade). 🏷️ Zones shows them on the see-through tower.
 
+Name your tower when you press Build it!: type a name, or tap one of the ideas and change it. The finished tower shows its name on a title card, on a stone-and-gold sign over the front door (lit at night), and in the saved file.
+
 Hold **Shift and scroll** (or two-finger swipe) to move up and down the tower without zooming.
 
 ## Develop
