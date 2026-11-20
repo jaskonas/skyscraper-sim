@@ -50,7 +50,7 @@ A small feature that sits outside the numbered roadmap. It does not depend on Pl
 `suggestTowerName(site, design, n)` builds a name from a **city word** and a **form word**. It is deterministic in `n`, so the 🎲 button just counts up.
 
 - **City words:**
-  - New York: Hudson, Liberty, Broadway, Harbor, Empire Park;
+  - New York: Hudson, Midtown, Broadway, Harbor, Empire Park;
   - Tokyo: Sakura, Sumida, Kanto, Shinjuku Sky, Fuji View;
   - Chicago: Lakeshore, Prairie, Windy City, Riverbend, Loop;
   - Shanghai: Pearl River, Bund, Huangpu, Jade, Lotus.
@@ -58,8 +58,8 @@ A small feature that sits outside the numbered roadmap. It does not depend on Pl
   - **Spire** when the crown is a spire;
   - **Needle** when it is slender (height/base over 8);
   - **Twist** when twist is 30° or more.
-- **The order:** suggestion `n` uses city word `n mod 5` and form word `⌊n/5⌋ + n mod (number of form words)`, so consecutive suggestions change both words. The result is "The <city> <form>", for example "The Sakura Spire".
-- None of these combinations is a real tower's name.
+- **The order:** suggestion `n` uses city word `n mod 5` and form word `(⌊n/5⌋ + n) mod (number of form words)`, with the design's extra forms listed first, so consecutive suggestions change both words. The result is "The <city> <form>", for example "The Sakura Spire".
+- The words are chosen to avoid famous real towers' names.
 
 ## 5. UI
 
