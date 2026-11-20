@@ -12,7 +12,7 @@ describe('game store', () => {
   });
 
   it('starts a project with the default design', () => {
-    expect(state().project).toEqual({ siteId: 'chicago', mode: 'sandbox', briefId: null });
+    expect(state().project).toEqual({ siteId: 'chicago', mode: 'sandbox', briefId: null, towerName: null });
     expect(design().floors).toBe(40);
     expect(selectCanUndo(state())).toBe(false);
   });
@@ -88,6 +88,37 @@ describe('game store', () => {
     for (const v of [55, 60]) state().dispatch([{ type: 'set_parameter', id: 'floors', value: v }], { coalesceKey: 'floors' });
     state().undo();
     expect(design().floors).toBe(50);
+  });
+});
+
+describe('tower name', () => {
+  beforeEach(() => {
+    state().newProject();
+    state().startProject('chicago', 'sandbox');
+  });
+
+  it('Build stores the cleaned name and leaves the design alone', () => {
+    const before = state().history.slice();
+    state().build('  My   Tower ');
+    expect(state().project?.towerName).toBe('My Tower');
+    expect(state().history).toEqual(before);
+  });
+
+  it('Build with no name, or a blank one, leaves it null', () => {
+    state().build('   ');
+    expect(state().project?.towerName).toBeNull();
+    state().newProject();
+    state().startProject('chicago', 'sandbox');
+    state().build();
+    expect(state().project?.towerName).toBeNull();
+  });
+
+  it('a new project forgets the old name', () => {
+    state().build('First');
+    state().skipBuild();
+    state().newProject();
+    state().startProject('tokyo', 'sandbox');
+    expect(state().project?.towerName).toBeNull();
   });
 });
 

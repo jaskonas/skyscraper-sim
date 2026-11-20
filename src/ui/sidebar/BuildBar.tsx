@@ -10,7 +10,7 @@ export function BuildBar() {
   return (
     <footer className="build-bar">
       {structuralFail && <p className="warning">⚠ This design would fail its structural engineering assessment.</p>}
-      <button className="build-button" onClick={build}>
+      <button className="build-button" onClick={() => build()}>
         Build it!
       </button>
       <p className="muted">Building locks the design.</p>

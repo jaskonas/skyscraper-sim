@@ -4,6 +4,7 @@ import { applyActions, type ApplyResult, type DesignAction, type GamePhase } fro
 import { defaultDesign } from '../sim/design';
 import { getSite } from '../sim/sites';
 import type { Design, DetailLevel, SiteId } from '../sim/types';
+import { cleanTowerName } from '../sim/towerName';
 import { setBuildProgress } from './buildProgress';
 import type { SystemId } from '../sim/systems/facts';
 
@@ -20,6 +21,8 @@ export interface Project {
   siteId: SiteId;
   mode: GameMode;
   briefId: string | null;
+  /** The name given when Build it! is pressed; null until then. Saved in the export, never part of the design. */
+  towerName: string | null;
 }
 
 const HISTORY_LIMIT = 200;
@@ -60,7 +63,8 @@ export interface GameState {
   endCoalesce: () => void;
   undo: () => void;
   redo: () => void;
-  build: () => void;
+  /** Start construction, naming the tower (cleaned; blank or missing leaves it unnamed). */
+  build: (name?: string) => void;
   /** The 3D view calls this when the current stage has finished playing. */
   finishStage: () => void;
   nextStage: () => void;
@@ -103,7 +107,7 @@ export const useGame = create<GameState>((set, get) => ({
 
   startProject: (siteId, mode, briefId = null) =>
     set({
-      project: { siteId, mode, briefId: mode === 'challenge' ? briefId : null },
+      project: { siteId, mode, briefId: mode === 'challenge' ? briefId : null, towerName: null },
       selectedBand: null,
       phase: 'design',
       history: [defaultDesign(getSite(siteId))],
@@ -143,10 +147,18 @@ export const useGame = create<GameState>((set, get) => ({
     set({ historyIndex: historyIndex + 1, lastCoalesceKey: null, selectedBand: null });
   },
 
-  build: () => {
-    if (!get().project || get().phase !== 'design') return;
+  build: (name) => {
+    const project = get().project;
+    if (!project || get().phase !== 'design') return;
     setBuildProgress(0);
-    set({ phase: 'building', buildStage: 0, stageDone: false, stageRun: get().stageRun + 1, lastCoalesceKey: null });
+    set({
+      project: { ...project, towerName: cleanTowerName(name ?? '') || null },
+      phase: 'building',
+      buildStage: 0,
+      stageDone: false,
+      stageRun: get().stageRun + 1,
+      lastCoalesceKey: null,
+    });
   },
 
   finishStage: () => {
