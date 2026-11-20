@@ -5,6 +5,7 @@ import { NameTowerDialog } from './NameTowerDialog';
 export function BuildBar() {
   const { analysis } = useCurrent();
   const [naming, setNaming] = useState(false);
+  const [draft, setDraft] = useState('');
   const structuralFail = analysis.checks.some(
     (c) => (c.id === 'windStrength' || c.id === 'seismic' || c.id === 'foundation') && c.status === 'fail',
   );
@@ -15,7 +16,7 @@ export function BuildBar() {
         Build it!
       </button>
       <p className="muted">Building locks the design.</p>
-      {naming && <NameTowerDialog onClose={() => setNaming(false)} />}
+      {naming && <NameTowerDialog draft={draft} onDraft={setDraft} onClose={() => setNaming(false)} />}
     </footer>
   );
 }

@@ -7,16 +7,23 @@ import { useGame } from '../../state/store';
 
 const IDEAS = 3;
 
-/** Asked when Build it! is pressed: he types the tower's name, or taps one of three ideas and edits it. */
-export function NameTowerDialog({ onClose }: { onClose: () => void }) {
+/**
+ * Asked when Build it! is pressed: he types the tower's name, or taps one of three ideas and edits it. The box starts
+ * from `draft` (what he typed last time), and every change is reported back so going back to designing keeps it.
+ */
+export function NameTowerDialog({ draft, onDraft, onClose }: { draft: string; onDraft: (name: string) => void; onClose: () => void }) {
   const { site, design } = useCurrent();
-  const [value, setValue] = useState('');
+  const [value, setValue] = useState(draft);
   const [offset, setOffset] = useState(0);
   const input = useRef<HTMLInputElement>(null);
   const ready = cleanTowerName(value) !== '';
   const used = Array.from(value).length;
 
-  const take = (text: string) => setValue(Array.from(text).slice(0, TOWER_NAME_MAX).join(''));
+  const take = (text: string) => {
+    const next = Array.from(text).slice(0, TOWER_NAME_MAX).join('');
+    setValue(next);
+    onDraft(next);
+  };
   const pick = (idea: string) => {
     take(idea);
     const el = input.current;

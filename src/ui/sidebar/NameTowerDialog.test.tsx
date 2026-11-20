@@ -97,6 +97,14 @@ describe('Name your tower', () => {
     expect(state().historyIndex).toBe(index);
   });
 
+  it('going back keeps the typed name for next time', () => {
+    click('Build it!');
+    fireEvent.change(box(), { target: { value: 'My Long Tower Name' } });
+    click('Back to designing');
+    click('Build it!');
+    expect(box().value).toBe('My Long Tower Name');
+  });
+
   it('the box stops at 40 characters', () => {
     click('Build it!');
     fireEvent.change(box(), { target: { value: 'x'.repeat(60) } });

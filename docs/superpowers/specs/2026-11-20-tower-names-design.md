@@ -58,7 +58,7 @@ A small feature that sits outside the numbered roadmap. It does not depend on Pl
   - **Spire** when the crown is a spire;
   - **Needle** when it is slender (height/base over 8);
   - **Twist** when twist is 30° or more.
-- **The order:** suggestion `n` uses city word `n mod 5` and form word `(⌊n/5⌋ + n) mod (number of form words)`, with the design's extra forms listed first, so consecutive suggestions change both words. The result is "The <city> <form>", for example "The Sakura Spire".
+- **The order (as built):** take `k = n mod (5 × number of form words)`. The city word is `k mod 5`, and the form word is `(city index + ⌊k/5⌋) mod (number of form words)`, with the design's extra forms listed first. Every pair of words comes up once before any repeats, and each next idea changes the city word. The result is "The <city> <form>", for example "The Sakura Spire".
 - The words are chosen to avoid famous real towers' names.
 
 ## 5. UI
@@ -74,7 +74,7 @@ A small feature that sits outside the numbered roadmap. It does not depend on Pl
   - **🎲 More ideas** replaces the three with the next three (`n += 3`). It never changes what's in the box.
 - **Buttons:**
   - **Start building 🏗️** also triggers on Enter. It is disabled while the box is blank, so the tower always gets a name he typed or chose.
-  - **Back to designing** also triggers on Escape. It leaves the design phase untouched.
+  - **Back to designing** also triggers on Escape. It leaves the design phase untouched and keeps what he typed for the next time the box opens.
 - With the idea buttons the dialog still needs only two taps to build, so the "one tap" anti-goal becomes **two taps** (an idea, then Start).
 - At Chromebook width (1024 px) it fits without scrolling. The idea buttons wrap onto a second line if they need to.
 
@@ -87,6 +87,7 @@ A small feature that sits outside the numbered roadmap. It does not depend on Pl
 - The top line is "🎉 <name>". Under it: "<tip height> m · <floors> floors · <city>".
 - On appearing it fades in and rises over about 0.6 s. With `prefers-reduced-motion` it doesn't move.
 - It ignores pointer events. The force banner stacks under it, and neither overlaps the other.
+- After 5 s it shrinks to a one-line name tag (name only, smaller) so it no longer hides the crown.
 - A long name wraps to at most two lines.
 
 **3D sign (`NameSign`):**
@@ -95,7 +96,7 @@ A small feature that sits outside the numbered roadmap. It does not depend on Pl
 - The text is drawn on a canvas texture. The font shrinks until the name fits on one line, down to a minimum, after which the text is cut with "…".
 - At night the letters glow: an emissive map, the same idea as the lobby glass.
 - It is drawn only when there is a name, and not on the ghosted tower (systems or zones view).
-- One mesh and one texture, disposed when the name or the tower changes.
+- One mesh with two canvas textures (the face, and the glowing letters for night), disposed when the name or the tower changes.
 
 ## 6. Testing
 
