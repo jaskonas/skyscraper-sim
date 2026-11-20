@@ -11,6 +11,7 @@ import { ForceBanner, ForceButtons, ForceReadout } from '../ui/ForceControls';
 import { ShadowToggle } from '../ui/ShadowToggle';
 import { SystemButtons, SystemReadout, useShownSystem, useShownZones, ZonesButton, ZonesReadout } from '../ui/SystemControls';
 import { SoilLegend } from '../ui/SoilLegend';
+import { TowerTitle } from '../ui/TowerTitle';
 import { Building } from './Building';
 import { ConstructionView } from './construction/ConstructionView';
 import { ContactShade } from './ContactShade';
@@ -110,7 +111,10 @@ export function Scene() {
         <DevCameraHook />
       </Canvas>
       <DetailInset />
-      <ForceBanner />
+      <div className="scene-top">
+        <TowerTitle />
+        <ForceBanner />
+      </div>
       <div className="scene-overlay">
         {forceOn ? <ForceReadout /> : systemOn ? <SystemReadout /> : zonesOn ? <ZonesReadout /> : <SoilLegend site={site} design={design} />}
         <button onClick={reframe} title="Tip: hold Shift and scroll to move up and down the tower">
