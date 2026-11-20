@@ -11,7 +11,7 @@ A small feature that sits outside the numbered roadmap. It does not depend on Pl
 ## 2. Goals, non-goals, anti-goals
 
 **Goals:**
-1. Pressing **Build it!** asks for a name before construction starts.
+1. Pressing **Build it!** asks for a name before construction starts. He types it in a text box, or taps one of a few ready-made names and edits it.
 2. The finished tower shows its name in four places:
    - a title card over the 3D view;
    - a 3D sign over the front door;
@@ -26,7 +26,7 @@ A small feature that sits outside the numbered roadmap. It does not depend on Pl
 - A name on the crown or the roof.
 
 **Anti-goals:**
-- **A blocker.** He must be able to build with one tap, using a suggested name, without typing.
+- **A blocker.** He must be able to build without typing: tap an idea, then Start building.
 - **Broken text.** A long name or an emoji name must not overflow the card, the sign or the file name.
 - **Changing the design.** Naming must not touch the design, its undo history, its analysis or the briefs.
 
@@ -47,7 +47,7 @@ A small feature that sits outside the numbered roadmap. It does not depend on Pl
 
 ## 4. Name suggestions (my call)
 
-`suggestTowerName(site, design, n)` builds a name from a **city word** and a **form word**. It is deterministic in `n`, so the 🎲 button just counts up.
+`suggestTowerName(site, design, n)` builds a name from a **city word** and a **form word**. It is deterministic in `n`, so 🎲 More ideas just moves on by three.
 
 - **City words:**
   - New York: Hudson, Midtown, Broadway, Harbor, Empire Park;
@@ -66,16 +66,17 @@ A small feature that sits outside the numbered roadmap. It does not depend on Pl
 **Name dialog (`NameTowerDialog`):**
 - Opens from **Build it!**.
 - It is a `role="dialog"` with `aria-modal`, the heading "Name your tower" and the line "Every great skyscraper has a name."
-- **The input:**
-  - focused on open;
-  - its placeholder is the current suggestion;
-  - it shows a live count of characters left;
-  - typing past 40 characters is cut off.
+- **The text box comes first.** It is empty and focused when the dialog opens, so he can just start typing.
+  - Its label is "Tower name" and its placeholder reads "Type a name…".
+  - It shows a live count of characters left. Typing past 40 characters is cut off.
+- **Ideas, under the box:** a row headed "Need an idea?" with **3 name buttons**, suggestions `n`, `n+1` and `n+2`.
+  - Tapping one puts that name into the box, where he can keep editing it. For example he taps "The Sakura Spire" and changes it to "The Sakura Super Spire".
+  - **🎲 More ideas** replaces the three with the next three (`n += 3`). It never changes what's in the box.
 - **Buttons:**
-  - **🎲 Another idea** puts the next suggestion into the field.
-  - **Start building 🏗️** is the default and also triggers on Enter. A blank field builds with the placeholder suggestion.
-  - **Back to designing** also closes on Escape. It leaves the design phase untouched.
-- At Chromebook width (1024 px) it fits without scrolling.
+  - **Start building 🏗️** also triggers on Enter. It is disabled while the box is blank, so the tower always gets a name he typed or chose.
+  - **Back to designing** also triggers on Escape. It leaves the design phase untouched.
+- With the idea buttons the dialog still needs only two taps to build, so the "one tap" anti-goal becomes **two taps** (an idea, then Start).
+- At Chromebook width (1024 px) it fits without scrolling. The idea buttons wrap onto a second line if they need to.
 
 **Construction card:** the heading gains a line above it, "Building <name>".
 
@@ -111,8 +112,9 @@ A small feature that sits outside the numbered roadmap. It does not depend on Pl
 - **UI:**
   - Build it! opens the dialog and does not start building;
   - Enter and Start building begin construction with the typed name;
-  - a blank field uses the suggestion;
-  - 🎲 changes the field;
+  - Start building is disabled while the box is blank;
+  - tapping an idea fills the box, and the name can still be edited;
+  - 🎲 More ideas changes the three ideas, not the box;
   - Escape and Back return to designing, with the phase still `design`;
   - the construction card, header and title card show the name.
 - **Scene:** the sign mesh exists with a name, and is absent with no name or on the ghosted tower.

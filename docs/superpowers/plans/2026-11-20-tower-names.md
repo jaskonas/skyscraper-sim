@@ -25,7 +25,8 @@
 - **Copy, exactly:**
   - the dialog heading "Name your tower";
   - the line "Every great skyscraper has a name.";
-  - the buttons "🎲 Another idea", "Start building 🏗️" and "Back to designing";
+  - the input label "Tower name", its placeholder "Type a name…", and the ideas heading "Need an idea?";
+  - the buttons "🎲 More ideas", "Start building 🏗️" and "Back to designing";
   - the construction line "Building {name}";
   - the title card's top line "🎉 {name}" and its second line "{tip} m · {floors} floors · {city}".
 - **Sign:** the panel is the entrance width × 1.4 m, with its centre at 4.6 m above the ground. It has a dark stone background and gold capital letters, which glow at night.
@@ -191,13 +192,25 @@ it('Enter starts building with the typed name', () => {
   expect(screen.getByText('Building Prairie Point')).toBeTruthy();
   expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Prairie Point');
 });
-it('a blank name builds with the suggested one', () => {
+it('Start building waits for a name', () => {
   click('Build it!');
-  const hint = (screen.getByRole('textbox') as HTMLInputElement).placeholder;
-  click('Start building 🏗️');
-  expect(useGame.getState().project?.towerName).toBe(hint);
+  expect((screen.getByRole('button', { name: 'Start building 🏗️' }) as HTMLButtonElement).disabled).toBe(true);
+  fireEvent.change(screen.getByRole('textbox', { name: 'Tower name' }), { target: { value: '   ' } });
+  expect((screen.getByRole('button', { name: 'Start building 🏗️' }) as HTMLButtonElement).disabled).toBe(true);
 });
-it('🎲 puts a new idea in the box', () => { /* the value after the click is non-empty and differs after a second click */ });
+it('tapping an idea fills the box, and it can still be edited', () => {
+  click('Build it!');
+  const idea = suggestTowerName(SITES.chicago, design(), 0);
+  click(idea);
+  const input = screen.getByRole('textbox', { name: 'Tower name' }) as HTMLInputElement;
+  expect(input.value).toBe(idea);
+  fireEvent.change(input, { target: { value: idea + ' Two' } });
+  click('Start building 🏗️');
+  expect(useGame.getState().project?.towerName).toBe(idea + ' Two');
+});
+it('🎲 More ideas shows three new ideas and leaves the box alone', () => {
+  /* type 'Mine'; the three idea buttons are suggestions 0..2; click 🎲: they are now 3..5 and the box still reads 'Mine' */
+});
 it('Escape and Back return to designing', () => {
   /* Escape on the input: the dialog is gone and the phase is 'design'. Same with "Back to designing". */
 });
@@ -212,7 +225,9 @@ it('the input stops at 40 characters', () => { /* change to 'x'.repeat(60): valu
 - [ ] **Step 3: Implement.**
   - **`BuildBar`:** keeps `open` state. Build it! sets it to true and does not call `build`. The dialog renders inside the footer, positioned fixed and centred over a dim backdrop.
   - **The dialog:**
-    - The suggestion index starts at 0. 🎲 sets the field to `suggestTowerName(site, design, ++n)`, and the placeholder shows the suggestion for the current `n`.
+    - The box starts empty, with the placeholder "Type a name…". The idea offset `n` starts at 0, and the three idea buttons show `suggestTowerName(site, design, n + i)` for i = 0, 1, 2.
+    - Tapping an idea sets the box's value and focuses the box, with the cursor at the end. 🎲 does `n += 3` only.
+    - Start building is `disabled` when `cleanTowerName(value) === ''`. On submit it calls `build(value)`.
     - `onChange` passes the value through `Array.from(v).slice(0, TOWER_NAME_MAX).join('')`.
     - `onKeyDown` calls `stopPropagation()` on every key, so global shortcuts never see them. Enter submits and Escape closes.
     - Use `<form onSubmit>` so Enter works natively.
